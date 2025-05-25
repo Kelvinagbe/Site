@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from 'react';
+import Image from 'next/image';
 
 // Simple SVG icon components
 const Menu = ({ className }: { className?: string }) => (
@@ -65,14 +66,17 @@ export default function Home() {
                 <Menu className="h-5 w-5" />
               </button>
               <div className="flex items-center ml-2 lg:ml-0">
-                <img 
+                <Image 
                   src="/favicon.ico" 
                   alt="Apexion" 
-                  className="w-8 h-8 mr-3 animate-spin"
+                  width={32}
+                  height={32}
+                  className="mr-3 animate-spin"
                   style={{ animationDuration: '3s' }}
                   onError={(e) => {
-                    e.target.style.display = 'none';
-                    e.target.nextSibling.style.display = 'flex';
+                    e.currentTarget.style.display = 'none';
+                    const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
+                    if (nextElement) nextElement.style.display = 'flex';
                   }}
                 />
                 <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg items-center justify-center mr-3 hidden animate-spin" style={{ animationDuration: '3s' }}>
@@ -108,14 +112,17 @@ export default function Home() {
         <div className={`fixed left-0 top-0 bottom-0 w-80 bg-white shadow-2xl transform transition-transform duration-300 ease-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
           <div className="flex items-center justify-between p-6 border-b border-gray-100">
             <div className="flex items-center">
-              <img 
+              <Image 
                 src="/favicon.ico" 
                 alt="Apexion" 
-                className="w-8 h-8 mr-3 animate-spin"
+                width={32}
+                height={32}
+                className="mr-3 animate-spin"
                 style={{ animationDuration: '3s' }}
                 onError={(e) => {
-                  e.target.style.display = 'none';
-                  e.target.nextSibling.style.display = 'flex';
+                  e.currentTarget.style.display = 'none';
+                  const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
+                  if (nextElement) nextElement.style.display = 'flex';
                 }}
               />
               <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg items-center justify-center mr-3 hidden animate-spin" style={{ animationDuration: '3s' }}>
@@ -279,7 +286,7 @@ export default function Home() {
               Start processing your documents with AI-powered precision. No setup required, instant results.
             </p>
             <button className="bg-white hover:bg-gray-50 text-blue-600 px-8 py-4 rounded-xl text-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg">
-              Get Started Now - It's Free
+              Get Started Now - It&apos;s Free
             </button>
           </div>
         </section>
@@ -291,14 +298,17 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="col-span-1 md:col-span-2">
               <div className="flex items-center mb-4">
-                <img 
+                <Image 
                   src="/favicon.ico" 
                   alt="Apexion" 
-                  className="w-8 h-8 mr-3 animate-spin"
+                  width={32}
+                  height={32}
+                  className="mr-3 animate-spin"
                   style={{ animationDuration: '3s' }}
                   onError={(e) => {
-                    e.target.style.display = 'none';
-                    e.target.nextSibling.style.display = 'flex';
+                    e.currentTarget.style.display = 'none';
+                    const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
+                    if (nextElement) nextElement.style.display = 'flex';
                   }}
                 />
                 <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg items-center justify-center mr-3 hidden animate-spin" style={{ animationDuration: '3s' }}>
@@ -334,4 +344,4 @@ export default function Home() {
       </footer>
     </div>
   );
-      }
+}
