@@ -56,49 +56,48 @@ export default function Home() {
     <div className="min-h-screen bg-white">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+          <div className="flex justify-between items-center h-12 sm:h-16">
             <div className="flex items-center">
               <button
                 onClick={toggleSidebar}
-                className="p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors lg:hidden"
+                className="p-1.5 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors lg:hidden"
               >
-                <Menu className="h-5 w-5" />
+                <Menu className="h-4 w-4" />
               </button>
-              <div className="flex items-center ml-2 lg:ml-0">
+              <div className="flex items-center ml-1 lg:ml-0">
                 <Image 
                   src="/favicon.ico" 
                   alt="Apexion" 
-                  width={32}
-                  height={32}
-                  className="mr-3 animate-spin"
-                  style={{ animationDuration: '3s' }}
+                  width={20}
+                  height={20}
+                  className="mr-2"
                   onError={(e) => {
                     e.currentTarget.style.display = 'none';
                     const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
                     if (nextElement) nextElement.style.display = 'flex';
                   }}
                 />
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg items-center justify-center mr-3 hidden animate-spin" style={{ animationDuration: '3s' }}>
-                  <span className="text-white text-sm font-bold">A</span>
+                <div className="w-5 h-5 bg-gradient-to-br from-blue-600 to-blue-700 rounded items-center justify-center mr-2 hidden">
+                  <span className="text-white text-xs font-bold">A</span>
                 </div>
-                <span className="text-xl font-bold text-gray-900">Apexion</span>
+                <span className="text-lg sm:text-xl font-bold text-gray-900">Apexion</span>
               </div>
             </div>
             
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center space-x-8">
-              <a href="#features" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Features</a>
-              <a href="#pricing" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Pricing</a>
-              <a href="#about" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">About</a>
-              <a href="#contact" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Contact</a>
+            <nav className="hidden lg:flex items-center space-x-6">
+              <a href="#features" className="text-gray-600 hover:text-gray-900 font-medium transition-colors text-sm">Features</a>
+              <a href="#pricing" className="text-gray-600 hover:text-gray-900 font-medium transition-colors text-sm">Pricing</a>
+              <a href="#about" className="text-gray-600 hover:text-gray-900 font-medium transition-colors text-sm">About</a>
+              <a href="#contact" className="text-gray-600 hover:text-gray-900 font-medium transition-colors text-sm">Contact</a>
             </nav>
             
-            <div className="flex items-center space-x-4">
-              <button className="text-gray-600 hover:text-gray-900 font-medium transition-colors">
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <button className="text-gray-600 hover:text-gray-900 font-medium transition-colors text-sm hidden sm:block">
                 Sign In
               </button>
-              <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105">
+              <button className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1.5 sm:px-4 sm:py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 text-xs sm:text-sm">
                 Get Started
               </button>
             </div>
@@ -109,46 +108,45 @@ export default function Home() {
       {/* Mobile Sidebar */}
       <div className={`fixed inset-0 z-40 lg:hidden transition-opacity duration-300 ${sidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
         <div className="fixed inset-0 bg-black/20 backdrop-blur-sm" onClick={toggleSidebar}></div>
-        <div className={`fixed left-0 top-0 bottom-0 w-80 bg-white shadow-2xl transform transition-transform duration-300 ease-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-          <div className="flex items-center justify-between p-6 border-b border-gray-100">
+        <div className={`fixed left-0 top-0 bottom-0 w-64 sm:w-80 bg-white shadow-2xl transform transition-transform duration-300 ease-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+          <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-100">
             <div className="flex items-center">
               <Image 
                 src="/favicon.ico" 
                 alt="Apexion" 
-                width={32}
-                height={32}
-                className="mr-3 animate-spin"
-                style={{ animationDuration: '3s' }}
+                width={24}
+                height={24}
+                className="mr-3"
                 onError={(e) => {
                   e.currentTarget.style.display = 'none';
                   const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
                   if (nextElement) nextElement.style.display = 'flex';
                 }}
               />
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg items-center justify-center mr-3 hidden animate-spin" style={{ animationDuration: '3s' }}>
+              <div className="w-6 h-6 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg items-center justify-center mr-3 hidden">
                 <span className="text-white text-sm font-bold">A</span>
               </div>
-              <span className="text-xl font-bold text-gray-900">Apexion</span>
+              <span className="text-lg sm:text-xl font-bold text-gray-900">Apexion</span>
             </div>
             <button
               onClick={toggleSidebar}
               className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"
             >
-              <X className="h-5 w-5" />
+              <X className="h-4 w-4" />
             </button>
           </div>
-          <nav className="p-6">
-            <div className="space-y-4">
-              <a href="#features" className="block text-lg font-medium text-gray-700 hover:text-blue-600 transition-colors" onClick={toggleSidebar}>Features</a>
-              <a href="#pricing" className="block text-lg font-medium text-gray-700 hover:text-blue-600 transition-colors" onClick={toggleSidebar}>Pricing</a>
-              <a href="#about" className="block text-lg font-medium text-gray-700 hover:text-blue-600 transition-colors" onClick={toggleSidebar}>About</a>
-              <a href="#contact" className="block text-lg font-medium text-gray-700 hover:text-blue-600 transition-colors" onClick={toggleSidebar}>Contact</a>
+          <nav className="p-4 sm:p-6">
+            <div className="space-y-3">
+              <a href="#features" className="block text-base font-medium text-gray-700 hover:text-blue-600 transition-colors" onClick={toggleSidebar}>Features</a>
+              <a href="#pricing" className="block text-base font-medium text-gray-700 hover:text-blue-600 transition-colors" onClick={toggleSidebar}>Pricing</a>
+              <a href="#about" className="block text-base font-medium text-gray-700 hover:text-blue-600 transition-colors" onClick={toggleSidebar}>About</a>
+              <a href="#contact" className="block text-base font-medium text-gray-700 hover:text-blue-600 transition-colors" onClick={toggleSidebar}>Contact</a>
             </div>
-            <div className="mt-8 pt-6 border-t border-gray-100">
-              <button className="w-full text-left text-gray-600 hover:text-gray-900 font-medium mb-4 transition-colors">
+            <div className="mt-6 pt-4 border-t border-gray-100">
+              <button className="w-full text-left text-gray-600 hover:text-gray-900 font-medium mb-3 text-sm transition-colors">
                 Sign In
               </button>
-              <button className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium transition-colors">
+              <button className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors text-sm">
                 Get Started
               </button>
             </div>
@@ -157,42 +155,42 @@ export default function Home() {
       </div>
 
       {/* Main Content */}
-      <main className="pt-16">
+      <main className="pt-12 sm:pt-16">
         {/* Hero Section */}
-        <section className="py-20 px-4 sm:px-6 lg:px-8">
+        <section className="py-12 sm:py-16 lg:py-20 px-3 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto text-center">
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-gray-900 mb-6 leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight">
               Transform PDFs with
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
                 AI Intelligence
               </span>
             </h1>
-            <p className="max-w-3xl mx-auto text-xl sm:text-2xl text-gray-600 mb-10 leading-relaxed">
+            <p className="max-w-2xl mx-auto text-base sm:text-lg lg:text-xl text-gray-600 mb-6 sm:mb-8 lg:mb-10 leading-relaxed px-2">
               Experience the future of document processing. Convert, analyze, and extract data from PDFs 
               with unprecedented accuracy using advanced AI technology.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <button className="group bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl text-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center px-4">
+              <button className="group w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-base sm:text-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center">
                 Start Converting Free
-                <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5 transition-transform group-hover:translate-x-1" />
               </button>
-              <button className="border-2 border-gray-300 hover:border-gray-400 text-gray-700 px-8 py-4 rounded-xl text-lg font-semibold transition-all duration-200 hover:bg-gray-50">
+              <button className="w-full sm:w-auto border-2 border-gray-300 hover:border-gray-400 text-gray-700 px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-base sm:text-lg font-semibold transition-all duration-200 hover:bg-gray-50">
                 Watch Demo
               </button>
             </div>
             
             {/* Trust Indicators */}
-            <div className="mt-16 flex flex-col sm:flex-row items-center justify-center gap-8 text-sm text-gray-500">
+            <div className="mt-10 sm:mt-16 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-xs sm:text-sm text-gray-500">
               <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
+                <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />
                 <span>No registration required</span>
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
+                <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />
                 <span>Process up to 10MB files</span>
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
+                <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />
                 <span>100% secure & private</span>
               </div>
             </div>
@@ -200,44 +198,44 @@ export default function Home() {
         </section>
 
         {/* Features Section */}
-        <section id="features" className="py-20 bg-gray-50 px-4 sm:px-6 lg:px-8">
+        <section id="features" className="py-12 sm:py-16 lg:py-20 bg-gray-50 px-3 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4">
+            <div className="text-center mb-10 sm:mb-16">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-gray-900 mb-3 sm:mb-4">
                 Why Choose Apexion?
               </h2>
-              <p className="max-w-2xl mx-auto text-xl text-gray-600">
+              <p className="max-w-2xl mx-auto text-base sm:text-lg lg:text-xl text-gray-600 px-4">
                 Our AI-powered platform delivers unmatched accuracy and speed for all your PDF processing needs.
               </p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-lg transition-shadow duration-300">
-                <div className="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center mb-6">
-                  <Zap className="h-7 w-7 text-blue-600" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+              <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm hover:shadow-lg transition-shadow duration-300">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 bg-blue-100 rounded-xl flex items-center justify-center mb-4 sm:mb-6">
+                  <Zap className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 text-blue-600" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">Lightning Fast</h3>
-                <p className="text-gray-600 text-lg leading-relaxed">
+                <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">Lightning Fast</h3>
+                <p className="text-gray-600 text-sm sm:text-base lg:text-lg leading-relaxed">
                   Process documents in seconds, not minutes. Our optimized AI algorithms deliver results 10x faster than traditional methods.
                 </p>
               </div>
               
-              <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-lg transition-shadow duration-300">
-                <div className="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center mb-6">
-                  <FileText className="h-7 w-7 text-green-600" />
+              <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm hover:shadow-lg transition-shadow duration-300">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 bg-green-100 rounded-xl flex items-center justify-center mb-4 sm:mb-6">
+                  <FileText className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 text-green-600" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">99.9% Accurate</h3>
-                <p className="text-gray-600 text-lg leading-relaxed">
+                <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">99.9% Accurate</h3>
+                <p className="text-gray-600 text-sm sm:text-base lg:text-lg leading-relaxed">
                   Advanced OCR and machine learning ensure perfect text recognition, even from scanned or low-quality documents.
                 </p>
               </div>
               
-              <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-lg transition-shadow duration-300">
-                <div className="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center mb-6">
-                  <Shield className="h-7 w-7 text-purple-600" />
+              <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm hover:shadow-lg transition-shadow duration-300">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 bg-purple-100 rounded-xl flex items-center justify-center mb-4 sm:mb-6">
+                  <Shield className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 text-purple-600" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">Bank-Level Security</h3>
-                <p className="text-gray-600 text-lg leading-relaxed">
+                <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">Bank-Level Security</h3>
+                <p className="text-gray-600 text-sm sm:text-base lg:text-lg leading-relaxed">
                   Your documents are encrypted end-to-end and automatically deleted after processing. Zero data retention policy.
                 </p>
               </div>
@@ -246,46 +244,46 @@ export default function Home() {
         </section>
 
         {/* Stats Section */}
-        <section className="py-20 px-4 sm:px-6 lg:px-8">
+        <section className="py-12 sm:py-16 lg:py-20 px-3 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto text-center">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 sm:mb-4">
               Trusted by Professionals Worldwide
             </h2>
-            <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg lg:text-xl text-gray-600 mb-8 sm:mb-12 max-w-2xl mx-auto px-4">
               Join thousands of businesses and individuals who rely on Apexion for their document processing needs.
             </p>
             
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
               <div>
-                <div className="text-4xl sm:text-5xl font-bold text-blue-600 mb-2">5M+</div>
-                <div className="text-gray-600 text-lg">Documents Processed</div>
+                <div className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-blue-600 mb-1 sm:mb-2">5M+</div>
+                <div className="text-gray-600 text-sm sm:text-base lg:text-lg">Documents Processed</div>
               </div>
               <div>
-                <div className="text-4xl sm:text-5xl font-bold text-blue-600 mb-2">250K+</div>
-                <div className="text-gray-600 text-lg">Happy Users</div>
+                <div className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-blue-600 mb-1 sm:mb-2">250K+</div>
+                <div className="text-gray-600 text-sm sm:text-base lg:text-lg">Happy Users</div>
               </div>
               <div>
-                <div className="text-4xl sm:text-5xl font-bold text-blue-600 mb-2">99.9%</div>
-                <div className="text-gray-600 text-lg">Accuracy Rate</div>
+                <div className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-blue-600 mb-1 sm:mb-2">99.9%</div>
+                <div className="text-gray-600 text-sm sm:text-base lg:text-lg">Accuracy Rate</div>
               </div>
               <div>
-                <div className="text-4xl sm:text-5xl font-bold text-blue-600 mb-2">24/7</div>
-                <div className="text-gray-600 text-lg">Available</div>
+                <div className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-blue-600 mb-1 sm:mb-2">24/7</div>
+                <div className="text-gray-600 text-sm sm:text-base lg:text-lg">Available</div>
               </div>
             </div>
           </div>
         </section>
 
         {/* CTA Section */}
-        <section className="py-20 bg-gradient-to-r from-blue-600 to-purple-600 px-4 sm:px-6 lg:px-8">
+        <section className="py-12 sm:py-16 lg:py-20 bg-gradient-to-r from-blue-600 to-purple-600 px-3 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-4xl sm:text-5xl font-bold text-white mb-6">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-white mb-4 sm:mb-6">
               Ready to Transform Your PDFs?
             </h2>
-            <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg lg:text-xl text-blue-100 mb-6 sm:mb-8 max-w-2xl mx-auto px-4">
               Start processing your documents with AI-powered precision. No setup required, instant results.
             </p>
-            <button className="bg-white hover:bg-gray-50 text-blue-600 px-8 py-4 rounded-xl text-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg">
+            <button className="bg-white hover:bg-gray-50 text-blue-600 px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-base sm:text-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg">
               Get Started Now - It&apos;s Free
             </button>
           </div>
@@ -293,52 +291,51 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12 px-4 sm:px-6 lg:px-8">
+      <footer className="bg-gray-900 text-white py-8 sm:py-12 px-3 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 sm:gap-8">
             <div className="col-span-1 md:col-span-2">
-              <div className="flex items-center mb-4">
+              <div className="flex items-center mb-3 sm:mb-4">
                 <Image 
                   src="/favicon.ico" 
                   alt="Apexion" 
-                  width={32}
-                  height={32}
-                  className="mr-3 animate-spin"
-                  style={{ animationDuration: '3s' }}
+                  width={24}
+                  height={24}
+                  className="mr-3"
                   onError={(e) => {
                     e.currentTarget.style.display = 'none';
                     const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
                     if (nextElement) nextElement.style.display = 'flex';
                   }}
                 />
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg items-center justify-center mr-3 hidden animate-spin" style={{ animationDuration: '3s' }}>
+                <div className="w-6 h-6 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg items-center justify-center mr-3 hidden">
                   <span className="text-white text-sm font-bold">A</span>
                 </div>
-                <span className="text-xl font-bold">Apexion</span>
+                <span className="text-lg sm:text-xl font-bold">Apexion</span>
               </div>
-              <p className="text-gray-400 max-w-md">
+              <p className="text-gray-400 max-w-md text-sm sm:text-base">
                 Transform your documents with AI-powered intelligence. Fast, accurate, and secure PDF processing for the modern world.
               </p>
             </div>
             <div>
-              <h3 className="font-semibold mb-4">Product</h3>
-              <ul className="space-y-2 text-gray-400">
+              <h3 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Product</h3>
+              <ul className="space-y-2 text-gray-400 text-sm">
                 <li><a href="#" className="hover:text-white transition-colors">Features</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Pricing</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">API</a></li>
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold mb-4">Company</h3>
-              <ul className="space-y-2 text-gray-400">
+              <h3 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Company</h3>
+              <ul className="space-y-2 text-gray-400 text-sm">
                 <li><a href="#" className="hover:text-white transition-colors">About</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Privacy</a></li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2025 Apexion. All rights reserved.</p>
+          <div className="border-t border-gray-800 mt-6 sm:mt-8 pt-6 sm:pt-8 text-center text-gray-400">
+            <p className="text-xs sm:text-sm">&copy; 2025 Apexion. All rights reserved.</p>
           </div>
         </div>
       </footer>
