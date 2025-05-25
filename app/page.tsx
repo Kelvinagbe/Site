@@ -57,9 +57,17 @@ const Cookie = ({ className }: { className?: string }) => (
 export default function Home() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showCookieBanner, setShowCookieBanner] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
 
+  // Ensure component is mounted before accessing browser APIs
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    
     // Check if user has already accepted cookies
     const cookiesAccepted = document.cookie.split(';').some((item) => item.trim().startsWith('cookies-accepted='));
     if (!cookiesAccepted) {
@@ -69,17 +77,19 @@ export default function Home() {
       }, 1500);
       return () => clearTimeout(timer);
     }
-  }, []);
+  }, [mounted]);
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
   const handleGetStarted = () => {
-    if (typeof window !== 'undefined') {
+    if (mounted && typeof window !== 'undefined') {
       router.push('/app');
     }
   };
 
   const acceptCookies = () => {
+    if (!mounted) return;
+    
     // Set cookie with 1 year expiration
     const date = new Date();
     date.setTime(date.getTime() + (365 * 24 * 60 * 60 * 1000));
@@ -88,12 +98,79 @@ export default function Home() {
   };
 
   const declineCookies = () => {
+    if (!mounted) return;
+    
     // Set cookie with 30 days expiration for decline
     const date = new Date();
     date.setTime(date.getTime() + (30 * 24 * 60 * 60 * 1000));
     document.cookie = `cookies-declined=true; expires=${date.toUTCString()}; path=/`;
     setShowCookieBanner(false);
   };
+
+  // Don't render interactive elements until mounted
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-white">
+        {/* Static header without interactive elements */}
+        <header className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 z-50">
+          <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+            <div className="flex justify-between items-center h-12 sm:h-16">
+              <div className="flex items-center ml-1 lg:ml-0">
+                <Image 
+                  src="/favicon.ico" 
+                  alt="Apexion" 
+                  width={32}
+                  height={32}
+                  className="w-7 h-7 sm:w-8 sm:h-8 mr-3"
+                />
+                <span className="text-lg sm:text-xl font-bold text-gray-900">Apexion</span>
+              </div>
+              <nav className="hidden lg:flex items-center space-x-6">
+                <a href="#features" className="text-gray-600 hover:text-gray-900 font-medium transition-colors text-sm">Features</a>
+                <a href="#pricing" className="text-gray-600 hover:text-gray-900 font-medium transition-colors text-sm">Pricing</a>
+                <a href="#about" className="text-gray-600 hover:text-gray-900 font-medium transition-colors text-sm">About</a>
+                <a href="#contact" className="text-gray-600 hover:text-gray-900 font-medium transition-colors text-sm">Contact</a>
+              </nav>
+              <div className="flex items-center space-x-2 sm:space-x-4">
+                <span className="text-gray-600 font-medium text-sm hidden sm:block">Sign In</span>
+                <span className="bg-blue-600 text-white px-2 py-1.5 sm:px-4 sm:py-2 rounded-lg font-medium text-xs sm:text-sm">
+                  Get Started
+                </span>
+              </div>
+            </div>
+          </div>
+        </header>
+        
+        {/* Rest of static content */}
+        <main className="pt-12 sm:pt-16">
+          {/* Hero Section - Static version */}
+          <section className="py-12 sm:py-16 lg:py-20 px-3 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto text-center">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight">
+                Transform PDFs with
+                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+                  AI Intelligence
+                </span>
+              </h1>
+              <p className="max-w-2xl mx-auto text-base sm:text-lg lg:text-xl text-gray-600 mb-6 sm:mb-8 lg:mb-10 leading-relaxed px-2">
+                Experience the future of document processing. Convert, analyze, and extract data from PDFs 
+                with unprecedented accuracy using advanced AI technology.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center px-4">
+                <span className="group w-full sm:w-auto bg-blue-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-base sm:text-lg font-semibold shadow-lg flex items-center justify-center">
+                  Start Converting Free
+                  <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
+                </span>
+                <span className="w-full sm:w-auto border-2 border-gray-300 text-gray-700 px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-base sm:text-lg font-semibold">
+                  Watch Demo
+                </span>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -116,9 +193,6 @@ export default function Home() {
                   height={32}
                   className="w-7 h-7 sm:w-8 sm:h-8 mr-3"
                 />
-                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg items-center justify-center mr-3 hidden">
-                  <span className="text-white text-sm sm:text-base font-bold">A</span>
-                </div>
                 <span className="text-lg sm:text-xl font-bold text-gray-900">Apexion</span>
               </div>
             </div>
@@ -159,9 +233,6 @@ export default function Home() {
                 height={36}
                 className="w-8 h-8 sm:w-9 sm:h-9 mr-3"
               />
-              <div className="w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg items-center justify-center mr-3 hidden">
-                <span className="text-white text-base sm:text-lg font-bold">A</span>
-              </div>
               <span className="text-lg sm:text-xl font-bold text-gray-900">Apexion</span>
             </div>
             <button
@@ -312,7 +383,7 @@ export default function Home() {
                 <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">99.9% Accurate</h3>
                 <p className="text-gray-600 text-sm sm:text-base lg:text-lg leading-relaxed">
                   Advanced OCR and machine learning ensure perfect text recognition, even from scanned or low-quality documents.
-                </p>
+     </p>
               </div>
 
               <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm hover:shadow-lg transition-shadow duration-300">
