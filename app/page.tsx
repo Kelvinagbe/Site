@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -357,7 +356,7 @@ export default function Home() {
             <p className="text-base sm:text-lg lg:text-xl text-blue-100 mb-6 sm:mb-8 max-w-2xl mx-auto px-4">
               Start processing your documents with AI-powered precision. No setup required, instant results.
             </p>
-                <button className="bg-white hover:bg-gray-50 text-blue-600 px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-base sm:text-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg">
+            <button className="bg-white hover:bg-gray-50 text-blue-600 px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-base sm:text-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg">
               Get Started Now - It's Free
             </button>
           </div>
@@ -370,7 +369,17 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 sm:gap-8">
             <div className="col-span-1 md:col-span-2">
               <div className="flex items-center mb-3 sm:mb-4">
-                <div className="w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center mr-3">
+                <img 
+                  src="/favicon.ico" 
+                  alt="Apexion" 
+                  className="w-8 h-8 sm:w-9 sm:h-9 mr-3"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
+                    if (nextElement) nextElement.style.display = 'flex';
+                  }}
+                />
+                <div className="w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg items-center justify-center mr-3 hidden">
                   <span className="text-white text-base sm:text-lg font-bold">A</span>
                 </div>
                 <span className="text-lg sm:text-xl font-bold">Apexion</span>
