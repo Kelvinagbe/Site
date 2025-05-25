@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 // Simple SVG icon components
 const Menu = ({ className }: { className?: string }) => (
@@ -56,6 +57,7 @@ const Cookie = ({ className }: { className?: string }) => (
 export default function Home() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showCookieBanner, setShowCookieBanner] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     // Check if user has already accepted cookies
@@ -70,6 +72,10 @@ export default function Home() {
   }, []);
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+
+  const handleGetStarted = () => {
+    router.push('/app');
+  };
 
   const acceptCookies = () => {
     // Set cookie with 1 year expiration
@@ -119,7 +125,7 @@ export default function Home() {
                 <span className="text-lg sm:text-xl font-bold text-gray-900">Apexion</span>
               </div>
             </div>
-            
+
             {/* Desktop Navigation */}
             <nav className="hidden lg:flex items-center space-x-6">
               <a href="#features" className="text-gray-600 hover:text-gray-900 font-medium transition-colors text-sm">Features</a>
@@ -127,12 +133,15 @@ export default function Home() {
               <a href="#about" className="text-gray-600 hover:text-gray-900 font-medium transition-colors text-sm">About</a>
               <a href="#contact" className="text-gray-600 hover:text-gray-900 font-medium transition-colors text-sm">Contact</a>
             </nav>
-            
+
             <div className="flex items-center space-x-2 sm:space-x-4">
               <button className="text-gray-600 hover:text-gray-900 font-medium transition-colors text-sm hidden sm:block">
                 Sign In
               </button>
-              <button className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1.5 sm:px-4 sm:py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 text-xs sm:text-sm">
+              <button 
+                onClick={handleGetStarted}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1.5 sm:px-4 sm:py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 text-xs sm:text-sm"
+              >
                 Get Started
               </button>
             </div>
@@ -181,7 +190,10 @@ export default function Home() {
               <button className="w-full text-left text-gray-600 hover:text-gray-900 font-medium mb-3 text-sm transition-colors">
                 Sign In
               </button>
-              <button className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors text-sm">
+              <button 
+                onClick={handleGetStarted}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors text-sm"
+              >
                 Get Started
               </button>
             </div>
@@ -248,7 +260,10 @@ export default function Home() {
               with unprecedented accuracy using advanced AI technology.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center px-4">
-              <button className="group w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-base sm:text-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center">
+              <button 
+                onClick={handleGetStarted}
+                className="group w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-base sm:text-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center"
+              >
                 Start Converting Free
                 <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5 transition-transform group-hover:translate-x-1" />
               </button>
@@ -256,7 +271,7 @@ export default function Home() {
                 Watch Demo
               </button>
             </div>
-            
+
             {/* Trust Indicators */}
             <div className="mt-10 sm:mt-16 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-xs sm:text-sm text-gray-500">
               <div className="flex items-center gap-2">
@@ -286,7 +301,7 @@ export default function Home() {
                 Our AI-powered platform delivers unmatched accuracy and speed for all your PDF processing needs.
               </p>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
               <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm hover:shadow-lg transition-shadow duration-300">
                 <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 bg-blue-100 rounded-xl flex items-center justify-center mb-4 sm:mb-6">
@@ -297,7 +312,7 @@ export default function Home() {
                   Process documents in seconds, not minutes. Our optimized AI algorithms deliver results 10x faster than traditional methods.
                 </p>
               </div>
-              
+
               <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm hover:shadow-lg transition-shadow duration-300">
                 <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 bg-green-100 rounded-xl flex items-center justify-center mb-4 sm:mb-6">
                   <FileText className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 text-green-600" />
@@ -307,7 +322,7 @@ export default function Home() {
                   Advanced OCR and machine learning ensure perfect text recognition, even from scanned or low-quality documents.
                 </p>
               </div>
-              
+
               <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm hover:shadow-lg transition-shadow duration-300">
                 <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 bg-purple-100 rounded-xl flex items-center justify-center mb-4 sm:mb-6">
                   <Shield className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 text-purple-600" />
@@ -330,7 +345,7 @@ export default function Home() {
             <p className="text-base sm:text-lg lg:text-xl text-gray-600 mb-8 sm:mb-12 max-w-2xl mx-auto px-4">
               Join thousands of businesses and individuals who rely on Apexion for their document processing needs.
             </p>
-            
+
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
               <div>
                 <div className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-blue-600 mb-1 sm:mb-2">5M+</div>
@@ -352,6 +367,7 @@ export default function Home() {
           </div>
         </section>
 
+        
         {/* CTA Section */}
         <section className="py-12 sm:py-16 lg:py-20 bg-gradient-to-r from-blue-600 to-purple-600 px-3 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto text-center">
@@ -361,7 +377,10 @@ export default function Home() {
              <p className="text-base sm:text-lg lg:text-xl text-blue-100 mb-6 sm:mb-8 max-w-2xl mx-auto px-4">
               Start processing your documents with AI-powered precision. No setup required, instant results.
             </p>
-            <button className="bg-white hover:bg-gray-50 text-blue-600 px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-base sm:text-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg">
+               <button 
+                 onClick={handleGetStarted}
+                 className="bg-white hover:bg-gray-50 text-blue-600 px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-base sm:text-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg"
+               >
               Get Started Now - It&apos;s Free
             </button>
           </div>
@@ -419,4 +438,4 @@ export default function Home() {
       </footer>
     </div>
   );
-                  }
+}
