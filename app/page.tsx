@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 
 // Simple SVG icon components
 const Menu = ({ className }: { className?: string }) => (
@@ -100,9 +101,11 @@ export default function Home() {
                 <Menu className="h-4 w-4" />
               </button>
               <div className="flex items-center ml-1 lg:ml-0">
-                <img 
+                <Image 
                   src="/favicon.ico" 
                   alt="Apexion" 
+                  width={32}
+                  height={32}
                   className="w-7 h-7 sm:w-8 sm:h-8 mr-3"
                   onError={(e) => {
                     e.currentTarget.style.display = 'none';
@@ -143,9 +146,11 @@ export default function Home() {
         <div className={`fixed left-0 top-0 bottom-0 w-64 sm:w-80 bg-white shadow-2xl transform transition-transform duration-300 ease-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
           <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-100">
             <div className="flex items-center">
-              <img 
+              <Image 
                 src="/favicon.ico" 
                 alt="Apexion" 
+                width={36}
+                height={36}
                 className="w-8 h-8 sm:w-9 sm:h-9 mr-3"
                 onError={(e) => {
                   e.currentTarget.style.display = 'none';
@@ -201,7 +206,7 @@ export default function Home() {
                   </h3>
                   <p className="text-sm text-gray-600 leading-relaxed">
                     We use cookies to enhance your browsing experience, serve personalized content, and analyze our traffic. 
-                    By clicking "Accept All", you consent to our use of cookies.{' '}
+                    By clicking &ldquo;Accept All&rdquo;, you consent to our use of cookies.{' '}
                     <a href="#" className="text-blue-600 hover:text-blue-700 underline font-medium">
                       Learn more
                     </a>
@@ -264,7 +269,7 @@ export default function Home() {
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />
-                <span>100% secure & private</span>
+                <span>100% secure &amp; private</span>
               </div>
             </div>
           </div>
@@ -353,11 +358,11 @@ export default function Home() {
             <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-white mb-4 sm:mb-6">
               Ready to Transform Your PDFs?
             </h2>
-            <p className="text-base sm:text-lg lg:text-xl text-blue-100 mb-6 sm:mb-8 max-w-2xl mx-auto px-4">
+             <p className="text-base sm:text-lg lg:text-xl text-blue-100 mb-6 sm:mb-8 max-w-2xl mx-auto px-4">
               Start processing your documents with AI-powered precision. No setup required, instant results.
             </p>
             <button className="bg-white hover:bg-gray-50 text-blue-600 px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-base sm:text-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg">
-              Get Started Now - It's Free
+              Get Started Now - It&apos;s Free
             </button>
           </div>
         </section>
@@ -369,9 +374,11 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 sm:gap-8">
             <div className="col-span-1 md:col-span-2">
               <div className="flex items-center mb-3 sm:mb-4">
-                <img 
+                <Image 
                   src="/favicon.ico" 
                   alt="Apexion" 
+                  width={36}
+                  height={36}
                   className="w-8 h-8 sm:w-9 sm:h-9 mr-3"
                   onError={(e) => {
                     e.currentTarget.style.display = 'none';
@@ -412,4 +419,4 @@ export default function Home() {
       </footer>
     </div>
   );
-      }
+                  }
