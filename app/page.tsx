@@ -1,8 +1,7 @@
-// app/page.tsx
+
 "use client";
 
-import { useState } from 'react';
-import Image from 'next/image';
+import { useState, useEffect } from 'react';
 
 // Simple SVG icon components
 const Menu = ({ className }: { className?: string }) => (
@@ -47,10 +46,46 @@ const CheckCircle = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const Cookie = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 10h.01M15 10h.01M10 16s2 2 4 0" />
+  </svg>
+);
+
 export default function Home() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showCookieBanner, setShowCookieBanner] = useState(false);
+
+  useEffect(() => {
+    // Check if user has already accepted cookies
+    const cookiesAccepted = document.cookie.split(';').some((item) => item.trim().startsWith('cookies-accepted='));
+    if (!cookiesAccepted) {
+      // Show banner after a short delay for better UX
+      const timer = setTimeout(() => {
+        setShowCookieBanner(true);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+
+  const acceptCookies = () => {
+    // Set cookie with 1 year expiration
+    const date = new Date();
+    date.setTime(date.getTime() + (365 * 24 * 60 * 60 * 1000));
+    document.cookie = `cookies-accepted=true; expires=${date.toUTCString()}; path=/`;
+    setShowCookieBanner(false);
+  };
+
+  const declineCookies = () => {
+    // Set cookie with 30 days expiration for decline
+    const date = new Date();
+    date.setTime(date.getTime() + (30 * 24 * 60 * 60 * 1000));
+    document.cookie = `cookies-declined=true; expires=${date.toUTCString()}; path=/`;
+    setShowCookieBanner(false);
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -66,20 +101,18 @@ export default function Home() {
                 <Menu className="h-4 w-4" />
               </button>
               <div className="flex items-center ml-1 lg:ml-0">
-                <Image 
+                <img 
                   src="/favicon.ico" 
                   alt="Apexion" 
-                  width={20}
-                  height={20}
-                  className="mr-2"
+                  className="w-7 h-7 sm:w-8 sm:h-8 mr-3"
                   onError={(e) => {
                     e.currentTarget.style.display = 'none';
                     const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
                     if (nextElement) nextElement.style.display = 'flex';
                   }}
                 />
-                <div className="w-5 h-5 bg-gradient-to-br from-blue-600 to-blue-700 rounded items-center justify-center mr-2 hidden">
-                  <span className="text-white text-xs font-bold">A</span>
+                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg items-center justify-center mr-3 hidden">
+                  <span className="text-white text-sm sm:text-base font-bold">A</span>
                 </div>
                 <span className="text-lg sm:text-xl font-bold text-gray-900">Apexion</span>
               </div>
@@ -111,20 +144,18 @@ export default function Home() {
         <div className={`fixed left-0 top-0 bottom-0 w-64 sm:w-80 bg-white shadow-2xl transform transition-transform duration-300 ease-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
           <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-100">
             <div className="flex items-center">
-              <Image 
+              <img 
                 src="/favicon.ico" 
                 alt="Apexion" 
-                width={24}
-                height={24}
-                className="mr-3"
+                className="w-8 h-8 sm:w-9 sm:h-9 mr-3"
                 onError={(e) => {
                   e.currentTarget.style.display = 'none';
                   const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
                   if (nextElement) nextElement.style.display = 'flex';
                 }}
               />
-              <div className="w-6 h-6 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg items-center justify-center mr-3 hidden">
-                <span className="text-white text-sm font-bold">A</span>
+              <div className="w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg items-center justify-center mr-3 hidden">
+                <span className="text-white text-base sm:text-lg font-bold">A</span>
               </div>
               <span className="text-lg sm:text-xl font-bold text-gray-900">Apexion</span>
             </div>
@@ -151,6 +182,49 @@ export default function Home() {
               </button>
             </div>
           </nav>
+        </div>
+      </div>
+
+      {/* Cookie Consent Banner */}
+      <div className={`fixed bottom-0 left-0 right-0 z-50 transform transition-all duration-500 ease-in-out ${
+        showCookieBanner ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'
+      }`}>
+        <div className="bg-white border-t border-gray-200 shadow-2xl">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-3 flex-1">
+                <div className="flex-shrink-0 mt-0.5">
+                  <Cookie className="h-5 w-5 text-amber-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-1">
+                    We value your privacy
+                  </h3>
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    We use cookies to enhance your browsing experience, serve personalized content, and analyze our traffic. 
+                    By clicking "Accept All", you consent to our use of cookies.{' '}
+                    <a href="#" className="text-blue-600 hover:text-blue-700 underline font-medium">
+                      Learn more
+                    </a>
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
+                <button
+                  onClick={declineCookies}
+                  className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 border border-gray-300 hover:border-gray-400 rounded-lg transition-colors w-full sm:w-auto"
+                >
+                  Decline
+                </button>
+                <button
+                  onClick={acceptCookies}
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors w-full sm:w-auto"
+                >
+                  Accept All
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -283,8 +357,8 @@ export default function Home() {
             <p className="text-base sm:text-lg lg:text-xl text-blue-100 mb-6 sm:mb-8 max-w-2xl mx-auto px-4">
               Start processing your documents with AI-powered precision. No setup required, instant results.
             </p>
-            <button className="bg-white hover:bg-gray-50 text-blue-600 px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-base sm:text-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg">
-              Get Started Now - It&apos;s Free
+                <button className="bg-white hover:bg-gray-50 text-blue-600 px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-base sm:text-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg">
+              Get Started Now - It's Free
             </button>
           </div>
         </section>
@@ -296,20 +370,8 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 sm:gap-8">
             <div className="col-span-1 md:col-span-2">
               <div className="flex items-center mb-3 sm:mb-4">
-                <Image 
-                  src="/favicon.ico" 
-                  alt="Apexion" 
-                  width={24}
-                  height={24}
-                  className="mr-3"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                    const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
-                    if (nextElement) nextElement.style.display = 'flex';
-                  }}
-                />
-                <div className="w-6 h-6 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg items-center justify-center mr-3 hidden">
-                  <span className="text-white text-sm font-bold">A</span>
+                <div className="w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center mr-3">
+                  <span className="text-white text-base sm:text-lg font-bold">A</span>
                 </div>
                 <span className="text-lg sm:text-xl font-bold">Apexion</span>
               </div>
@@ -341,4 +403,4 @@ export default function Home() {
       </footer>
     </div>
   );
-}
+      }
