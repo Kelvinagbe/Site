@@ -74,7 +74,9 @@ export default function Home() {
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
   const handleGetStarted = () => {
-    router.push('/app');
+    if (typeof window !== 'undefined') {
+      router.push('/app');
+    }
   };
 
   const acceptCookies = () => {
@@ -113,11 +115,6 @@ export default function Home() {
                   width={32}
                   height={32}
                   className="w-7 h-7 sm:w-8 sm:h-8 mr-3"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                    const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
-                    if (nextElement) nextElement.style.display = 'flex';
-                  }}
                 />
                 <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg items-center justify-center mr-3 hidden">
                   <span className="text-white text-sm sm:text-base font-bold">A</span>
@@ -161,11 +158,6 @@ export default function Home() {
                 width={36}
                 height={36}
                 className="w-8 h-8 sm:w-9 sm:h-9 mr-3"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                  const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
-                  if (nextElement) nextElement.style.display = 'flex';
-                }}
               />
               <div className="w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg items-center justify-center mr-3 hidden">
                 <span className="text-white text-base sm:text-lg font-bold">A</span>
@@ -367,7 +359,6 @@ export default function Home() {
           </div>
         </section>
 
-        
         {/* CTA Section */}
         <section className="py-12 sm:py-16 lg:py-20 bg-gradient-to-r from-blue-600 to-purple-600 px-3 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto text-center">
@@ -399,11 +390,6 @@ export default function Home() {
                   width={36}
                   height={36}
                   className="w-8 h-8 sm:w-9 sm:h-9 mr-3"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                    const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
-                    if (nextElement) nextElement.style.display = 'flex';
-                  }}
                 />
                 <div className="w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg items-center justify-center mr-3 hidden">
                   <span className="text-white text-base sm:text-lg font-bold">A</span>
