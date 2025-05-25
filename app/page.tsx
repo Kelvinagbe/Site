@@ -1,136 +1,295 @@
 // app/page.tsx
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { Menu, X, ArrowRight, FileText, Zap, Shield, Star, CheckCircle } from 'lucide-react';
 
 export default function Home() {
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      setMousePosition({ x: e.clientX, y: e.clientY });
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
+  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
   return (
-    <main className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 opacity-30">
-        <div 
-          className="absolute w-96 h-96 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full blur-3xl animate-pulse"
-          style={{
-            left: `${mousePosition.x * 0.02}px`,
-            top: `${mousePosition.y * 0.02}px`,
-          }}
-        />
-        <div className="absolute top-1/4 right-1/4 w-80 h-80 bg-gradient-to-r from-pink-500 to-yellow-500 rounded-full blur-3xl animate-pulse delay-1000" />
-        <div className="absolute bottom-1/4 left-1/4 w-72 h-72 bg-gradient-to-r from-green-400 to-blue-500 rounded-full blur-3xl animate-pulse delay-2000" />
-      </div>
-
-      {/* Grid pattern overlay */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px]" />
-
-      {/* Main content */}
-      <div className="relative z-10 min-h-screen flex flex-col justify-center items-center px-6">
-        {/* Header with typing animation effect */}
-        <div className="text-center mb-8">
-          <h1 className="text-6xl md:text-7xl lg:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-100 to-purple-100 mb-4 animate-fade-in">
-            AI PDF
-          </h1>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 animate-fade-in delay-300">
-            Converter
-          </h2>
-        </div>
-
-        {/* Subtitle */}
-        <p className="max-w-2xl text-center text-gray-200 text-xl md:text-2xl mb-12 leading-relaxed animate-fade-in delay-600">
-          Transform your PDFs with cutting-edge AI technology. 
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 font-semibold"> Fast, accurate, intelligent.</span>
-        </p>
-
-        {/* CTA Button with hover effects */}
-        <div className="relative group animate-fade-in delay-900">
-          <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-xl blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-tilt"></div>
-          <button className="relative bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold py-4 px-12 rounded-xl shadow-2xl transition-all duration-300 transform hover:scale-105 hover:shadow-purple-500/25">
-            <span className="flex items-center gap-3">
-              Get Started
-              <svg className="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-            </span>
-          </button>
-        </div>
-
-        {/* Feature highlights */}
-        <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl animate-fade-in delay-1200">
-          {[
-            { icon: "⚡", title: "Lightning Fast", desc: "Convert in seconds" },
-            { icon: "🎯", title: "AI Powered", desc: "Smart recognition" },
-            { icon: "🔒", title: "Secure", desc: "Your data protected" }
-          ].map((feature, index) => (
-            <div key={index} className="text-center p-6 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-all duration-300 hover:scale-105">
-              <div className="text-3xl mb-3">{feature.icon}</div>
-              <h3 className="text-white font-semibold text-lg mb-2">{feature.title}</h3>
-              <p className="text-gray-300 text-sm">{feature.desc}</p>
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <header className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <button
+                onClick={toggleSidebar}
+                className="p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors lg:hidden"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+              <div className="flex items-center ml-2 lg:ml-0">
+                <img 
+                  src="/favicon.ico" 
+                  alt="Apexion" 
+                  className="w-8 h-8 mr-3 animate-spin"
+                  style={{ animationDuration: '3s' }}
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'flex';
+                  }}
+                />
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg items-center justify-center mr-3 hidden animate-spin" style={{ animationDuration: '3s' }}>
+                  <span className="text-white text-sm font-bold">A</span>
+                </div>
+                <span className="text-xl font-bold text-gray-900">Apexion</span>
+              </div>
             </div>
-          ))}
+            
+            {/* Desktop Navigation */}
+            <nav className="hidden lg:flex items-center space-x-8">
+              <a href="#features" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Features</a>
+              <a href="#pricing" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Pricing</a>
+              <a href="#about" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">About</a>
+              <a href="#contact" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Contact</a>
+            </nav>
+            
+            <div className="flex items-center space-x-4">
+              <button className="text-gray-600 hover:text-gray-900 font-medium transition-colors">
+                Sign In
+              </button>
+              <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105">
+                Get Started
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Mobile Sidebar */}
+      <div className={`fixed inset-0 z-40 lg:hidden transition-opacity duration-300 ${sidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm" onClick={toggleSidebar}></div>
+        <div className={`fixed left-0 top-0 bottom-0 w-80 bg-white shadow-2xl transform transition-transform duration-300 ease-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+          <div className="flex items-center justify-between p-6 border-b border-gray-100">
+            <div className="flex items-center">
+              <img 
+                src="/favicon.ico" 
+                alt="Apexion" 
+                className="w-8 h-8 mr-3 animate-spin"
+                style={{ animationDuration: '3s' }}
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'flex';
+                }}
+              />
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg items-center justify-center mr-3 hidden animate-spin" style={{ animationDuration: '3s' }}>
+                <span className="text-white text-sm font-bold">A</span>
+              </div>
+              <span className="text-xl font-bold text-gray-900">Apexion</span>
+            </div>
+            <button
+              onClick={toggleSidebar}
+              className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+          <nav className="p-6">
+            <div className="space-y-4">
+              <a href="#features" className="block text-lg font-medium text-gray-700 hover:text-blue-600 transition-colors" onClick={toggleSidebar}>Features</a>
+              <a href="#pricing" className="block text-lg font-medium text-gray-700 hover:text-blue-600 transition-colors" onClick={toggleSidebar}>Pricing</a>
+              <a href="#about" className="block text-lg font-medium text-gray-700 hover:text-blue-600 transition-colors" onClick={toggleSidebar}>About</a>
+              <a href="#contact" className="block text-lg font-medium text-gray-700 hover:text-blue-600 transition-colors" onClick={toggleSidebar}>Contact</a>
+            </div>
+            <div className="mt-8 pt-6 border-t border-gray-100">
+              <button className="w-full text-left text-gray-600 hover:text-gray-900 font-medium mb-4 transition-colors">
+                Sign In
+              </button>
+              <button className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium transition-colors">
+                Get Started
+              </button>
+            </div>
+          </nav>
         </div>
       </div>
 
-      {/* Floating particles */}
-      <div className="absolute inset-0 pointer-events-none">
-        {[...Array(20)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-1 h-1 bg-white/20 rounded-full animate-float"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 3}s`,
-              animationDuration: `${3 + Math.random() * 4}s`
-            }}
-          />
-        ))}
-      </div>
+      {/* Main Content */}
+      <main className="pt-16">
+        {/* Hero Section */}
+        <section className="py-20 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto text-center">
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-gray-900 mb-6 leading-tight">
+              Transform PDFs with
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+                AI Intelligence
+              </span>
+            </h1>
+            <p className="max-w-3xl mx-auto text-xl sm:text-2xl text-gray-600 mb-10 leading-relaxed">
+              Experience the future of document processing. Convert, analyze, and extract data from PDFs 
+              with unprecedented accuracy using advanced AI technology.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <button className="group bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl text-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center">
+                Start Converting Free
+                <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+              </button>
+              <button className="border-2 border-gray-300 hover:border-gray-400 text-gray-700 px-8 py-4 rounded-xl text-lg font-semibold transition-all duration-200 hover:bg-gray-50">
+                Watch Demo
+              </button>
+            </div>
+            
+            {/* Trust Indicators */}
+            <div className="mt-16 flex flex-col sm:flex-row items-center justify-center gap-8 text-sm text-gray-500">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                <span>No registration required</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                <span>Process up to 10MB files</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                <span>100% secure & private</span>
+              </div>
+            </div>
+          </div>
+        </section>
 
-      <style jsx>{`
-        @keyframes fade-in {
-          from { opacity: 0; transform: translateY(30px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        
-        @keyframes float {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          50% { transform: translateY(-20px) rotate(180deg); }
-        }
-        
-        @keyframes tilt {
-          0%, 50%, 100% { transform: rotate(0deg); }
-          25% { transform: rotate(0.5deg); }
-          75% { transform: rotate(-0.5deg); }
-        }
-        
-        .animate-fade-in {
-          animation: fade-in 0.8s ease-out forwards;
-          opacity: 0;
-        }
-        
-        .animate-float {
-          animation: float linear infinite;
-        }
-        
-        .animate-tilt {
-          animation: tilt 10s infinite linear;
-        }
-        
-        .delay-300 { animation-delay: 0.3s; }
-        .delay-600 { animation-delay: 0.6s; }
-        .delay-900 { animation-delay: 0.9s; }
-        .delay-1200 { animation-delay: 1.2s; }
-      `}</style>
-    </main>
+        {/* Features Section */}
+        <section id="features" className="py-20 bg-gray-50 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4">
+                Why Choose Apexion?
+              </h2>
+              <p className="max-w-2xl mx-auto text-xl text-gray-600">
+                Our AI-powered platform delivers unmatched accuracy and speed for all your PDF processing needs.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-lg transition-shadow duration-300">
+                <div className="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center mb-6">
+                  <Zap className="h-7 w-7 text-blue-600" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-4">Lightning Fast</h3>
+                <p className="text-gray-600 text-lg leading-relaxed">
+                  Process documents in seconds, not minutes. Our optimized AI algorithms deliver results 10x faster than traditional methods.
+                </p>
+              </div>
+              
+              <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-lg transition-shadow duration-300">
+                <div className="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center mb-6">
+                  <FileText className="h-7 w-7 text-green-600" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-4">99.9% Accurate</h3>
+                <p className="text-gray-600 text-lg leading-relaxed">
+                  Advanced OCR and machine learning ensure perfect text recognition, even from scanned or low-quality documents.
+                </p>
+              </div>
+              
+              <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-lg transition-shadow duration-300">
+                <div className="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center mb-6">
+                  <Shield className="h-7 w-7 text-purple-600" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-4">Bank-Level Security</h3>
+                <p className="text-gray-600 text-lg leading-relaxed">
+                  Your documents are encrypted end-to-end and automatically deleted after processing. Zero data retention policy.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Stats Section */}
+        <section className="py-20 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto text-center">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Trusted by Professionals Worldwide
+            </h2>
+            <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto">
+              Join thousands of businesses and individuals who rely on Apexion for their document processing needs.
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+              <div>
+                <div className="text-4xl sm:text-5xl font-bold text-blue-600 mb-2">5M+</div>
+                <div className="text-gray-600 text-lg">Documents Processed</div>
+              </div>
+              <div>
+                <div className="text-4xl sm:text-5xl font-bold text-blue-600 mb-2">250K+</div>
+                <div className="text-gray-600 text-lg">Happy Users</div>
+              </div>
+              <div>
+                <div className="text-4xl sm:text-5xl font-bold text-blue-600 mb-2">99.9%</div>
+                <div className="text-gray-600 text-lg">Accuracy Rate</div>
+              </div>
+              <div>
+                <div className="text-4xl sm:text-5xl font-bold text-blue-600 mb-2">24/7</div>
+                <div className="text-gray-600 text-lg">Available</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* CTA Section */}
+        <section className="py-20 bg-gradient-to-r from-blue-600 to-purple-600 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-4xl mx-auto text-center">
+            <h2 className="text-4xl sm:text-5xl font-bold text-white mb-6">
+              Ready to Transform Your PDFs?
+            </h2>
+            <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+              Start processing your documents with AI-powered precision. No setup required, instant results.
+            </p>
+            <button className="bg-white hover:bg-gray-50 text-blue-600 px-8 py-4 rounded-xl text-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg">
+              Get Started Now - It's Free
+            </button>
+          </div>
+        </section>
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div className="col-span-1 md:col-span-2">
+              <div className="flex items-center mb-4">
+                <img 
+                  src="/favicon.ico" 
+                  alt="Apexion" 
+                  className="w-8 h-8 mr-3 animate-spin"
+                  style={{ animationDuration: '3s' }}
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'flex';
+                  }}
+                />
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg items-center justify-center mr-3 hidden animate-spin" style={{ animationDuration: '3s' }}>
+                  <span className="text-white text-sm font-bold">A</span>
+                </div>
+                <span className="text-xl font-bold">Apexion</span>
+              </div>
+              <p className="text-gray-400 max-w-md">
+                Transform your documents with AI-powered intelligence. Fast, accurate, and secure PDF processing for the modern world.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-4">Product</h3>
+              <ul className="space-y-2 text-gray-400">
+                <li><a href="#" className="hover:text-white transition-colors">Features</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Pricing</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">API</a></li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-4">Company</h3>
+              <ul className="space-y-2 text-gray-400">
+                <li><a href="#" className="hover:text-white transition-colors">About</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Privacy</a></li>
+              </ul>
+            </div>
+          </div>
+          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+            <p>&copy; 2025 Apexion. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
+    </div>
   );
       }
