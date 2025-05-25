@@ -68,109 +68,64 @@ export default function Home() {
   useEffect(() => {
     if (!mounted) return;
     
-    // Check if user has already accepted cookies
-    const cookiesAccepted = document.cookie.split(';').some((item) => item.trim().startsWith('cookies-accepted='));
-    if (!cookiesAccepted) {
-      // Show banner after a short delay for better UX
-      const timer = setTimeout(() => {
-        setShowCookieBanner(true);
-      }, 1500);
-      return () => clearTimeout(timer);
+    try {
+      // Check if user has already accepted cookies
+      const cookiesAccepted = document.cookie.split(';').some((item) => item.trim().startsWith('cookies-accepted='));
+      if (!cookiesAccepted) {
+        // Show banner after a short delay for better UX
+        const timer = setTimeout(() => {
+          setShowCookieBanner(true);
+        }, 1500);
+        return () => clearTimeout(timer);
+      }
+    } catch (error) {
+      console.log('Cookie check failed:', error);
     }
   }, [mounted]);
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
   const handleGetStarted = () => {
-    if (mounted && typeof window !== 'undefined') {
+    try {
       router.push('/app');
+    } catch (error) {
+      console.log('Navigation failed:', error);
+      // Fallback navigation
+      if (typeof window !== 'undefined') {
+        window.location.href = '/app';
+      }
     }
   };
 
   const acceptCookies = () => {
     if (!mounted) return;
     
-    // Set cookie with 1 year expiration
-    const date = new Date();
-    date.setTime(date.getTime() + (365 * 24 * 60 * 60 * 1000));
-    document.cookie = `cookies-accepted=true; expires=${date.toUTCString()}; path=/`;
-    setShowCookieBanner(false);
+    try {
+      // Set cookie with 1 year expiration
+      const date = new Date();
+      date.setTime(date.getTime() + (365 * 24 * 60 * 60 * 1000));
+      document.cookie = `cookies-accepted=true; expires=${date.toUTCString()}; path=/`;
+      setShowCookieBanner(false);
+    } catch (error) {
+      console.log('Cookie setting failed:', error);
+      setShowCookieBanner(false);
+    }
   };
 
   const declineCookies = () => {
     if (!mounted) return;
     
-    // Set cookie with 30 days expiration for decline
-    const date = new Date();
-    date.setTime(date.getTime() + (30 * 24 * 60 * 60 * 1000));
-    document.cookie = `cookies-declined=true; expires=${date.toUTCString()}; path=/`;
-    setShowCookieBanner(false);
+    try {
+      // Set cookie with 30 days expiration for decline
+      const date = new Date();
+      date.setTime(date.getTime() + (30 * 24 * 60 * 60 * 1000));
+      document.cookie = `cookies-declined=true; expires=${date.toUTCString()}; path=/`;
+      setShowCookieBanner(false);
+    } catch (error) {
+      console.log('Cookie setting failed:', error);
+      setShowCookieBanner(false);
+    }
   };
-
-  // Don't render interactive elements until mounted
-  if (!mounted) {
-    return (
-      <div className="min-h-screen bg-white">
-        {/* Static header without interactive elements */}
-        <header className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 z-50">
-          <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
-            <div className="flex justify-between items-center h-12 sm:h-16">
-              <div className="flex items-center ml-1 lg:ml-0">
-                <Image 
-                  src="/favicon.ico" 
-                  alt="Apexion" 
-                  width={32}
-                  height={32}
-                  className="w-7 h-7 sm:w-8 sm:h-8 mr-3"
-                />
-                <span className="text-lg sm:text-xl font-bold text-gray-900">Apexion</span>
-              </div>
-              <nav className="hidden lg:flex items-center space-x-6">
-                <a href="#features" className="text-gray-600 hover:text-gray-900 font-medium transition-colors text-sm">Features</a>
-                <a href="#pricing" className="text-gray-600 hover:text-gray-900 font-medium transition-colors text-sm">Pricing</a>
-                <a href="#about" className="text-gray-600 hover:text-gray-900 font-medium transition-colors text-sm">About</a>
-                <a href="#contact" className="text-gray-600 hover:text-gray-900 font-medium transition-colors text-sm">Contact</a>
-              </nav>
-              <div className="flex items-center space-x-2 sm:space-x-4">
-                <span className="text-gray-600 font-medium text-sm hidden sm:block">Sign In</span>
-                <span className="bg-blue-600 text-white px-2 py-1.5 sm:px-4 sm:py-2 rounded-lg font-medium text-xs sm:text-sm">
-                  Get Started
-                </span>
-              </div>
-            </div>
-          </div>
-        </header>
-        
-        {/* Rest of static content */}
-        <main className="pt-12 sm:pt-16">
-          {/* Hero Section - Static version */}
-          <section className="py-12 sm:py-16 lg:py-20 px-3 sm:px-6 lg:px-8">
-            <div className="max-w-7xl mx-auto text-center">
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight">
-                Transform PDFs with
-                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
-                  AI Intelligence
-                </span>
-              </h1>
-              <p className="max-w-2xl mx-auto text-base sm:text-lg lg:text-xl text-gray-600 mb-6 sm:mb-8 lg:mb-10 leading-relaxed px-2">
-                Experience the future of document processing. Convert, analyze, and extract data from PDFs 
-                with unprecedented accuracy using advanced AI technology.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center px-4">
-                <span className="group w-full sm:w-auto bg-blue-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-base sm:text-lg font-semibold shadow-lg flex items-center justify-center">
-                  Start Converting Free
-                  <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
-                </span>
-                <span className="w-full sm:w-auto border-2 border-gray-300 text-gray-700 px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-base sm:text-lg font-semibold">
-                  Watch Demo
-                </span>
-              </div>
-            </div>
-          </section>
-        </main>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -179,12 +134,14 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
           <div className="flex justify-between items-center h-12 sm:h-16">
             <div className="flex items-center">
-              <button
-                onClick={toggleSidebar}
-                className="p-1.5 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors lg:hidden"
-              >
-                <Menu className="h-4 w-4" />
-              </button>
+              {mounted && (
+                <button
+                  onClick={toggleSidebar}
+                  className="p-1.5 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors lg:hidden"
+                >
+                  <Menu className="h-4 w-4" />
+                </button>
+              )}
               <div className="flex items-center ml-1 lg:ml-0">
                 <Image 
                   src="/favicon.ico" 
@@ -221,91 +178,95 @@ export default function Home() {
       </header>
 
       {/* Mobile Sidebar */}
-      <div className={`fixed inset-0 z-40 lg:hidden transition-opacity duration-300 ${sidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
-        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm" onClick={toggleSidebar}></div>
-        <div className={`fixed left-0 top-0 bottom-0 w-64 sm:w-80 bg-white shadow-2xl transform transition-transform duration-300 ease-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-          <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-100">
-            <div className="flex items-center">
-              <Image 
-                src="/favicon.ico" 
-                alt="Apexion" 
-                width={36}
-                height={36}
-                className="w-8 h-8 sm:w-9 sm:h-9 mr-3"
-              />
-              <span className="text-lg sm:text-xl font-bold text-gray-900">Apexion</span>
-            </div>
-            <button
-              onClick={toggleSidebar}
-              className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-          <nav className="p-4 sm:p-6">
-            <div className="space-y-3">
-              <a href="#features" className="block text-base font-medium text-gray-700 hover:text-blue-600 transition-colors" onClick={toggleSidebar}>Features</a>
-              <a href="#pricing" className="block text-base font-medium text-gray-700 hover:text-blue-600 transition-colors" onClick={toggleSidebar}>Pricing</a>
-              <a href="#about" className="block text-base font-medium text-gray-700 hover:text-blue-600 transition-colors" onClick={toggleSidebar}>About</a>
-              <a href="#contact" className="block text-base font-medium text-gray-700 hover:text-blue-600 transition-colors" onClick={toggleSidebar}>Contact</a>
-            </div>
-            <div className="mt-6 pt-4 border-t border-gray-100">
-              <button className="w-full text-left text-gray-600 hover:text-gray-900 font-medium mb-3 text-sm transition-colors">
-                Sign In
-              </button>
-              <button 
-                onClick={handleGetStarted}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors text-sm"
+      {mounted && (
+        <div className={`fixed inset-0 z-40 lg:hidden transition-opacity duration-300 ${sidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+          <div className="fixed inset-0 bg-black/20 backdrop-blur-sm" onClick={toggleSidebar}></div>
+          <div className={`fixed left-0 top-0 bottom-0 w-64 sm:w-80 bg-white shadow-2xl transform transition-transform duration-300 ease-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-100">
+              <div className="flex items-center">
+                <Image 
+                  src="/favicon.ico" 
+                  alt="Apexion" 
+                  width={36}
+                  height={36}
+                  className="w-8 h-8 sm:w-9 sm:h-9 mr-3"
+                />
+                <span className="text-lg sm:text-xl font-bold text-gray-900">Apexion</span>
+              </div>
+              <button
+                onClick={toggleSidebar}
+                className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"
               >
-                Get Started
+                <X className="h-4 w-4" />
               </button>
             </div>
-          </nav>
+            <nav className="p-4 sm:p-6">
+              <div className="space-y-3">
+                <a href="#features" className="block text-base font-medium text-gray-700 hover:text-blue-600 transition-colors" onClick={toggleSidebar}>Features</a>
+                <a href="#pricing" className="block text-base font-medium text-gray-700 hover:text-blue-600 transition-colors" onClick={toggleSidebar}>Pricing</a>
+                <a href="#about" className="block text-base font-medium text-gray-700 hover:text-blue-600 transition-colors" onClick={toggleSidebar}>About</a>
+                <a href="#contact" className="block text-base font-medium text-gray-700 hover:text-blue-600 transition-colors" onClick={toggleSidebar}>Contact</a>
+              </div>
+              <div className="mt-6 pt-4 border-t border-gray-100">
+                <button className="w-full text-left text-gray-600 hover:text-gray-900 font-medium mb-3 text-sm transition-colors">
+                  Sign In
+                </button>
+                <button 
+                  onClick={handleGetStarted}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors text-sm"
+                >
+                  Get Started
+                </button>
+              </div>
+            </nav>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Cookie Consent Banner */}
-      <div className={`fixed bottom-0 left-0 right-0 z-50 transform transition-all duration-500 ease-in-out ${
-        showCookieBanner ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'
-      }`}>
-        <div className="bg-white border-t border-gray-200 shadow-2xl">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-start gap-3 flex-1">
-                <div className="flex-shrink-0 mt-0.5">
-                  <Cookie className="h-5 w-5 text-amber-600" />
+      {mounted && (
+        <div className={`fixed bottom-0 left-0 right-0 z-50 transform transition-all duration-500 ease-in-out ${
+          showCookieBanner ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'
+        }`}>
+          <div className="bg-white border-t border-gray-200 shadow-2xl">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-start gap-3 flex-1">
+                  <div className="flex-shrink-0 mt-0.5">
+                    <Cookie className="h-5 w-5 text-amber-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-sm font-semibold text-gray-900 mb-1">
+                      We value your privacy
+                    </h3>
+                    <p className="text-sm text-gray-600 leading-relaxed">
+                      We use cookies to enhance your browsing experience, serve personalized content, and analyze our traffic. 
+                      By clicking &ldquo;Accept All&rdquo;, you consent to our use of cookies.{' '}
+                      <a href="#" className="text-blue-600 hover:text-blue-700 underline font-medium">
+                        Learn more
+                      </a>
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-1">
-                    We value your privacy
-                  </h3>
-                  <p className="text-sm text-gray-600 leading-relaxed">
-                    We use cookies to enhance your browsing experience, serve personalized content, and analyze our traffic. 
-                    By clicking &ldquo;Accept All&rdquo;, you consent to our use of cookies.{' '}
-                    <a href="#" className="text-blue-600 hover:text-blue-700 underline font-medium">
-                      Learn more
-                    </a>
-                  </p>
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
+                  <button
+                    onClick={declineCookies}
+                    className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 border border-gray-300 hover:border-gray-400 rounded-lg transition-colors w-full sm:w-auto"
+                  >
+                    Decline
+                  </button>
+                  <button
+                    onClick={acceptCookies}
+                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors w-full sm:w-auto"
+                  >
+                    Accept All
+                  </button>
                 </div>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
-                <button
-                  onClick={declineCookies}
-                  className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 border border-gray-300 hover:border-gray-400 rounded-lg transition-colors w-full sm:w-auto"
-                >
-                  Decline
-                </button>
-                <button
-                  onClick={acceptCookies}
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors w-full sm:w-auto"
-                >
-                  Accept All
-                </button>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Main Content */}
       <main className="pt-12 sm:pt-16">
@@ -383,7 +344,7 @@ export default function Home() {
                 <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">99.9% Accurate</h3>
                 <p className="text-gray-600 text-sm sm:text-base lg:text-lg leading-relaxed">
                   Advanced OCR and machine learning ensure perfect text recognition, even from scanned or low-quality documents.
-     </p>
+                </p>
               </div>
 
               <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm hover:shadow-lg transition-shadow duration-300">
@@ -430,19 +391,19 @@ export default function Home() {
           </div>
         </section>
 
-        {/* CTA Section */}
+       {/* CTA Section */}
         <section className="py-12 sm:py-16 lg:py-20 bg-gradient-to-r from-blue-600 to-purple-600 px-3 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-white mb-4 sm:mb-6">
               Ready to Transform Your PDFs?
             </h2>
-             <p className="text-base sm:text-lg lg:text-xl text-blue-100 mb-6 sm:mb-8 max-w-2xl mx-auto px-4">
+            <p className="text-base sm:text-lg lg:text-xl text-blue-100 mb-6 sm:mb-8 max-w-2xl mx-auto px-4">
               Start processing your documents with AI-powered precision. No setup required, instant results.
             </p>
-               <button 
-                 onClick={handleGetStarted}
-                 className="bg-white hover:bg-gray-50 text-blue-600 px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-base sm:text-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg"
-               >
+            <button 
+              onClick={handleGetStarted}
+              className="bg-white hover:bg-gray-50 text-blue-600 px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-base sm:text-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg"
+            >
               Get Started Now - It&apos;s Free
             </button>
           </div>
@@ -462,9 +423,6 @@ export default function Home() {
                   height={36}
                   className="w-8 h-8 sm:w-9 sm:h-9 mr-3"
                 />
-                <div className="w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg items-center justify-center mr-3 hidden">
-                  <span className="text-white text-base sm:text-lg font-bold">A</span>
-                </div>
                 <span className="text-lg sm:text-xl font-bold">Apexion</span>
               </div>
               <p className="text-gray-400 max-w-md text-sm sm:text-base">
