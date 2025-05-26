@@ -6,6 +6,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 declare global {
   interface Window {
     pdfjsLib: any;
+    jsPDF: any;
   }
 }
 
@@ -53,56 +54,71 @@ const CheckCircleIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-const EyeIcon = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-  </svg>
-);
-
 const CopyIcon = ({ className }: { className?: string }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
   </svg>
 );
 
+const ArrowRightIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+  </svg>
+);
+
+const ArrowLeftIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 17l-5-5m0 0l5-5m-5 5h12"></path>
+  </svg>
+);
+
 const PDFConverter = () => {
+  const [mode, setMode] = useState<'pdf-to-text' | 'text-to-pdf'>('pdf-to-text');
   const [file, setFile] = useState<File | null>(null);
+  const [inputText, setInputText] = useState('');
   const [extractedText, setExtractedText] = useState('');
   const [enhancedText, setEnhancedText] = useState('');
-  const [isExtracting, setIsExtracting] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [activeTab, setActiveTab] = useState('original');
   const [pdfLibLoaded, setPdfLibLoaded] = useState(false);
+  const [jsPDFLoaded, setJsPDFLoaded] = useState(false);
 
-  // Load PDF.js from CDN
+  // Load required libraries
   useEffect(() => {
-    const loadPdfJs = () => {
-      // Check if already loaded
-      if (window.pdfjsLib) {
+    const loadLibraries = () => {
+      // Load PDF.js for PDF to text
+      if (!window.pdfjsLib) {
+        const pdfScript = document.createElement('script');
+        pdfScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+        pdfScript.onload = () => {
+          if (window.pdfjsLib) {
+            window.pdfjsLib.GlobalWorkerOptions.workerSrc = 
+              'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            setPdfLibLoaded(true);
+          }
+        };
+        document.head.appendChild(pdfScript);
+      } else {
         setPdfLibLoaded(true);
-        return;
       }
 
-      const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-      script.onload = () => {
-        if (window.pdfjsLib) {
-          // Set up PDF.js worker
-          window.pdfjsLib.GlobalWorkerOptions.workerSrc = 
-            'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-          setPdfLibLoaded(true);
-        }
-      };
-      script.onerror = () => {
-        setError('Failed to load PDF processing library');
-      };
-      document.head.appendChild(script);
+      // Load jsPDF for text to PDF
+      if (!window.jsPDF) {
+        const jsPDFScript = document.createElement('script');
+        jsPDFScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+        jsPDFScript.onload = () => {
+          setJsPDFLoaded(true);
+        };
+        document.head.appendChild(jsPDFScript);
+      } else {
+        setJsPDFLoaded(true);
+      }
     };
 
-    loadPdfJs();
+    loadLibraries();
   }, []);
 
   const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -124,7 +140,7 @@ const PDFConverter = () => {
       return;
     }
 
-    setIsExtracting(true);
+    setIsProcessing(true);
     setError('');
     
     try {
@@ -146,13 +162,66 @@ const PDFConverter = () => {
       setError('Failed to extract text from PDF. Please try another file.');
       console.error('PDF extraction error:', err);
     } finally {
-      setIsExtracting(false);
+      setIsProcessing(false);
+    }
+  };
+
+  const convertTextToPDF = async () => {
+    if (!inputText.trim()) {
+      setError('Please enter some text to convert to PDF.');
+      return;
+    }
+
+    if (!window.jsPDF || !jsPDFLoaded) {
+      setError('PDF generation library not ready. Please try again.');
+      return;
+    }
+
+    setIsProcessing(true);
+    setError('');
+
+    try {
+      const { jsPDF } = window.jsPDF;
+      const doc = new jsPDF();
+      
+      // Split text into lines that fit the page width
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const margin = 20;
+      const maxLineWidth = pageWidth - 2 * margin;
+      
+      const lines = doc.splitTextToSize(inputText, maxLineWidth);
+      
+      // Add text to PDF with proper pagination
+      let yPosition = 30;
+      const lineHeight = 7;
+      const pageHeight = doc.internal.pageSize.getHeight();
+      
+      for (let i = 0; i < lines.length; i++) {
+        if (yPosition > pageHeight - 20) {
+          doc.addPage();
+          yPosition = 30;
+        }
+        
+        doc.text(lines[i], margin, yPosition);
+        yPosition += lineHeight;
+      }
+      
+      // Download the PDF
+      doc.save('converted-text.pdf');
+      setSuccess('PDF generated and downloaded successfully!');
+    } catch (err) {
+      setError('Failed to generate PDF. Please try again.');
+      console.error('PDF generation error:', err);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   const enhanceTextWithAI = async () => {
-    if (!extractedText.trim()) {
-      setError('No text to enhance. Please extract text first.');
+    const textToEnhance = mode === 'pdf-to-text' ? extractedText : inputText;
+    
+    if (!textToEnhance.trim()) {
+      setError('No text to enhance. Please add some text first.');
       return;
     }
 
@@ -177,7 +246,7 @@ const PDFConverter = () => {
               5. Adding appropriate formatting where needed
               
               Text to enhance:
-              ${extractedText}`
+              ${textToEnhance}`
             }
           ]
         }),
@@ -234,92 +303,171 @@ const PDFConverter = () => {
           <div className="flex items-center justify-center mb-4">
             <FileTextIcon className="w-8 h-8 text-blue-600 mr-3" />
             <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              AI PDF Converter
+              PDF Converter
             </h1>
           </div>
           <p className="text-gray-600 text-sm md:text-base">
-            Extract text from PDFs and enhance it with AI-powered editing
+            Convert between PDF and text formats with AI-powered enhancement
           </p>
         </div>
 
-        {/* PDF.js Loading Status */}
-        {!pdfLibLoaded && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6 flex items-center">
-            <LoaderIcon className="w-5 h-5 text-yellow-500 mr-3 flex-shrink-0" />
-            <p className="text-yellow-800 text-sm">Loading PDF processing library...</p>
-          </div>
-        )}
-
-        {/* Upload Section */}
+        {/* Mode Toggle */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-          <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-blue-400 transition-colors">
-            <UploadIcon />
-            <div className="mb-4">
-              <label htmlFor="pdf-upload" className="cursor-pointer">
-                <span className="text-lg font-medium text-gray-700">
-                  Drop your PDF here or{' '}
-                  <span className="text-blue-600 hover:text-blue-700">browse</span>
-                </span>
-                <input
-                  id="pdf-upload"
-                  type="file"
-                  accept=".pdf"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
-              </label>
-            </div>
-            {file && (
-              <div className="bg-blue-50 rounded-lg p-3 mb-4">
-                <p className="text-blue-800 font-medium text-sm">
-                  Selected: {file.name}
-                </p>
-                <p className="text-blue-600 text-xs">
-                  Size: {(file.size / 1024 / 1024).toFixed(2)} MB
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 mt-6">
+          <div className="flex flex-col sm:flex-row gap-4">
             <button
-              onClick={extractTextFromPDF}
-              disabled={!file || isExtracting || !pdfLibLoaded}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white px-6 py-3 rounded-xl font-medium transition-colors flex items-center justify-center"
+              onClick={() => setMode('pdf-to-text')}
+              className={`flex-1 p-4 rounded-xl border-2 transition-all ${
+                mode === 'pdf-to-text'
+                  ? 'border-blue-500 bg-blue-50 text-blue-700'
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
             >
-              {isExtracting ? (
-                <>
-                  <LoaderIcon className="w-4 h-4 mr-2" />
-                  Extracting...
-                </>
-              ) : (
-                <>
-                  <FileTextIcon className="w-4 h-4 mr-2" />
-                  Extract Text
-                </>
-              )}
+              <div className="flex items-center justify-center mb-2">
+                <FileTextIcon className="w-6 h-6 mr-2" />
+                <ArrowRightIcon className="w-4 h-4 mr-2" />
+                <FileTextIcon className="w-6 h-6" />
+              </div>
+              <h3 className="font-semibold">PDF to Text</h3>
+              <p className="text-sm text-gray-600 mt-1">Extract text from PDF files</p>
             </button>
 
             <button
+              onClick={() => setMode('text-to-pdf')}
+              className={`flex-1 p-4 rounded-xl border-2 transition-all ${
+                mode === 'text-to-pdf'
+                  ? 'border-purple-500 bg-purple-50 text-purple-700'
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              <div className="flex items-center justify-center mb-2">
+                <FileTextIcon className="w-6 h-6 mr-2" />
+                <ArrowLeftIcon className="w-4 h-4 mr-2" />
+                <FileTextIcon className="w-6 h-6" />
+              </div>
+              <h3 className="font-semibold">Text to PDF</h3>
+              <p className="text-sm text-gray-600 mt-1">Convert text to PDF format</p>
+            </button>
+          </div>
+        </div>
+
+        {/* Library Loading Status */}
+        {(!pdfLibLoaded || !jsPDFLoaded) && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6 flex items-center">
+            <LoaderIcon className="w-5 h-5 text-yellow-500 mr-3 flex-shrink-0" />
+            <p className="text-yellow-800 text-sm">Loading PDF processing libraries...</p>
+          </div>
+        )}
+
+        {/* PDF to Text Mode */}
+        {mode === 'pdf-to-text' && (
+          <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">Upload PDF File</h2>
+            <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-blue-400 transition-colors">
+              <UploadIcon />
+              <div className="mb-4">
+                <label htmlFor="pdf-upload" className="cursor-pointer">
+                  <span className="text-lg font-medium text-gray-700">
+                    Drop your PDF here or{' '}
+                    <span className="text-blue-600 hover:text-blue-700">browse</span>
+                  </span>
+                  <input
+                    id="pdf-upload"
+                    type="file"
+                    accept=".pdf"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+              {file && (
+                <div className="bg-blue-50 rounded-lg p-3 mb-4">
+                  <p className="text-blue-800 font-medium text-sm">
+                    Selected: {file.name}
+                  </p>
+                  <p className="text-blue-600 text-xs">
+                    Size: {(file.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 mt-6">
+              <button
+                onClick={extractTextFromPDF}
+                disabled={!file || isProcessing || !pdfLibLoaded}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white px-6 py-3 rounded-xl font-medium transition-colors flex items-center justify-center"
+              >
+                {isProcessing ? (
+                  <>
+                    <LoaderIcon className="w-4 h-4 mr-2" />
+                    Extracting...
+                  </>
+                ) : (
+                  <>
+                    <FileTextIcon className="w-4 h-4 mr-2" />
+                    Extract Text
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Text to PDF Mode */}
+        {mode === 'text-to-pdf' && (
+          <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">Enter Text to Convert</h2>
+            <textarea
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              placeholder="Paste or type your text here..."
+              className="w-full h-64 p-4 border border-gray-300 rounded-xl resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            />
+            
+            <div className="flex flex-col sm:flex-row gap-3 mt-6">
+              <button
+                onClick={convertTextToPDF}
+                disabled={!inputText.trim() || isProcessing || !jsPDFLoaded}
+                className="flex-1 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 text-white px-6 py-3 rounded-xl font-medium transition-colors flex items-center justify-center"
+              >
+                {isProcessing ? (
+                  <>
+                    <LoaderIcon className="w-4 h-4 mr-2" />
+                    Converting...
+                  </>
+                ) : (
+                  <>
+                    <DownloadIcon className="w-4 h-4 mr-2" />
+                    Convert to PDF
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* AI Enhancement Button */}
+        {((mode === 'pdf-to-text' && extractedText) || (mode === 'text-to-pdf' && inputText)) && (
+          <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+            <button
               onClick={enhanceTextWithAI}
-              disabled={!extractedText || isEnhancing}
-              className="flex-1 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 text-white px-6 py-3 rounded-xl font-medium transition-colors flex items-center justify-center"
+              disabled={isEnhancing}
+              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-gray-300 disabled:to-gray-300 text-white px-6 py-3 rounded-xl font-medium transition-all flex items-center justify-center"
             >
               {isEnhancing ? (
                 <>
                   <LoaderIcon className="w-4 h-4 mr-2" />
-                  Enhancing...
+                  Enhancing with AI...
                 </>
               ) : (
                 <>
                   <WandIcon className="w-4 h-4 mr-2" />
-                  Enhance with AI
+                  Enhance Text with AI
                 </>
               )}
             </button>
           </div>
-        </div>
+        )}
 
         {/* Status Messages */}
         {error && (
@@ -349,8 +497,8 @@ const PDFConverter = () => {
                     : 'text-gray-600 hover:text-gray-800'
                 }`}
               >
-                <EyeIcon className="w-4 h-4 mr-2" />
-                Original Text
+                <FileTextIcon className="w-4 h-4 mr-2" />
+                {mode === 'pdf-to-text' ? 'Extracted Text' : 'Original Text'}
               </button>
               <button
                 onClick={() => setActiveTab('enhanced')}
@@ -366,20 +514,21 @@ const PDFConverter = () => {
               </button>
             </div>
 
+            
             {/* Content */}
             <div className="p-6">
-              {activeTab === 'original' && extractedText && (
+              {activeTab === 'original' && (mode === 'pdf-to-text' ? extractedText : inputText) && (
                 <div>
                   <div className="flex flex-col sm:flex-row gap-2 mb-4">
                     <button
-                      onClick={() => copyToClipboard(extractedText)}
+                      onClick={() => copyToClipboard(mode === 'pdf-to-text' ? extractedText : inputText)}
                       className="flex items-center justify-center px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm"
                     >
                       <CopyIcon className="w-4 h-4 mr-2" />
                       Copy
                     </button>
                     <button
-                      onClick={() => downloadText(extractedText, 'extracted-text.txt')}
+                      onClick={() => downloadText(mode === 'pdf-to-text' ? extractedText : inputText, 'text-content.txt')}
                       className="flex items-center justify-center px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-colors text-sm"
                     >
                       <DownloadIcon className="w-4 h-4 mr-2" />
@@ -388,7 +537,7 @@ const PDFConverter = () => {
                   </div>
                   <div className="bg-gray-50 rounded-xl p-4 max-h-96 overflow-y-auto">
                     <pre className="whitespace-pre-wrap text-sm text-gray-800 font-mono">
-                      {extractedText}
+                      {mode === 'pdf-to-text' ? extractedText : inputText}
                     </pre>
                   </div>
                 </div>
@@ -428,38 +577,13 @@ const PDFConverter = () => {
                 <div className="text-center py-8">
                   <WandIcon className="w-12 h-12 text-gray-300 mx-auto mb-4" />
                   <p className="text-gray-500">
-                    Click &ldquo;Enhance with AI&rdquo; to improve your extracted text
+                    Click &ldquo;Enhance Text with AI&rdquo; to improve your text
                   </p>
                 </div>
               )}
             </div>
           </div>
         )}
-
-        {/* Features */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-xl p-6 text-center shadow-sm">
-            <FileTextIcon className="w-8 h-8 text-blue-600 mx-auto mb-3" />
-            <h3 className="font-semibold text-gray-800 mb-2">PDF Text Extraction</h3>
-            <p className="text-gray-600 text-sm">
-              Extract text from any PDF document with high accuracy
-            </p>
-          </div>
-          <div className="bg-white rounded-xl p-6 text-center shadow-sm">
-            <WandIcon className="w-8 h-8 text-purple-600 mx-auto mb-3" />
-            <h3 className="font-semibold text-gray-800 mb-2">AI Enhancement</h3>
-            <p className="text-gray-600 text-sm">
-              Improve text quality with AI-powered grammar and style fixes
-            </p>
-          </div>
-          <div className="bg-white rounded-xl p-6 text-center shadow-sm">
-            <DownloadIcon className="w-8 h-8 text-green-600 mx-auto mb-3" />
-            <h3 className="font-semibold text-gray-800 mb-2">Easy Export</h3>
-            <p className="text-gray-600 text-sm">
-              Download or copy your processed text instantly
-            </p>
-          </div>
-        </div>
       </div>
     </div>
   );
