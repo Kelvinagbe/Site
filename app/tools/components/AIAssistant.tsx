@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Send, Bot, User, Loader2, Copy, Check } from "lucide-react";
 
 interface Message {
@@ -18,7 +18,6 @@ export default function AIAssistant() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  // Scroll chat to bottom on new messages
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -27,7 +26,6 @@ export default function AIAssistant() {
     scrollToBottom();
   }, [messages]);
 
-  // Submit user message and get AI response
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
@@ -46,7 +44,9 @@ export default function AIAssistant() {
     try {
       const response = await fetch("/api/groq-chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           messages: [...messages, userMessage].map((msg) => ({
             role: msg.role,
@@ -84,7 +84,6 @@ export default function AIAssistant() {
     }
   };
 
-  // Copy message text to clipboard
   const copyToClipboard = async (text: string, messageId: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -95,12 +94,10 @@ export default function AIAssistant() {
     }
   };
 
-  // Clear all messages
   const clearChat = () => {
     setMessages([]);
   };
 
-  // Submit on Enter (no Shift)
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -109,26 +106,28 @@ export default function AIAssistant() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-br from-slate-50 to-blue-50 rounded-xl shadow-lg">
+    <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 shadow-sm flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <div className="flex items-center justify-center w-10 h-10 bg-blue-600 rounded-lg">
-            <Bot className="w-6 h-6 text-white" />
+      <div className="bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center justify-center w-10 h-10 bg-blue-600 rounded-lg">
+              <Bot className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">AI Assistant</h1>
+              <p className="text-sm text-gray-600">Powered by Groq AI</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">AI Assistant</h1>
-            <p className="text-sm text-gray-600">Powered by Groq AI</p>
-          </div>
+          {messages.length > 0 && (
+            <button
+              onClick={clearChat}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              Clear Chat
+            </button>
+          )}
         </div>
-        {messages.length > 0 && (
-          <button
-            onClick={clearChat}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-          >
-            Clear Chat
-          </button>
-        )}
       </div>
 
       {/* Messages */}
@@ -142,8 +141,9 @@ export default function AIAssistant() {
               Welcome to AI Assistant
             </h2>
             <p className="text-gray-600 max-w-md mb-6">
-              I'm here to help you with questions, writing, analysis, coding,
-              and more. Start a conversation by typing your message below.
+              I&apos;m here to help you with questions, writing, analysis,
+              coding, and more. Start a conversation by typing your message
+              below.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl w-full">
               {[
@@ -190,7 +190,9 @@ export default function AIAssistant() {
 
                   {message.role === "assistant" && (
                     <button
-                      onClick={() => copyToClipboard(message.content, message.id)}
+                      onClick={() =>
+                        copyToClipboard(message.content, message.id)
+                      }
                       className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-gray-100"
                       title="Copy message"
                     >
@@ -268,13 +270,10 @@ export default function AIAssistant() {
               type="submit"
               disabled={!input.trim() || isLoading}
               className="flex items-center justify-center w-12 h-12 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              aria-label="Send message"
             >
               {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
             </button>
-          </div>
-          <div className="mt-2 text-xs text-gray-500 text-center">
-            AI responses are generated and may contain errors. Please verify important
-            information.
           </div>
         </form>
       </div>
