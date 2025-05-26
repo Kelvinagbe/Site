@@ -6,7 +6,7 @@ import AIA from './components/AIAssistant';
 // Extend the Window interface to include our custom property
 declare global {
   interface Window {
-    setActiveApp: (appId: string) => void;
+    setActiveApp?: (appId: string) => void;
   }
 }
 
