@@ -37,19 +37,31 @@ export default function AIAssistant() {
       const response = await fetch("/api/groq-chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage.content }),
+        body: JSON.stringify({ 
+          messages: [
+            {
+              role: "user",
+              content: userMessage.content
+            }
+          ]
+        }),
       });
 
+      console.log("Response status:", response.status);
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json();
+        console.error("API Error:", errorData);
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
+      console.log("API Response:", data);
 
       const botMessage: Message = {
         id: crypto.randomUUID(),
         role: "bot",
-        content: data.reply || data.message || "Sorry, I didn't understand that.",
+        content: data.message || "Sorry, I didn't understand that.",
       };
 
       setMessages((prev) => [...prev, botMessage]);
@@ -60,7 +72,7 @@ export default function AIAssistant() {
         {
           id: crypto.randomUUID(),
           role: "bot",
-          content: "Oops! Something went wrong. Please try again.",
+          content: `Error: ${error instanceof Error ? error.message : "Something went wrong. Please try again."}`,
         },
       ]);
     } finally {
