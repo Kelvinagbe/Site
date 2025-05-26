@@ -428,7 +428,7 @@ const PDFConverter = () => {
                 <div className="text-center py-8">
                   <WandIcon className="w-12 h-12 text-gray-300 mx-auto mb-4" />
                   <p className="text-gray-500">
-                    Click "Enhance with AI" to improve your extracted text
+                    Click &ldquo;Enhance with AI&rdquo; to improve your extracted text
                   </p>
                 </div>
               )}
