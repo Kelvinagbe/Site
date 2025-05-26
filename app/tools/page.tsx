@@ -1,27 +1,17 @@
 "use client";
 
 import React, { useState } from "react";
-import {
-  Menu,
-  Image,
-  FileText,
-  Bot,
-  Home,
-  X,
-} from "lucide-react";
 
 const apps = [
-  { id: "home", name: "Dashboard", icon: Home, color: "from-blue-500 to-purple-600" },
-  { id: "wallpaper", name: "Wallpapers", icon: Image, color: "from-green-500 to-teal-600" },
-  { id: "pdf-converter", name: "PDF Converter", icon: FileText, color: "from-orange-500 to-red-600" },
-  { id: "ai-assistant", name: "AI Assistant", icon: Bot, color: "from-purple-500 to-pink-600" },
+  { id: "home", name: "Dashboard", color: "from-blue-500 to-purple-600" },
+  { id: "wallpaper", name: "Wallpapers", color: "from-green-500 to-teal-600" },
+  { id: "pdf-converter", name: "PDF Converter", color: "from-orange-500 to-red-600" },
+  { id: "ai-assistant", name: "AI Assistant", color: "from-purple-500 to-pink-600" },
 ];
 
 export default function ToolsPage() {
   const [activeApp, setActiveApp] = useState("home");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const ActiveIcon = apps.find((app) => app.id === activeApp)?.icon || Home;
 
   return (
     <div className="flex h-screen">
@@ -38,11 +28,11 @@ export default function ToolsPage() {
             onClick={() => setSidebarOpen(false)}
             aria-label="Close sidebar"
           >
-            <X />
+            X
           </button>
         </div>
         <nav className="p-4">
-          {apps.map(({ id, name, icon: Icon, color }) => (
+          {apps.map(({ id, name, color }) => (
             <button
               key={id}
               className={`flex items-center w-full p-2 mb-2 rounded-md hover:bg-gray-700 ${
@@ -53,7 +43,6 @@ export default function ToolsPage() {
                 setSidebarOpen(false);
               }}
             >
-              <Icon className="mr-3" />
               {name}
             </button>
           ))}
@@ -65,15 +54,19 @@ export default function ToolsPage() {
         {/* Mobile header */}
         <header className="md:hidden flex items-center justify-between bg-gray-900 text-white p-4">
           <button onClick={() => setSidebarOpen(true)} aria-label="Open sidebar">
-            <Menu />
+            ☰
           </button>
-          <h2 className="text-lg font-semibold">{apps.find((a) => a.id === activeApp)?.name}</h2>
+          <h2 className="text-lg font-semibold">
+            {apps.find((a) => a.id === activeApp)?.name}
+          </h2>
           <div style={{ width: 24 }} /> {/* placeholder for spacing */}
         </header>
 
         {/* Content area */}
         <main className="flex-1 p-6 bg-gray-100">
-          <h1 className="text-2xl font-bold mb-4">{apps.find((a) => a.id === activeApp)?.name}</h1>
+          <h1 className="text-2xl font-bold mb-4">
+            {apps.find((a) => a.id === activeApp)?.name}
+          </h1>
           <p>Content for {activeApp} goes here.</p>
         </main>
       </div>
