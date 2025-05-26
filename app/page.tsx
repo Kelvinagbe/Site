@@ -87,7 +87,7 @@ export default function Home() {
 
   const handleGetStarted = () => {
     try {
-      router.push('/app');
+      router.push('/tools');
     } catch (error) {
       console.log('Navigation failed:', error);
       // Fallback navigation
