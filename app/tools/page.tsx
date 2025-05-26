@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import AIA from './components/AIAAssistant';
+import AIA from './components/AIAssistant';
 
 // Individual app components
 const Dashboard = () => (
