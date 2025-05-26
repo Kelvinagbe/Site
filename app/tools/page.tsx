@@ -63,43 +63,33 @@ export default function ToolsPage() {
         </header>
 
         {/* Content area */}
-        <main className="flex-1 p-6 bg-gray-100 overflow-auto">
+        <main className="flex-1 p-6 bg-gray-100">
           <h1 className="text-2xl font-bold mb-4">
             {apps.find((a) => a.id === activeApp)?.name}
           </h1>
 
           {activeApp === "home" && (
             <div>
-              <p>Welcome to your Dashboard! Here's a quick overview.</p>
+              <p>Welcome to your Dashboard! Here&apos;s a quick overview.</p>
               {/* Add dashboard widgets or stats here */}
             </div>
           )}
 
           {activeApp === "wallpaper" && (
             <div>
-              <p>Upload or browse wallpapers here.</p>
-              <input type="file" accept="image/*" className="border p-2 rounded" />
-              {/* You can add a gallery or upload button */}
+              <p>Browse and select wallpapers for your device.</p>
             </div>
           )}
 
           {activeApp === "pdf-converter" && (
             <div>
-              <p>Select files to convert to PDF.</p>
-              <input type="file" accept=".doc,.docx,.txt" className="border p-2 rounded" />
-              <button className="mt-2 px-4 py-2 bg-orange-500 text-white rounded">Convert</button>
+              <p>Convert your files easily with our PDF converter.</p>
             </div>
           )}
 
           {activeApp === "ai-assistant" && (
             <div>
-              <p>Chat with your AI Assistant below:</p>
-              <textarea
-                rows={6}
-                className="w-full p-2 border rounded"
-                placeholder="Ask me anything..."
-              ></textarea>
-              <button className="mt-2 px-4 py-2 bg-purple-600 text-white rounded">Send</button>
+              <p>Chat with your AI assistant to get help and answers.</p>
             </div>
           )}
         </main>
