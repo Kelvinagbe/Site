@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from 'react';
 import { Menu, Image, FileText, Bot, Home, X, Upload, Send, Download, Sparkles } from 'lucide-react';
 
