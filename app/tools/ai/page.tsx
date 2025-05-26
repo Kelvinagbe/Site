@@ -9,6 +9,9 @@ export default function AIPage() {
         </header>
         <main className="flex-1">
           <AIAssistant />
+          <p className="mt-4 text-gray-600">
+            Here&apos;s a smart AI assistant to help you with your queries.
+          </p>
         </main>
       </div>
     </div>
