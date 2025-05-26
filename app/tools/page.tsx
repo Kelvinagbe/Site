@@ -33,13 +33,13 @@ const Dashboard = () => (
         <p className="text-gray-600 mb-3">Jump to your favorite tools:</p>
         <div className="space-y-2">
           <button 
-            onClick={() => window.setActiveApp("ai-assistant")}
+            onClick={() => window.setActiveApp?.("ai-assistant")}
             className="block w-full text-left px-3 py-2 bg-purple-100 text-purple-700 rounded hover:bg-purple-200"
           >
             AI Assistant
           </button>
           <button 
-            onClick={() => window.setActiveApp("pdf-converter")}
+            onClick={() => window.setActiveApp?.("pdf-converter")}
             className="block w-full text-left px-3 py-2 bg-orange-100 text-orange-700 rounded hover:bg-orange-200"
           >
             PDF Converter
