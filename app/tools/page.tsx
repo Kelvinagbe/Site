@@ -65,6 +65,12 @@ const DownloadIcon = ({ className = "w-6 h-6" }) => (
   </svg>
 );
 
+const CheckIcon = ({ className = "w-6 h-6" }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+  </svg>
+);
+
 // Individual app components
 const Dashboard = () => (
   <div className="space-y-8">
@@ -348,9 +354,7 @@ startxref
           ) : (
             <div className="text-center">
               <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
+                <CheckIcon className="w-8 h-8 text-white" />
               </div>
               <p className="text-xl font-semibold text-green-600 mb-6">Conversion Complete!</p>
               <button
@@ -372,7 +376,17 @@ const AIAssistant = () => {
   return <AIA />;
 };
 
-const apps = [
+// Type definition for app components
+type AppComponent = React.ComponentType;
+
+interface AppConfig {
+  id: string;
+  name: string;
+  icon: React.ComponentType<{ className?: string }>;
+  component: AppComponent;
+}
+
+const apps: AppConfig[] = [
   { id: "home", name: "Dashboard", icon: HomeIcon, component: Dashboard },
   { id: "wallpaper", name: "Wallpapers", icon: ImageIcon, component: WallpaperApp },
   { id: "pdf-converter", name: "PDF Converter", icon: DocumentIcon, component: PDFConverter },
@@ -391,7 +405,8 @@ export default function ToolsPage() {
     };
   }, []);
 
-  const ActiveComponent = apps.find(app => app.id === activeApp)?.component;
+  const currentApp = apps.find(app => app.id === activeApp);
+  const ActiveComponent = currentApp?.component;
   const isAIAssistant = activeApp === "ai-assistant";
 
   return (
@@ -460,7 +475,8 @@ export default function ToolsPage() {
         />
       )}
 
-    {/* Main content */}
+    
+      {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header - Always visible */}
         <header className="bg-white/80 backdrop-blur-lg shadow-xl border-b border-slate-200 sticky top-0 z-30">
@@ -477,11 +493,11 @@ export default function ToolsPage() {
               </button>
               <div className="flex items-center">
                 <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mr-4 shadow-lg">
-                  {React.createElement(apps.find((a) => a.id === activeApp)?.icon || HomeIcon, { className: "w-6 h-6 text-white" })}
+                  {currentApp && React.createElement(currentApp.icon, { className: "w-6 h-6 text-white" })}
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-slate-800">
-                    {apps.find((a) => a.id === activeApp)?.name}
+                    {currentApp?.name || "Dashboard"}
                   </h2>
                   <p className="text-slate-500 text-sm">Professional Tools</p>
                 </div>
@@ -497,11 +513,11 @@ export default function ToolsPage() {
         <main className={`flex-1 overflow-auto ${isAIAssistant ? 'p-8' : 'p-10'}`}>
           {isAIAssistant ? (
             <div className="h-full">
-              <ActiveComponent />
+              {ActiveComponent && React.createElement(ActiveComponent)}
             </div>
           ) : (
             <div>
-              {ActiveComponent && <ActiveComponent />}
+              {ActiveComponent && React.createElement(ActiveComponent)}
             </div>
           )}
         </main>
