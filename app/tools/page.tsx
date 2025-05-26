@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import AIA from './component/AIAAssistant';
 
 // Individual app components
 const Dashboard = () => (
@@ -142,69 +143,7 @@ const PDFConverter = () => {
 };
 
 const AIAssistant = () => {
-  // TODO: Replace with your actual AI component
-   import YourAIComponent from './component/AIAAssistant';
-   return <AIA/>;
-  
-  // Temporary demo - remove this entire section when adding your AI
-  const [messages, setMessages] = useState([
-    { role: "assistant", content: "Hello! I'm your AI assistant. How can I help you today?" }
-  ]);
-  const [input, setInput] = useState("");
-  
-  const sendMessage = () => {
-    if (!input.trim()) return;
-    
-    const newMessages = [
-      ...messages,
-      { role: "user", content: input },
-      { role: "assistant", content: "Replace this demo with your actual AI component!" }
-    ];
-    setMessages(newMessages);
-    setInput("");
-  };
-  
-  return (
-    <div className="max-w-4xl mx-auto h-full flex flex-col">
-      <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
-        <strong>Note:</strong> Replace the AIAssistant component with your working AI component
-      </div>
-      <div className="flex-1 bg-white rounded-lg shadow-md mb-4 flex flex-col">
-        <div className="flex-1 p-4 overflow-y-auto space-y-4">
-          {messages.map((msg, i) => (
-            <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                msg.role === 'user' 
-                  ? 'bg-purple-500 text-white' 
-                  : 'bg-gray-200 text-gray-800'
-              }`}>
-                {msg.content}
-              </div>
-            </div>
-          ))}
-        </div>
-        
-        <div className="p-4 border-t">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-              placeholder="Type your message..."
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-            />
-            <button
-              onClick={sendMessage}
-              className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600"
-            >
-              Send
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  return <AIA />;
 };
 
 const apps = [
