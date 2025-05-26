@@ -73,9 +73,12 @@ export default function ToolsPage() {
               <p>Welcome to your Dashboard! Here&apos;s a quick overview.</p>
               <p>
                 To access the AI Assistant, please{" "}
-                <a href="/tools/ai" className="text-blue-600 underline">
+                <button 
+                  onClick={() => setActiveApp("ai-assistant")}
+                  className="text-blue-600 underline hover:text-blue-800 bg-transparent border-none cursor-pointer"
+                >
                   click here
-                </a>
+                </button>
                 .
               </p>
               {/* Add more dashboard widgets or stats here */}
