@@ -63,14 +63,14 @@ export default function ToolsPage() {
         </header>
 
         {/* Content area */}
-        <main className="flex-1 p-6 bg-gray-100">
+        <main className="flex-1 p-6 bg-gray-100 overflow-auto">
           <h1 className="text-2xl font-bold mb-4">
             {apps.find((a) => a.id === activeApp)?.name}
           </h1>
 
           {activeApp === "home" && (
             <div>
-              <p>Welcome to your Dashboard! Here&apos;s a quick overview.</p>
+              <p>Welcome to your Dashboard! Here's a quick overview.</p>
               {/* Add dashboard widgets or stats here */}
             </div>
           )}
@@ -89,7 +89,16 @@ export default function ToolsPage() {
 
           {activeApp === "ai-assistant" && (
             <div>
-              <p>Chat with your AI assistant to get help and answers.</p>
+              <p>
+                To access the AI Assistant, please{" "}
+                <a
+                  href="/tools/ai"
+                  className="text-blue-600 underline"
+                >
+                  click here
+                </a>
+                .
+              </p>
             </div>
           )}
         </main>
