@@ -3,6 +3,13 @@
 import React, { useState } from "react";
 import AIA from './components/AIAssistant';
 
+// Extend the Window interface to include our custom property
+declare global {
+  interface Window {
+    setActiveApp: (appId: string) => void;
+  }
+}
+
 // Individual app components
 const Dashboard = () => (
   <div className="space-y-6">
@@ -46,7 +53,7 @@ const Dashboard = () => (
 const WallpaperApp = () => {
   const [selectedCategory, setSelectedCategory] = useState("nature");
   const categories = ["nature", "abstract", "technology", "minimal"];
-  
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap gap-2 mb-6">
@@ -64,7 +71,7 @@ const WallpaperApp = () => {
           </button>
         ))}
       </div>
-      
+
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {[1,2,3,4,5,6,7,8].map(i => (
           <div key={i} className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -83,13 +90,13 @@ const WallpaperApp = () => {
 };
 
 const PDFConverter = () => {
-  const [file, setFile] = useState(null);
+  const [file, setFile] = useState<File | null>(null);
   const [converting, setConverting] = useState(false);
-  
-  const handleFileUpload = (e) => {
-    setFile(e.target.files[0]);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFile(e.target.files?.[0] || null);
   };
-  
+
   const handleConvert = () => {
     setConverting(true);
     // Simulate conversion
@@ -98,7 +105,7 @@ const PDFConverter = () => {
       alert("File converted successfully!");
     }, 2000);
   };
-  
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="bg-white p-6 rounded-lg shadow-md">
@@ -125,7 +132,7 @@ const PDFConverter = () => {
           )}
         </div>
       </div>
-      
+
       {file && (
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold mb-4">Convert to PDF</h3>
@@ -156,7 +163,7 @@ const apps = [
 export default function ToolsPage() {
   const [activeApp, setActiveApp] = useState("home");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  
+
   // Make setActiveApp available globally for dashboard quick access buttons
   React.useEffect(() => {
     window.setActiveApp = setActiveApp;
@@ -233,7 +240,7 @@ export default function ToolsPage() {
           <h1 className="text-3xl font-bold mb-6 text-gray-800">
             {apps.find((a) => a.id === activeApp)?.name}
           </h1>
-          
+
           {ActiveComponent && <ActiveComponent />}
         </main>
       </div>
