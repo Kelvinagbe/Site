@@ -2,20 +2,20 @@ import React, { useState, useCallback, useRef } from 'react';
 import { Upload, FileText, Download, Wand2, Loader2, AlertCircle, CheckCircle, Copy, ArrowRight, ArrowLeft } from 'lucide-react';
 
 const PDFConverter = () => {
-  const [mode, setMode] = useState('pdf-to-text');
-  const [file, setFile] = useState(null);
-  const [inputText, setInputText] = useState('');
-  const [extractedText, setExtractedText] = useState('');
-  const [enhancedText, setEnhancedText] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isEnhancing, setIsEnhancing] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [activeTab, setActiveTab] = useState('original');
-  const fileInputRef = useRef(null);
+  const [mode, setMode] = useState<'pdf-to-text' | 'text-to-pdf'>('pdf-to-text');
+  const [file, setFile] = useState<File | null>(null);
+  const [inputText, setInputText] = useState<string>('');
+  const [extractedText, setExtractedText] = useState<string>('');
+  const [enhancedText, setEnhancedText] = useState<string>('');
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [isEnhancing, setIsEnhancing] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
+  const [success, setSuccess] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<'original' | 'enhanced'>('original');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Handle file upload
-  const handleFileUpload = useCallback((event) => {
+  const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const uploadedFile = event.target.files?.[0];
     if (uploadedFile) {
       if (uploadedFile.type === 'application/pdf') {
@@ -31,11 +31,11 @@ const PDFConverter = () => {
   }, []);
 
   // Handle drag and drop
-  const handleDragOver = useCallback((e) => {
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
   }, []);
 
-  const handleDrop = useCallback((e) => {
+  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     const droppedFile = e.dataTransfer.files[0];
     if (droppedFile && droppedFile.type === 'application/pdf') {
@@ -186,7 +186,7 @@ This is a simulation of AI enhancement. In your actual implementation, you would
   };
 
   // Download text as file
-  const downloadText = (text, filename) => {
+  const downloadText = (text: string, filename: string) => {
     const blob = new Blob([text], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -199,7 +199,7 @@ This is a simulation of AI enhancement. In your actual implementation, you would
   };
 
   // Copy to clipboard
-  const copyToClipboard = async (text) => {
+  const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
       setSuccess('Text copied to clipboard!');
@@ -493,7 +493,7 @@ This is a simulation of AI enhancement. In your actual implementation, you would
               )}
             </div>
 
-            {/* Content */}
+{/* Content */}
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-semibold text-gray-800">
