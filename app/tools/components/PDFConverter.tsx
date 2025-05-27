@@ -63,11 +63,11 @@ const PDFConverter = () => {
       // Convert file to buffer for pdf-parse
       const arrayBuffer = await file.arrayBuffer();
       const uint8Array = new Uint8Array(arrayBuffer);
-      
+
       // Use pdf-parse (we'll simulate this since we can't import it directly in this environment)
       // In your actual app, you would do: const pdfParse = require('pdf-parse');
       // const data = await pdfParse(uint8Array);
-      
+
       // For demonstration, we'll simulate text extraction
       // Replace this with actual pdf-parse implementation
       const simulatedText = `This is extracted text from your PDF file: ${file.name}
@@ -493,7 +493,6 @@ This is a simulation of AI enhancement. In your actual implementation, you would
               )}
             </div>
 
-       
             {/* Content */}
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
@@ -523,7 +522,7 @@ This is a simulation of AI enhancement. In your actual implementation, you would
                   </button>
                 </div>
               </div>
-              
+
               <div className="bg-gray-50 rounded-xl p-4 max-h-96 overflow-y-auto">
                 <pre className="whitespace-pre-wrap text-sm text-gray-800 font-mono leading-relaxed">
                   {activeTab === 'original' ? extractedText : enhancedText}
@@ -533,7 +532,7 @@ This is a simulation of AI enhancement. In your actual implementation, you would
               {activeTab === 'original' && extractedText && !enhancedText && (
                 <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
                   <p className="text-blue-800 text-sm">
-                    💡 <strong>Tip:</strong> Click "Enhance Text with AI" above to improve grammar, readability, and formatting.
+                    💡 <strong>Tip:</strong> Click &ldquo;Enhance Text with AI&rdquo; above to improve grammar, readability, and formatting.
                   </p>
                 </div>
               )}
