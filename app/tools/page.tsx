@@ -1,6 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from 'next/navigation';
+import { onAuthStateChanged, User } from 'firebase/auth';
+import { auth } from '../lib/firebase'; // Adjust path to your Firebase config
 import SplashScreen from './components/SplashScreen';
 import AIA from './components/AIAssistant';
 import Dashboard from './components/Dashboard';
@@ -24,17 +27,33 @@ const apps = [
 ];
 
 export default function ToolsPage() {
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [activeApp, setActiveApp] = useState("home");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const router = useRouter();
 
-  // Splash screen timer
+  // Check authentication status
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 2500);
-    return () => clearTimeout(timer);
-  }, []);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUser(user);
+        setAuthLoading(false);
+        // Show splash screen only for authenticated users
+        setIsLoading(true);
+        const timer = setTimeout(() => {
+          setIsLoading(false);
+        }, 2500);
+        return () => clearTimeout(timer);
+      } else {
+        // Redirect to login if not authenticated
+        router.push('/login');
+      }
+    });
+
+    return () => unsubscribe();
+  }, [router]);
 
   // Make setActiveApp available globally for dashboard
   useEffect(() => {
@@ -44,8 +63,19 @@ export default function ToolsPage() {
     };
   }, []);
 
-  if (isLoading) {
+  // Show nothing while checking auth status
+  if (authLoading) {
+    return null;
+  }
+
+  // Show splash screen only for authenticated users
+  if (isLoading && user) {
     return <SplashScreen />;
+  }
+
+  // This component only renders for authenticated users
+  if (!user) {
+    return null;
   }
 
   const currentApp = apps.find(app => app.id === activeApp);
@@ -87,7 +117,7 @@ export default function ToolsPage() {
             </svg>
           </button>
         </div>
-        
+
         <nav className="p-4 space-y-2">
           {apps.map(({ id, name, icon: IconComponent }) => (
             <button
@@ -113,6 +143,25 @@ export default function ToolsPage() {
             </button>
           ))}
         </nav>
+
+        {/* User Info Section */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-700">
+          <div className="flex items-center">
+            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
+              <span className="text-xs font-medium text-white">
+                {user.displayName?.charAt(0) || user.email?.charAt(0)?.toUpperCase()}
+              </span>
+            </div>
+            <div className="ml-3 flex-1 min-w-0">
+              <p className="text-sm font-medium text-white truncate">
+                {user.displayName || 'User'}
+              </p>
+              <p className="text-xs text-slate-400 truncate">
+                {user.email}
+              </p>
+            </div>
+          </div>
+        </div>
       </aside>
 
       {/* Main Content */}
@@ -139,6 +188,15 @@ export default function ToolsPage() {
                   </h2>
                   <p className="text-slate-500 text-xs">Professional Tools</p>
                 </div>
+              </div>
+            </div>
+
+            {/* User Avatar in Header */}
+            <div className="flex items-center">
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
+                <span className="text-xs font-medium text-white">
+                  {user.displayName?.charAt(0) || user.email?.charAt(0)?.toUpperCase()}
+                </span>
               </div>
             </div>
           </div>
