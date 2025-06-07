@@ -58,7 +58,7 @@ export default function LoginPage() {
     try {
       if (activeTab === 'signin') {
         await signInWithEmailAndPassword(auth, formState.email, formState.password);
-        router.push('/dashboard');
+        router.push('/tools');
       } else if (activeTab === 'signup') {
         if (formState.password !== formState.confirmPassword) {
           throw new Error('Passwords do not match');
