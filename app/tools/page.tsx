@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth } from '../lib/firebase'; // Adjust path to your Firebase config
+import { auth } from '../../lib/firebase'; // Adjust path to your Firebase config
 import SplashScreen from './components/SplashScreen';
 import AIA from './components/AIAssistant';
 import Dashboard from './components/Dashboard';
