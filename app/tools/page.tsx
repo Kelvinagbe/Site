@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
 import { useTheme } from 'next-themes';
+import { LoadingProvider, useLoading } from './context/LoadingContext';
 import SplashScreen from './components/SplashScreen';
 import AIA from './components/AIAssistant';
 import Dashboard from './components/Dashboard';
@@ -197,23 +198,24 @@ const menuApps = [
 
 const allApps = [...mainApps, ...menuApps];
 
-export default function ToolsPage() {
+// Main Tools Component
+function ToolsPageContent() {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [activeApp, setActiveApp] = useState("home");
   const [menuOpen, setMenuOpen] = useState(false);
-  const [appLoading, setAppLoading] = useState(false);
-  const [contentLoading, setContentLoading] = useState(false); // New: for skeleton loading
-  const [loadingText, setLoadingText] = useState("Loading...");
   const router = useRouter();
   const { theme, setTheme } = useTheme();
-
-  // Global loading function
-  const setGlobalLoading = (loading: boolean, text = "Loading...") => {
-    setAppLoading(loading);
-    setLoadingText(text);
-  };
+  
+  // Use the loading context
+  const { 
+    isAppLoading, 
+    isContentLoading, 
+    loadingText,
+    setAppLoading, 
+    setContentLoading 
+  } = useLoading();
 
   // Authentication check
   useEffect(() => {
@@ -246,13 +248,13 @@ export default function ToolsPage() {
       }, 800);
     };
     return () => { delete window.setActiveApp; };
-  }, []);
+  }, [setContentLoading]);
 
   // Make loading function available globally
   useEffect(() => {
-    (window as any).setGlobalLoading = setGlobalLoading;
+    (window as any).setGlobalLoading = setAppLoading;
     return () => { delete (window as any).setGlobalLoading; };
-  }, []);
+  }, [setAppLoading]);
 
   if (authLoading) return null;
   if (isLoading && user) return <SplashScreen />;
@@ -282,51 +284,46 @@ export default function ToolsPage() {
   };
 
   return (
-    <LoadingContext.Provider value={{ 
-      isLoading: appLoading, 
-      loadingText, 
-      setLoading: setGlobalLoading 
-    }}>
-      <div className="h-screen flex flex-col bg-white dark:bg-gray-900">
+    <div className="h-screen flex flex-col bg-white dark:bg-gray-900">
 
-        {/* Global App Loader */}
-        <AppLoader isVisible={appLoading} text={loadingText} />
+      {/* Global App Loader */}
+      <AppLoader isVisible={isAppLoading} text={loadingText} />
 
-        {/* Slide-out Menu */}
-        {menuOpen && (
-          <>
-            <div className="fixed inset-0 bg-black/50 z-50" onClick={() => setMenuOpen(false)} />
-            <div className="fixed inset-y-0 right-0 w-80 bg-white dark:bg-gray-800 shadow-2xl z-50 flex flex-col">
-              <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Tools</h2>
-                <button 
-                  onClick={() => setMenuOpen(false)}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                >
-                  <CloseIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                </button>
-              </div>
-
-              <div className="flex-1 p-4 space-y-2">
-                {menuApps.map(({ id, name, icon: IconComponent }) => (
-                  <LoadingButton
-                    key={id}
-                    loading={contentLoading && activeApp === id}
-                    onClick={() => handleMenuItemClick(id)}
-                    className={`w-full flex items-center p-4 rounded-lg transition-colors ${
-                      activeApp === id 
-                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
-                        : 'hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
-                    }`}
-                  >
-                    <IconComponent className="w-5 h-5 mr-3" />
-                    <span className="font-medium">{name}</span>
-                  </LoadingButton>
-                ))}
-              </div>
+      {/* Slide-out Menu */}
+      {menuOpen && (
+        <>
+          <div className="fixed inset-0 bg-black/50 z-50" onClick={() => setMenuOpen(false)} />
+          <div className="fixed inset-y-0 right-0 w-80 bg-white dark:bg-gray-800 shadow-2xl z-50 flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Tools</h2>
+              <button 
+                onClick={() => setMenuOpen(false)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <CloseIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              </button>
             </div>
-          </>
-        )}
+
+            <div className="flex-1 p-4 space-y-2">
+              {menuApps.map(({ id, name, icon: IconComponent }) => (
+                <LoadingButton
+                  key={id}
+                  loading={isContentLoading && activeApp === id}
+                  onClick={() => handleMenuItemClick(id)}
+                  className={`w-full flex items-center p-4 rounded-lg transition-colors ${
+                    activeApp === id 
+                      ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
+                      : 'hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                  }`}
+                >
+                  <IconComponent className="w-5 h-5 mr-3" />
+                  <span className="font-medium">{name}</span>
+                </LoadingButton>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Fixed Top Navigation Bar */}
       <nav className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm">
@@ -380,7 +377,7 @@ export default function ToolsPage() {
             {allApps.map(({ id, name, icon: IconComponent }) => (
               <LoadingButton
                 key={id}
-                loading={contentLoading && activeApp === id}
+                loading={isContentLoading && activeApp === id}
                 onClick={() => handleAppSwitch(id)}
                 className={`w-full flex items-center p-3 rounded-lg transition-colors ${
                   activeApp === id 
@@ -416,7 +413,7 @@ export default function ToolsPage() {
         {/* Main Content with Skeleton Loading */}
         <main className={`flex-1 overflow-y-auto sm:ml-64 ${isFullscreen ? '' : 'bg-gray-50 dark:bg-gray-900'} ${isFullscreen ? 'pb-0' : 'pb-16 sm:pb-0'}`}>
           <div className={isFullscreen ? 'h-full' : 'min-h-full'}>
-            <ContentWrapper isLoading={contentLoading}>
+            <ContentWrapper isLoading={isContentLoading}>
               {ActiveComponent && <ActiveComponent />}
             </ContentWrapper>
           </div>
@@ -430,14 +427,14 @@ export default function ToolsPage() {
             <button
               key={id}
               onClick={() => handleAppSwitch(id)}
-              disabled={contentLoading}
+              disabled={isContentLoading}
               className={`flex-1 flex flex-col items-center py-3 px-2 transition-colors relative ${
                 activeApp === id 
                   ? 'text-blue-600 dark:text-blue-400' 
                   : 'text-gray-500 dark:text-gray-400'
-              } ${contentLoading ? 'opacity-70' : ''}`}
+              } ${isContentLoading ? 'opacity-70' : ''}`}
             >
-              {contentLoading && activeApp === id ? (
+              {isContentLoading && activeApp === id ? (
                 <div className="w-6 h-6 mb-1 flex items-center justify-center">
                   <MiniLoader size="sm" />
                 </div>
@@ -450,6 +447,14 @@ export default function ToolsPage() {
         </div>
       </nav>
     </div>
-    </LoadingContext.Provider>
+  );
+}
+
+// Main export with LoadingProvider wrapper
+export default function ToolsPage() {
+  return (
+    <LoadingProvider>
+      <ToolsPageContent />
+    </LoadingProvider>
   );
 }
