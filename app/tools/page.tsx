@@ -18,13 +18,52 @@ declare global {
   }
 }
 
-// App configuration
-const apps = [
+// Menu Icon Component
+const MenuIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+  </svg>
+);
+
+// Settings Icon Component
+const SettingsIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+  </svg>
+);
+
+// Calculator Icon Component
+const CalculatorIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+  </svg>
+);
+
+// Cloud Icon Component
+const CloudIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+  </svg>
+);
+
+// Main navigation apps
+const mainApps = [
   { id: "home", name: "Dashboard", icon: HomeIcon, component: Dashboard },
   { id: "wallpaper", name: "Wallpapers", icon: ImageIcon, component: WallpaperApp },
-  { id: "pdf-converter", name: "PDF Converter", icon: DocumentIcon, component: PDFConverter },
   { id: "ai-assistant", name: "AI Assistant", icon: BrainIcon, component: AIA },
 ];
+
+// Menu sidebar apps
+const menuApps = [
+  { id: "pdf-converter", name: "PDF Converter", icon: DocumentIcon, component: PDFConverter },
+  { id: "calculator", name: "Calculator", icon: CalculatorIcon, component: null },
+  { id: "cloud-storage", name: "Cloud Storage", icon: CloudIcon, component: null },
+  { id: "settings", name: "Settings", icon: SettingsIcon, component: null },
+];
+
+// All apps combined
+const allApps = [...mainApps, ...menuApps];
 
 export default function ToolsPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -32,6 +71,7 @@ export default function ToolsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [activeApp, setActiveApp] = useState("home");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const router = useRouter();
 
   // Check authentication status
@@ -78,19 +118,89 @@ export default function ToolsPage() {
     return null;
   }
 
-  const currentApp = apps.find(app => app.id === activeApp);
+  const currentApp = allApps.find(app => app.id === activeApp);
   const ActiveComponent = currentApp?.component;
   const isAIAssistant = activeApp === "ai-assistant";
 
+  // Handle menu item clicks
+  const handleMenuItemClick = (appId: string) => {
+    setActiveApp(appId);
+    setMenuOpen(false);
+  };
+
   return (
     <div className="flex h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 overflow-hidden">
-      {/* Mobile Sidebar Overlay */}
-      {sidebarOpen && (
+      {/* Menu Sidebar Overlay */}
+      {menuOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 bg-black bg-opacity-50 z-50"
+          onClick={() => setMenuOpen(false)}
         />
       )}
+
+      {/* Right Menu Sidebar */}
+      <aside
+        className={`fixed inset-y-0 right-0 w-80 bg-gradient-to-b from-white via-slate-50 to-white shadow-2xl transform ${
+          menuOpen ? "translate-x-0" : "translate-x-full"
+        } transition-transform duration-300 z-50 border-l border-slate-200`}
+      >
+        <div className="flex items-center justify-between p-6 border-b border-slate-200">
+          <div className="flex items-center">
+            <div className="w-10 h-10 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+              <MenuIcon className="w-5 h-5 text-white" />
+            </div>
+            <div className="ml-3">
+              <h1 className="text-xl font-bold text-slate-800">More Tools</h1>
+              <p className="text-slate-500 text-xs">Additional Features</p>
+            </div>
+          </div>
+          <button
+            className="text-slate-500 hover:text-slate-800 transition-colors p-2 rounded-lg hover:bg-slate-100"
+            onClick={() => setMenuOpen(false)}
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <nav className="p-4 space-y-2">
+          {menuApps.map(({ id, name, icon: IconComponent }) => (
+            <button
+              key={id}
+              className={`flex items-center w-full p-4 rounded-xl transition-all duration-300 group ${
+                activeApp === id 
+                  ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg" 
+                  : "text-slate-600 hover:text-slate-800 hover:bg-slate-100"
+              }`}
+              onClick={() => handleMenuItemClick(id)}
+              disabled={!menuApps.find(app => app.id === id)?.component && id !== 'pdf-converter'}
+            >
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center mr-3 transition-all duration-300 ${
+                activeApp === id 
+                  ? "bg-white bg-opacity-20" 
+                  : "bg-slate-200 group-hover:bg-slate-300"
+              }`}>
+                <IconComponent className="w-4 h-4" />
+              </div>
+              <div className="flex-1 text-left">
+                <span className="font-medium block">{name}</span>
+                {!menuApps.find(app => app.id === id)?.component && id !== 'pdf-converter' && (
+                  <span className="text-xs opacity-60">Coming Soon</span>
+                )}
+              </div>
+            </button>
+          ))}
+        </nav>
+
+        {/* Menu Footer */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-200 bg-slate-50">
+          <div className="text-center">
+            <p className="text-xs text-slate-500">Tools Hub v2.0</p>
+            <p className="text-xs text-slate-400">More tools coming soon</p>
+          </div>
+        </div>
+      </aside>
 
       {/* Desktop Sidebar - Hidden on mobile */}
       <aside
@@ -109,7 +219,7 @@ export default function ToolsPage() {
         </div>
 
         <nav className="p-4 space-y-2 flex-1">
-          {apps.map(({ id, name, icon: IconComponent }) => (
+          {mainApps.map(({ id, name, icon: IconComponent }) => (
             <button
               key={id}
               className={`flex items-center w-full p-4 rounded-xl transition-all duration-300 ${
@@ -168,8 +278,14 @@ export default function ToolsPage() {
               </div>
             </div>
 
-            {/* User Avatar in Header */}
-            <div className="flex items-center">
+            {/* User Avatar and Menu Button */}
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => setMenuOpen(true)}
+                className="p-2 rounded-lg text-slate-600 hover:text-slate-800 hover:bg-slate-100 transition-colors"
+              >
+                <MenuIcon className="w-5 h-5" />
+              </button>
               <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
                 <span className="text-xs font-medium text-white">
                   {user.displayName?.charAt(0) || user.email?.charAt(0)?.toUpperCase()}
@@ -194,8 +310,14 @@ export default function ToolsPage() {
               </div>
             </div>
 
-            {/* User Avatar in Header */}
-            <div className="flex items-center">
+            {/* User Avatar and Menu Button */}
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => setMenuOpen(true)}
+                className="p-2 rounded-lg text-slate-600 hover:text-slate-800 hover:bg-slate-100 transition-colors"
+              >
+                <MenuIcon className="w-5 h-5" />
+              </button>
               <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
                 <span className="text-xs font-medium text-white">
                   {user.displayName?.charAt(0) || user.email?.charAt(0)?.toUpperCase()}
@@ -215,7 +337,7 @@ export default function ToolsPage() {
         {/* Mobile Bottom Navigation - Only visible on mobile */}
         <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg border-t border-slate-200 shadow-lg z-40">
           <div className="flex items-center justify-around px-2 py-2">
-            {apps.map(({ id, name, icon: IconComponent }) => (
+            {mainApps.map(({ id, name, icon: IconComponent }) => (
               <button
                 key={id}
                 className={`flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200 min-w-0 flex-1 ${
@@ -239,6 +361,19 @@ export default function ToolsPage() {
                 </span>
               </button>
             ))}
+            
+            {/* Menu Button in Mobile Bottom Nav */}
+            <button
+              className="flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200 min-w-0 flex-1 text-slate-500 hover:text-slate-700"
+              onClick={() => setMenuOpen(true)}
+            >
+              <div className="w-6 h-6 mb-1 flex items-center justify-center rounded-md text-slate-500">
+                <MenuIcon className="w-5 h-5" />
+              </div>
+              <span className="text-xs font-medium text-slate-500">
+                More
+              </span>
+            </button>
           </div>
         </nav>
       </div>
