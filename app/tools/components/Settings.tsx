@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTheme } from 'next-themes';
 import { auth, db } from '../../../lib/firebase';
 import { signOut, updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
@@ -54,15 +54,7 @@ const Settings = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  useEffect(() => {
-    if (auth.currentUser) {
-      setDisplayName(auth.currentUser.displayName || '');
-      setEmail(auth.currentUser.email || '');
-      loadUserTheme();
-    }
-  }, []);
-
-  const loadUserTheme = async () => {
+  const loadUserTheme = useCallback(async () => {
     if (auth.currentUser) {
       try {
         const userDoc = await getDoc(doc(db, 'userSettings', auth.currentUser.uid));
@@ -73,7 +65,15 @@ const Settings = () => {
         console.error('Error loading theme:', error);
       }
     }
-  };
+  }, [setTheme]);
+
+  useEffect(() => {
+    if (auth.currentUser) {
+      setDisplayName(auth.currentUser.displayName || '');
+      setEmail(auth.currentUser.email || '');
+      loadUserTheme();
+    }
+  }, [loadUserTheme]);
 
   const showMessage = (text: string, type: 'success' | 'error') => {
     setMessage(text);
