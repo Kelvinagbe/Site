@@ -238,7 +238,7 @@ export default function ImageGenerator() {
               
               <div className="text-center bg-gray-50 p-4 rounded-xl">
                 <p className="text-gray-600 italic text-lg">
-                  "{generatedImage.prompt}"
+                  {`"${generatedImage.prompt}"`}
                 </p>
                 <p className="text-gray-500 text-sm mt-2">
                   Generated on {new Date(generatedImage.timestamp).toLocaleString()}
