@@ -92,11 +92,9 @@ export default function ToolsPage() {
         />
       )}
 
-      {/* Sidebar */}
+      {/* Desktop Sidebar - Hidden on mobile */}
       <aside
-        className={`fixed inset-y-0 left-0 w-72 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white transform ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } transition-transform duration-300 lg:translate-x-0 lg:static lg:flex-shrink-0 z-50 shadow-2xl`}
+        className={`hidden lg:flex lg:flex-col lg:w-72 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white shadow-2xl`}
       >
         <div className="flex items-center justify-between p-6 border-b border-slate-700">
           <div className="flex items-center">
@@ -108,17 +106,9 @@ export default function ToolsPage() {
               <p className="text-slate-400 text-xs">Professional Suite</p>
             </div>
           </div>
-          <button
-            className="lg:hidden text-slate-400 hover:text-white transition-colors"
-            onClick={() => setSidebarOpen(false)}
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
         </div>
 
-        <nav className="p-4 space-y-2">
+        <nav className="p-4 space-y-2 flex-1">
           {apps.map(({ id, name, icon: IconComponent }) => (
             <button
               key={id}
@@ -127,10 +117,7 @@ export default function ToolsPage() {
                   ? "bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg" 
                   : "text-slate-300 hover:text-white hover:bg-slate-700"
               }`}
-              onClick={() => {
-                setActiveApp(id);
-                setSidebarOpen(false);
-              }}
+              onClick={() => setActiveApp(id)}
             >
               <div className={`w-8 h-8 rounded-lg flex items-center justify-center mr-3 ${
                 activeApp === id 
@@ -145,7 +132,7 @@ export default function ToolsPage() {
         </nav>
 
         {/* User Info Section */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-700">
+        <div className="p-4 border-t border-slate-700">
           <div className="flex items-center">
             <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
               <span className="text-xs font-medium text-white">
@@ -166,28 +153,44 @@ export default function ToolsPage() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Header */}
-        <header className="bg-white/90 backdrop-blur-lg shadow-lg border-b border-slate-200 sticky top-0 z-30">
+        {/* Mobile Header - Only visible on mobile */}
+        <header className="lg:hidden bg-white/90 backdrop-blur-lg shadow-lg border-b border-slate-200 sticky top-0 z-30">
           <div className="flex items-center justify-between p-4">
             <div className="flex items-center">
-              <button 
-                onClick={() => setSidebarOpen(true)} 
-                className="lg:hidden text-slate-600 hover:text-slate-900 mr-3 p-2 rounded-lg hover:bg-slate-100"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              </button>
-              <div className="flex items-center">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
-                  {currentApp && React.createElement(currentApp.icon, { className: "w-5 h-5 text-white" })}
-                </div>
-                <div>
-                  <h2 className="text-lg font-bold text-slate-800">
-                    {currentApp?.name || "Dashboard"}
-                  </h2>
-                  <p className="text-slate-500 text-xs">Professional Tools</p>
-                </div>
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                {currentApp && React.createElement(currentApp.icon, { className: "w-5 h-5 text-white" })}
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-slate-800">
+                  {currentApp?.name || "Dashboard"}
+                </h2>
+                <p className="text-slate-500 text-xs">Professional Tools</p>
+              </div>
+            </div>
+
+            {/* User Avatar in Header */}
+            <div className="flex items-center">
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
+                <span className="text-xs font-medium text-white">
+                  {user.displayName?.charAt(0) || user.email?.charAt(0)?.toUpperCase()}
+                </span>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Desktop Header - Only visible on desktop */}
+        <header className="hidden lg:block bg-white/90 backdrop-blur-lg shadow-lg border-b border-slate-200 sticky top-0 z-30">
+          <div className="flex items-center justify-between p-4">
+            <div className="flex items-center">
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                {currentApp && React.createElement(currentApp.icon, { className: "w-5 h-5 text-white" })}
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-slate-800">
+                  {currentApp?.name || "Dashboard"}
+                </h2>
+                <p className="text-slate-500 text-xs">Professional Tools</p>
               </div>
             </div>
 
@@ -203,11 +206,41 @@ export default function ToolsPage() {
         </header>
 
         {/* Content Area */}
-        <main className={`flex-1 overflow-auto ${isAIAssistant ? '' : 'p-4 sm:p-6'}`}>
+        <main className={`flex-1 overflow-auto ${isAIAssistant ? '' : 'p-4 sm:p-6'} ${isAIAssistant ? '' : 'pb-20 lg:pb-6'}`}>
           <div className={isAIAssistant ? "h-full" : ""}>
             {ActiveComponent && React.createElement(ActiveComponent)}
           </div>
         </main>
+
+        {/* Mobile Bottom Navigation - Only visible on mobile */}
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg border-t border-slate-200 shadow-lg z-40">
+          <div className="flex items-center justify-around px-2 py-2">
+            {apps.map(({ id, name, icon: IconComponent }) => (
+              <button
+                key={id}
+                className={`flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200 min-w-0 flex-1 ${
+                  activeApp === id 
+                    ? "text-blue-600" 
+                    : "text-slate-500 hover:text-slate-700"
+                }`}
+                onClick={() => setActiveApp(id)}
+              >
+                <div className={`w-6 h-6 mb-1 flex items-center justify-center rounded-md transition-all duration-200 ${
+                  activeApp === id 
+                    ? "bg-blue-100 text-blue-600" 
+                    : "text-slate-500"
+                }`}>
+                  <IconComponent className="w-5 h-5" />
+                </div>
+                <span className={`text-xs font-medium truncate max-w-full ${
+                  activeApp === id ? "text-blue-600" : "text-slate-500"
+                }`}>
+                  {name}
+                </span>
+              </button>
+            ))}
+          </div>
+        </nav>
       </div>
     </div>
   );
