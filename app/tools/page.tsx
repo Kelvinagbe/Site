@@ -9,7 +9,7 @@ import AIA from './components/AIAssistant';
 import Dashboard from './components/Dashboard';
 import WallpaperApp from './components/WallpaperApp';
 import PDFConverter from './components/PDFConverter';
-import Settings from './components/Settings';
+import Settings from './components/settings';
 import { HomeIcon, BrainIcon, ImageIcon, DocumentIcon, LightningIcon } from './components/icons';
 
 // Extend the Window interface
