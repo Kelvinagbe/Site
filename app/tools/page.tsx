@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from '../../lib/firebase'; // Adjust path to your Firebase config
+import { useTheme } from 'next-themes'; // Import your installed theme system
 import SplashScreen from './components/SplashScreen';
 import AIA from './components/AIAssistant';
 import Dashboard from './components/Dashboard';
@@ -48,6 +49,19 @@ const CloudIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+// Theme Toggle Icon Components
+const SunIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+  </svg>
+);
+
+const MoonIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+  </svg>
+);
+
 // Main navigation apps
 const mainApps = [
   { id: "home", name: "Dashboard", icon: HomeIcon, component: Dashboard },
@@ -74,6 +88,9 @@ export default function ToolsPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const router = useRouter();
+  
+  // Theme hook
+  const { theme, setTheme } = useTheme();
 
   // Check authentication status
   useEffect(() => {
@@ -129,8 +146,13 @@ export default function ToolsPage() {
     setMenuOpen(false);
   };
 
+  // Toggle theme function
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
+
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 overflow-hidden">
+    <div className="flex h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 overflow-hidden transition-colors duration-200">
       {/* Menu Sidebar Overlay */}
       {menuOpen && (
         <div 
@@ -141,28 +163,42 @@ export default function ToolsPage() {
 
       {/* Right Menu Sidebar */}
       <aside
-        className={`fixed inset-y-0 right-0 w-80 bg-gradient-to-b from-white via-slate-50 to-white shadow-2xl transform ${
+        className={`fixed inset-y-0 right-0 w-80 bg-gradient-to-b from-white via-slate-50 to-white dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 shadow-2xl transform ${
           menuOpen ? "translate-x-0" : "translate-x-full"
-        } transition-transform duration-300 z-50 border-l border-slate-200`}
+        } transition-transform duration-300 z-50 border-l border-slate-200 dark:border-gray-600`}
       >
-        <div className="flex items-center justify-between p-6 border-b border-slate-200">
+        <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-gray-600">
           <div className="flex items-center">
             <div className="w-10 h-10 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
               <MenuIcon className="w-5 h-5 text-white" />
             </div>
             <div className="ml-3">
-              <h1 className="text-xl font-bold text-slate-800">More Tools</h1>
-              <p className="text-slate-500 text-xs">Additional Features</p>
+              <h1 className="text-xl font-bold text-slate-800 dark:text-white">More Tools</h1>
+              <p className="text-slate-500 dark:text-gray-400 text-xs">Additional Features</p>
             </div>
           </div>
-          <button
-            className="text-slate-500 hover:text-slate-800 transition-colors p-2 rounded-lg hover:bg-slate-100"
-            onClick={() => setMenuOpen(false)}
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+          <div className="flex items-center space-x-2">
+            {/* Theme Toggle Button */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-lg text-slate-500 dark:text-gray-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-gray-600 transition-colors"
+              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {theme === 'dark' ? (
+                <SunIcon className="w-5 h-5" />
+              ) : (
+                <MoonIcon className="w-5 h-5" />
+              )}
+            </button>
+            <button
+              className="text-slate-500 dark:text-gray-400 hover:text-slate-800 dark:hover:text-white transition-colors p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-gray-600"
+              onClick={() => setMenuOpen(false)}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         <nav className="p-4 space-y-2">
@@ -172,7 +208,7 @@ export default function ToolsPage() {
               className={`flex items-center w-full p-4 rounded-xl transition-all duration-300 group ${
                 activeApp === id 
                   ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg" 
-                  : "text-slate-600 hover:text-slate-800 hover:bg-slate-100"
+                  : "text-slate-600 dark:text-gray-300 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-gray-600"
               }`}
               onClick={() => handleMenuItemClick(id)}
               disabled={!menuApps.find(app => app.id === id)?.component && !['pdf-converter', 'settings'].includes(id)}
@@ -180,7 +216,7 @@ export default function ToolsPage() {
               <div className={`w-8 h-8 rounded-lg flex items-center justify-center mr-3 transition-all duration-300 ${
                 activeApp === id 
                   ? "bg-white bg-opacity-20" 
-                  : "bg-slate-200 group-hover:bg-slate-300"
+                  : "bg-slate-200 dark:bg-gray-600 group-hover:bg-slate-300 dark:group-hover:bg-gray-500"
               }`}>
                 <IconComponent className="w-4 h-4" />
               </div>
@@ -195,28 +231,40 @@ export default function ToolsPage() {
         </nav>
 
         {/* Menu Footer */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-200 bg-slate-50">
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-200 dark:border-gray-600 bg-slate-50 dark:bg-gray-700">
           <div className="text-center">
-            <p className="text-xs text-slate-500">Tools Hub v2.0</p>
-            <p className="text-xs text-slate-400">More tools coming soon</p>
+            <p className="text-xs text-slate-500 dark:text-gray-400">Tools Hub v2.0</p>
+            <p className="text-xs text-slate-400 dark:text-gray-500">More tools coming soon</p>
           </div>
         </div>
       </aside>
 
       {/* Desktop Sidebar - Hidden on mobile */}
       <aside
-        className={`hidden lg:flex lg:flex-col lg:w-72 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white shadow-2xl`}
+        className={`hidden lg:flex lg:flex-col lg:w-72 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 text-white shadow-2xl`}
       >
-        <div className="flex items-center justify-between p-6 border-b border-slate-700">
+        <div className="flex items-center justify-between p-6 border-b border-slate-700 dark:border-gray-600">
           <div className="flex items-center">
             <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
               <LightningIcon className="w-5 h-5" />
             </div>
             <div className="ml-3">
               <h1 className="text-xl font-bold">Tools Hub</h1>
-              <p className="text-slate-400 text-xs">Professional Suite</p>
+              <p className="text-slate-400 dark:text-gray-400 text-xs">Professional Suite</p>
             </div>
           </div>
+          {/* Theme Toggle in Desktop Sidebar */}
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 dark:hover:bg-gray-600 transition-colors"
+            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {theme === 'dark' ? (
+              <SunIcon className="w-5 h-5" />
+            ) : (
+              <MoonIcon className="w-5 h-5" />
+            )}
+          </button>
         </div>
 
         <nav className="p-4 space-y-2 flex-1">
@@ -226,14 +274,14 @@ export default function ToolsPage() {
               className={`flex items-center w-full p-4 rounded-xl transition-all duration-300 ${
                 activeApp === id 
                   ? "bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg" 
-                  : "text-slate-300 hover:text-white hover:bg-slate-700"
+                  : "text-slate-300 dark:text-gray-400 hover:text-white hover:bg-slate-700 dark:hover:bg-gray-600"
               }`}
               onClick={() => setActiveApp(id)}
             >
               <div className={`w-8 h-8 rounded-lg flex items-center justify-center mr-3 ${
                 activeApp === id 
                   ? "bg-white bg-opacity-20" 
-                  : "bg-slate-600"
+                  : "bg-slate-600 dark:bg-gray-600"
               }`}>
                 <IconComponent className="w-4 h-4" />
               </div>
@@ -243,7 +291,7 @@ export default function ToolsPage() {
         </nav>
 
         {/* User Info Section */}
-        <div className="p-4 border-t border-slate-700">
+        <div className="p-4 border-t border-slate-700 dark:border-gray-600">
           <div className="flex items-center">
             <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
               <span className="text-xs font-medium text-white">
@@ -254,7 +302,7 @@ export default function ToolsPage() {
               <p className="text-sm font-medium text-white truncate">
                 {user.displayName || 'User'}
               </p>
-              <p className="text-xs text-slate-400 truncate">
+              <p className="text-xs text-slate-400 dark:text-gray-400 truncate">
                 {user.email}
               </p>
             </div>
@@ -265,25 +313,35 @@ export default function ToolsPage() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile Header - Only visible on mobile */}
-        <header className="lg:hidden bg-white/90 backdrop-blur-lg shadow-lg border-b border-slate-200 sticky top-0 z-30">
+        <header className="lg:hidden bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg shadow-lg border-b border-slate-200 dark:border-gray-600 sticky top-0 z-30">
           <div className="flex items-center justify-between p-4">
             <div className="flex items-center">
               <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
                 {currentApp && React.createElement(currentApp.icon, { className: "w-5 h-5 text-white" })}
               </div>
               <div>
-                <h2 className="text-lg font-bold text-slate-800">
+                <h2 className="text-lg font-bold text-slate-800 dark:text-white">
                   {currentApp?.name || "Dashboard"}
                 </h2>
-                <p className="text-slate-500 text-xs">Professional Tools</p>
+                <p className="text-slate-500 dark:text-gray-400 text-xs">Professional Tools</p>
               </div>
             </div>
 
             {/* User Avatar and Menu Button */}
             <div className="flex items-center space-x-3">
               <button
+                onClick={toggleTheme}
+                className="p-2 rounded-lg text-slate-600 dark:text-gray-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-gray-600 transition-colors"
+              >
+                {theme === 'dark' ? (
+                  <SunIcon className="w-5 h-5" />
+                ) : (
+                  <MoonIcon className="w-5 h-5" />
+                )}
+              </button>
+              <button
                 onClick={() => setMenuOpen(true)}
-                className="p-2 rounded-lg text-slate-600 hover:text-slate-800 hover:bg-slate-100 transition-colors"
+                className="p-2 rounded-lg text-slate-600 dark:text-gray-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-gray-600 transition-colors"
               >
                 <MenuIcon className="w-5 h-5" />
               </button>
@@ -297,17 +355,17 @@ export default function ToolsPage() {
         </header>
 
         {/* Desktop Header - Only visible on desktop */}
-        <header className="hidden lg:block bg-white/90 backdrop-blur-lg shadow-lg border-b border-slate-200 sticky top-0 z-30">
+        <header className="hidden lg:block bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg shadow-lg border-b border-slate-200 dark:border-gray-600 sticky top-0 z-30">
           <div className="flex items-center justify-between p-4">
             <div className="flex items-center">
               <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
                 {currentApp && React.createElement(currentApp.icon, { className: "w-5 h-5 text-white" })}
               </div>
               <div>
-                <h2 className="text-lg font-bold text-slate-800">
+                <h2 className="text-lg font-bold text-slate-800 dark:text-white">
                   {currentApp?.name || "Dashboard"}
                 </h2>
-                <p className="text-slate-500 text-xs">Professional Tools</p>
+                <p className="text-slate-500 dark:text-gray-400 text-xs">Professional Tools</p>
               </div>
             </div>
 
@@ -315,7 +373,7 @@ export default function ToolsPage() {
             <div className="flex items-center space-x-3">
               <button
                 onClick={() => setMenuOpen(true)}
-                className="p-2 rounded-lg text-slate-600 hover:text-slate-800 hover:bg-slate-100 transition-colors"
+                className="p-2 rounded-lg text-slate-600 dark:text-gray-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-gray-600 transition-colors"
               >
                 <MenuIcon className="w-5 h-5" />
               </button>
@@ -336,42 +394,43 @@ export default function ToolsPage() {
         </main>
 
         {/* Mobile Bottom Navigation - Only visible on mobile */}
-        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg border-t border-slate-200 shadow-lg z-40">
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-lg border-t border-slate-200 dark:border-gray-600 shadow-lg z-40">
           <div className="flex items-center justify-around px-2 py-2">
             {mainApps.map(({ id, name, icon: IconComponent }) => (
               <button
                 key={id}
                 className={`flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200 min-w-0 flex-1 ${
                   activeApp === id 
-                    ? "text-blue-600" 
-                    : "text-slate-500 hover:text-slate-700"
+                    ? "text-blue-600 dark:text-blue-400" 
+                    : "text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-gray-200"
                 }`}
                 onClick={() => setActiveApp(id)}
               >
                 <div className={`w-6 h-6 mb-1 flex items-center justify-center rounded-md transition-all duration-200 ${
                   activeApp === id 
-                    ? "bg-blue-100 text-blue-600" 
-                    : "text-slate-500"
+                    ? "bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400" 
+                    : "text-slate-500 dark:text-gray-400"
                 }`}>
                   <IconComponent className="w-5 h-5" />
                 </div>
                 <span className={`text-xs font-medium truncate max-w-full ${
-                  activeApp === id ? "text-blue-600" : "text-slate-500"
+                  activeApp === id ? "text-blue-600 dark:text-blue-400" : "text-slate-500 dark:text-gray-400"
                 }`}>
                   {name}
                 </span>
               </button>
             ))}
+
             
             {/* Menu Button in Mobile Bottom Nav */}
             <button
-              className="flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200 min-w-0 flex-1 text-slate-500 hover:text-slate-700"
+              className="flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200 min-w-0 flex-1 text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-gray-200"
               onClick={() => setMenuOpen(true)}
             >
-              <div className="w-6 h-6 mb-1 flex items-center justify-center rounded-md text-slate-500">
+              <div className="w-6 h-6 mb-1 flex items-center justify-center rounded-md text-slate-500 dark:text-gray-400">
                 <MenuIcon className="w-5 h-5" />
               </div>
-              <span className="text-xs font-medium text-slate-500">
+              <span className="text-xs font-medium text-slate-500 dark:text-gray-400">
                 More
               </span>
             </button>
