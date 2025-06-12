@@ -1,6 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '@/lib/firebase'; // Your Firebase config
 
 interface GeneratedImage {
   url: string;
@@ -15,10 +17,25 @@ export function ImageGenerator() {
   const [generatedImage, setGeneratedImage] = useState<GeneratedImage | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isWatermarking, setIsWatermarking] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
-  // Your website details - replace with actual values
-  const websiteName = "AICreator"; // Replace with your website name
-  const faviconUrl = "/favicon.ico"; // Replace with your favicon path
+  // Auto-detect website name from domain
+  const websiteName = typeof window !== 'undefined' ? 
+    window.location.hostname.split('.')[0].charAt(0).toUpperCase() + 
+    window.location.hostname.split('.')[0].slice(1) : 'AICreator';
+  
+  const faviconUrl = "/favicon.ico";
+
+  // Listen for auth state changes
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      setAuthLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const examplePrompts = [
     "cozy coffee shop with warm lighting",
@@ -29,40 +46,46 @@ export function ImageGenerator() {
     "magical forest with glowing mushrooms"
   ];
 
-  // Firebase transaction logging function
-  const logToFirebase = async (imageData: GeneratedImage) => {
+  // Store minimal transaction reference in Firebase
+  const storeTransaction = async (imageData: GeneratedImage) => {
+    if (!currentUser) return null;
+
     try {
-      const transactionData = {
+      const transactionId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      const transaction = {
         prompt: imageData.prompt,
         timestamp: imageData.timestamp,
-        userId: 'anonymous', // Replace with actual user ID if you have authentication
-        imageUrl: imageData.url,
-        status: 'completed',
-        createdAt: new Date().toISOString(),
-        userAgent: navigator.userAgent,
-        ip: null // This would need to be set server-side
+        status: 'completed'
       };
 
-      // Replace with your Firebase endpoint
-      const response = await fetch('/api/log-transaction', {
+      const response = await fetch('/api/store-transaction', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(transactionData),
+        body: JSON.stringify({
+          userId: currentUser.uid,
+          transactionId,
+          transaction
+        }),
       });
 
       if (response.ok) {
-        const result = await response.json();
-        return result.transactionId;
+        return transactionId;
       }
     } catch (error) {
-      console.error('Failed to log transaction:', error);
+      console.error('Failed to store transaction:', error);
     }
     return null;
   };
 
   const generateImage = async () => {
+    if (!currentUser) {
+      setError('Please log in to generate images');
+      return;
+    }
+
     if (!prompt.trim()) {
       setError('Please enter a prompt');
       return;
@@ -77,7 +100,10 @@ export function ImageGenerator() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ prompt: prompt.trim() }),
+        body: JSON.stringify({ 
+          prompt: prompt.trim(),
+          userId: currentUser.uid 
+        }),
       });
 
       const data = await response.json();
@@ -85,14 +111,12 @@ export function ImageGenerator() {
       if (data.success) {
         setIsWatermarking(true);
         
-        // Add watermark to the generated image
         let watermarkedImageUrl = data.imageUrl;
         
         try {
           watermarkedImageUrl = await addWatermarkToImage(data.imageUrl);
         } catch (error) {
-          console.error('Failed to add watermark to generated image:', error);
-          // Continue with original image if watermarking fails
+          console.error('Failed to add watermark:', error);
         }
 
         const imageData: GeneratedImage = {
@@ -101,8 +125,7 @@ export function ImageGenerator() {
           timestamp: Date.now(),
         };
 
-        // Log transaction to Firebase
-        const transactionId = await logToFirebase(imageData);
+        const transactionId = await storeTransaction(imageData);
         if (transactionId) {
           imageData.transactionId = transactionId;
         }
@@ -121,7 +144,6 @@ export function ImageGenerator() {
     }
   };
 
-  // Function to add watermark to image
   const addWatermarkToImage = (imageUrl: string): Promise<string> => {
     return new Promise((resolve, reject) => {
       const canvas = document.createElement('canvas');
@@ -130,14 +152,11 @@ export function ImageGenerator() {
       
       img.crossOrigin = 'anonymous';
       img.onload = () => {
-        // Set canvas size to match image
         canvas.width = img.width;
         canvas.height = img.height;
         
-        // Draw the original image
         ctx!.drawImage(img, 0, 0);
         
-        // Configure watermark styling
         const fontSize = Math.max(16, Math.min(img.width / 25, img.height / 25));
         ctx!.font = `bold ${fontSize}px Arial, sans-serif`;
         ctx!.fillStyle = 'rgba(255, 255, 255, 0.8)';
@@ -146,17 +165,14 @@ export function ImageGenerator() {
         ctx!.textAlign = 'right';
         ctx!.textBaseline = 'bottom';
         
-        // Position watermark at bottom right
         const padding = fontSize * 0.5;
         const x = img.width - padding;
         const y = img.height - padding;
         
-        // Draw text with stroke (outline) and fill
         const watermarkText = websiteName;
         ctx!.strokeText(watermarkText, x, y);
         ctx!.fillText(watermarkText, x, y);
         
-        // Add favicon if available
         const favicon = new Image();
         favicon.crossOrigin = 'anonymous';
         favicon.onload = () => {
@@ -171,7 +187,6 @@ export function ImageGenerator() {
           resolve(canvas.toDataURL('image/png'));
         };
         favicon.onerror = () => {
-          // If favicon fails to load, just resolve with text watermark
           resolve(canvas.toDataURL('image/png'));
         };
         favicon.src = faviconUrl;
@@ -188,12 +203,10 @@ export function ImageGenerator() {
     try {
       let imageUrl = generatedImage.url;
       
-      // Add watermark to the image before downloading
       try {
         imageUrl = await addWatermarkToImage(generatedImage.url);
       } catch (error) {
         console.error('Failed to add watermark:', error);
-        // Continue with original image if watermarking fails
       }
 
       const link = document.createElement('a');
@@ -214,14 +227,57 @@ export function ImageGenerator() {
     }
   };
 
+  // Show loading while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen w-full bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-300">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show login prompt if not authenticated
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen w-full bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 flex items-center justify-center">
+        <div className="text-center bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 p-8 max-w-md">
+          <div className="text-6xl mb-4">🎨</div>
+          <h2 className="text-2xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-blue-600 dark:from-purple-400 dark:to-blue-400 bg-clip-text text-transparent">
+            AI Image Generator
+          </h2>
+          <p className="text-gray-600 dark:text-gray-300 mb-6">
+            Please log in to start generating amazing AI images
+          </p>
+          <button
+            onClick={() => window.location.href = '/login'}
+            className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 shadow-lg"
+          >
+            Log In to Continue
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900">
       <div className="container mx-auto px-4 py-8">
-        {/* Header */}
+        {/* Header with user info */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 dark:from-purple-400 dark:via-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
-            🎨 AI Image Generator
-          </h1>
+          <div className="flex items-center justify-between mb-4">
+            <div></div>
+            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 dark:from-purple-400 dark:via-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
+              🎨 AI Image Generator
+            </h1>
+            <div className="text-right">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Welcome, {currentUser.displayName || currentUser.email}
+              </p>
+            </div>
+          </div>
           <p className="text-gray-600 dark:text-gray-300 text-lg">
             Turn your ideas into stunning images with AI
           </p>
@@ -233,7 +289,6 @@ export function ImageGenerator() {
           {/* Left Column - Input Section */}
           <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 p-6 h-fit">
             
-            {/* Input Section */}
             <div className="space-y-6 mb-6">
               <div>
                 <label htmlFor="prompt" className="block text-lg font-semibold text-gray-700 dark:text-gray-200 mb-3">
@@ -363,7 +418,7 @@ export function ImageGenerator() {
                   </p>
                   {generatedImage.transactionId && (
                     <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">
-                      Transaction ID: {generatedImage.transactionId}
+                      ID: {generatedImage.transactionId}
                     </p>
                   )}
                 </div>
@@ -384,25 +439,16 @@ export function ImageGenerator() {
           </div>
         </div>
 
-        {/* Footer with your branding */}
+        {/* Footer */}
         <div className="mt-12 text-center">
           <div className="flex flex-col items-center space-y-4 p-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 max-w-md mx-auto">
             <div className="flex items-center space-x-3">
-              <img 
-                src={faviconUrl} 
-                alt={`${websiteName} Logo`}
-                className="w-8 h-8 opacity-80"
-                onError={(e) => {
-                  // Fallback to a default icon if favicon fails to load
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
               <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 dark:from-purple-400 dark:to-blue-400 bg-clip-text text-transparent">
                 {websiteName}
               </span>
             </div>
             <p className="text-gray-500 dark:text-gray-400 text-sm">
-              🔥 Powered by Hugging Face • 1000 free generations per month
+              🔥 Powered by AI • Generate unlimited images
             </p>
             <p className="text-gray-400 dark:text-gray-500 text-xs">
               © 2025 {websiteName}. All rights reserved.
