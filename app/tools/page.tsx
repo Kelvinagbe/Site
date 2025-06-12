@@ -14,6 +14,101 @@ import PDFConverter from './components/PDFConverter';
 import Settings from './components/Settings';
 import { HomeIcon, BrainIcon, ImageIcon, DocumentIcon } from './components/icons';
 
+// Loading Context
+const LoadingContext = React.createContext<{
+  isLoading: boolean;
+  loadingText: string;
+  setLoading: (loading: boolean, text?: string) => void;
+}>({
+  isLoading: false,
+  loadingText: '',
+  setLoading: () => {},
+});
+
+export const useLoading = () => React.useContext(LoadingContext);
+
+// Enhanced Loader Component
+const AppLoader = ({ isVisible, text = "Loading..." }: { isVisible: boolean; text?: string }) => {
+  if (!isVisible) return null;
+
+  return (
+    <div className="fixed inset-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm z-50 flex items-center justify-center">
+      <div className="flex flex-col items-center space-y-4">
+        {/* Animated Logo */}
+        <div className="relative">
+          <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center animate-pulse">
+            <Image 
+              src="/favicon.ico" 
+              alt="Loading" 
+              width={32} 
+              height={32}
+              className="w-8 h-8 animate-spin"
+            />
+          </div>
+          {/* Rotating border */}
+          <div className="absolute inset-0 border-4 border-transparent border-t-blue-500 rounded-2xl animate-spin"></div>
+        </div>
+        
+        {/* Loading text */}
+        <div className="text-center">
+          <p className="text-lg font-medium text-gray-900 dark:text-white mb-2">{text}</p>
+          <div className="flex space-x-1">
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Mini Loader for smaller operations
+const MiniLoader = ({ size = "sm" }: { size?: "sm" | "md" | "lg" }) => {
+  const sizeClasses = {
+    sm: "w-4 h-4",
+    md: "w-6 h-6", 
+    lg: "w-8 h-8"
+  };
+
+  return (
+    <div className={`${sizeClasses[size]} border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin`}></div>
+  );
+};
+
+// Button with loading state
+const LoadingButton = ({ 
+  loading, 
+  children, 
+  onClick, 
+  className = "",
+  disabled = false,
+  ...props 
+}: {
+  loading: boolean;
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  disabled?: boolean;
+  [key: string]: any;
+}) => (
+  <button
+    onClick={onClick}
+    disabled={loading || disabled}
+    className={`relative flex items-center justify-center ${className} ${
+      loading || disabled ? 'opacity-70 cursor-not-allowed' : ''
+    }`}
+    {...props}
+  >
+    {loading && (
+      <div className="absolute left-3">
+        <MiniLoader size="sm" />
+      </div>
+    )}
+    <span className={loading ? 'ml-6' : ''}>{children}</span>
+  </button>
+);
+
 // Global window interface
 declare global {
   interface Window {
@@ -72,8 +167,16 @@ export default function ToolsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [activeApp, setActiveApp] = useState("home");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [appLoading, setAppLoading] = useState(false);
+  const [loadingText, setLoadingText] = useState("Loading...");
   const router = useRouter();
   const { theme, setTheme } = useTheme();
+
+  // Global loading function
+  const setGlobalLoading = (loading: boolean, text = "Loading...") => {
+    setAppLoading(loading);
+    setLoadingText(text);
+  };
 
   // Authentication check
   useEffect(() => {
@@ -91,10 +194,22 @@ export default function ToolsPage() {
     return () => unsubscribe();
   }, [router]);
 
-  // Global app setter
+  // Global app setter with loading
   useEffect(() => {
-    window.setActiveApp = setActiveApp;
+    window.setActiveApp = (appId: string) => {
+      setGlobalLoading(true, "Loading app...");
+      setTimeout(() => {
+        setActiveApp(appId);
+        setGlobalLoading(false);
+      }, 800); // Simulate app loading time
+    };
     return () => { delete window.setActiveApp; };
+  }, []);
+
+  // Make loading function available globally
+  useEffect(() => {
+    (window as any).setGlobalLoading = setGlobalLoading;
+    return () => { delete (window as any).setGlobalLoading; };
   }, []);
 
   if (authLoading) return null;
@@ -107,45 +222,71 @@ export default function ToolsPage() {
 
   const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark');
 
+  // Handle app switching with loading
+  const handleAppSwitch = (appId: string) => {
+    if (appId === activeApp) return;
+    
+    setGlobalLoading(true, "Switching apps...");
+    setTimeout(() => {
+      setActiveApp(appId);
+      setGlobalLoading(false);
+    }, 600);
+  };
+
+  // Handle menu item clicks with loading
+  const handleMenuItemClick = (appId: string) => {
+    setMenuOpen(false);
+    handleAppSwitch(appId);
+  };
+
   return (
-    <div className="h-screen flex flex-col bg-white dark:bg-gray-900">
-      
-      {/* Slide-out Menu - Fixed position, doesn't affect scrolling */}
-      {menuOpen && (
-        <>
-          <div className="fixed inset-0 bg-black/50 z-50" onClick={() => setMenuOpen(false)} />
-          <div className="fixed inset-y-0 right-0 w-80 bg-white dark:bg-gray-800 shadow-2xl z-50 flex flex-col">
-            {/* Menu Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Tools</h2>
-              <button 
-                onClick={() => setMenuOpen(false)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-              >
-                <CloseIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-              </button>
-            </div>
-            
-            {/* Menu Items */}
-            <div className="flex-1 p-4 space-y-2">
-              {menuApps.map(({ id, name, icon: IconComponent }) => (
-                <button
-                  key={id}
-                  onClick={() => { setActiveApp(id); setMenuOpen(false); }}
-                  className={`w-full flex items-center p-4 rounded-lg transition-colors ${
-                    activeApp === id 
-                      ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
-                      : 'hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
-                  }`}
+    <LoadingContext.Provider value={{ 
+      isLoading: appLoading, 
+      loadingText, 
+      setLoading: setGlobalLoading 
+    }}>
+      <div className="h-screen flex flex-col bg-white dark:bg-gray-900">
+        
+        {/* Global App Loader */}
+        <AppLoader isVisible={appLoading} text={loadingText} />
+        
+        {/* Slide-out Menu - Fixed position, doesn't affect scrolling */}
+        {menuOpen && (
+          <>
+            <div className="fixed inset-0 bg-black/50 z-50" onClick={() => setMenuOpen(false)} />
+            <div className="fixed inset-y-0 right-0 w-80 bg-white dark:bg-gray-800 shadow-2xl z-50 flex flex-col">
+              {/* Menu Header */}
+              <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Tools</h2>
+                <button 
+                  onClick={() => setMenuOpen(false)}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 >
-                  <IconComponent className="w-5 h-5 mr-3" />
-                  <span className="font-medium">{name}</span>
+                  <CloseIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                 </button>
-              ))}
+              </div>
+              
+              {/* Menu Items */}
+              <div className="flex-1 p-4 space-y-2">
+                {menuApps.map(({ id, name, icon: IconComponent }) => (
+                  <LoadingButton
+                    key={id}
+                    loading={appLoading && activeApp === id}
+                    onClick={() => handleMenuItemClick(id)}
+                    className={`w-full flex items-center p-4 rounded-lg transition-colors ${
+                      activeApp === id 
+                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
+                        : 'hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                    }`}
+                  >
+                    <IconComponent className="w-5 h-5 mr-3" />
+                    <span className="font-medium">{name}</span>
+                  </LoadingButton>
+                ))}
+              </div>
             </div>
-          </div>
-        </>
-      )}
+          </>
+        )}
 
       {/* Fixed Top Navigation Bar */}
       <nav className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm">
@@ -199,9 +340,10 @@ export default function ToolsPage() {
         <aside className="hidden sm:block fixed left-0 top-16 bottom-16 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
           <div className="p-4 space-y-2">
             {allApps.map(({ id, name, icon: IconComponent }) => (
-              <button
+              <LoadingButton
                 key={id}
-                onClick={() => setActiveApp(id)}
+                loading={appLoading && activeApp === id}
+                onClick={() => handleAppSwitch(id)}
                 className={`w-full flex items-center p-3 rounded-lg transition-colors ${
                   activeApp === id 
                     ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
@@ -210,7 +352,7 @@ export default function ToolsPage() {
               >
                 <IconComponent className="w-5 h-5 mr-3" />
                 <span className="font-medium">{name}</span>
-              </button>
+              </LoadingButton>
             ))}
           </div>
 
@@ -248,19 +390,27 @@ export default function ToolsPage() {
           {mainApps.map(({ id, name, icon: IconComponent }) => (
             <button
               key={id}
-              onClick={() => setActiveApp(id)}
-              className={`flex-1 flex flex-col items-center py-3 px-2 transition-colors ${
+              onClick={() => handleAppSwitch(id)}
+              disabled={appLoading}
+              className={`flex-1 flex flex-col items-center py-3 px-2 transition-colors relative ${
                 activeApp === id 
                   ? 'text-blue-600 dark:text-blue-400' 
                   : 'text-gray-500 dark:text-gray-400'
-              }`}
+              } ${appLoading ? 'opacity-70' : ''}`}
             >
-              <IconComponent className="w-6 h-6 mb-1" />
+              {appLoading && activeApp === id ? (
+                <div className="w-6 h-6 mb-1 flex items-center justify-center">
+                  <MiniLoader size="sm" />
+                </div>
+              ) : (
+                <IconComponent className="w-6 h-6 mb-1" />
+              )}
               <span className="text-xs font-medium">{name}</span>
             </button>
           ))}
         </div>
       </nav>
     </div>
+    </LoadingContext.Provider>
   );
 }
