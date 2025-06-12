@@ -1,10 +1,14 @@
-"use client";
-
 import React, { ReactNode } from "react";
+import type { Metadata } from 'next';
 
 interface ToolsLayoutProps {
   children: ReactNode;
 }
+
+export const metadata: Metadata = {
+  title: 'Tools - Apexion',
+  description: 'Access powerful PDF and AI tools',
+};
 
 export default function ToolsLayout({ children }: ToolsLayoutProps) {
   return (
