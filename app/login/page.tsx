@@ -89,172 +89,126 @@ export default function LoginPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 flex items-center justify-center p-3 sm:p-4 relative overflow-hidden">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-20 sm:-top-40 -right-20 sm:-right-40 w-40 sm:w-80 h-40 sm:h-80 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-pulse"></div>
-        <div className="absolute -bottom-20 sm:-bottom-40 -left-20 sm:-left-40 w-40 sm:w-80 h-40 sm:h-80 bg-blue-300 rounded-full mix-blend-multiply filter blur-xl opacity-25 animate-pulse animation-delay-2000"></div>
-        <div className="absolute top-20 sm:top-40 right-10 sm:right-20 w-30 sm:w-60 h-30 sm:h-60 bg-blue-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-4000"></div>
-      </div>
-
-      <div className="relative w-full max-w-sm sm:max-w-md">
-        {/* Glass morphism container */}
-        <div className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-2xl border border-blue-200/50 p-4 sm:p-6 lg:p-8 relative">
-          {/* Logo/Brand area */}
-          <div className="text-center mb-6 sm:mb-8">
-            <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full mb-3 sm:mb-4 shadow-lg">
-              {!showFallback ? (
-                <Image 
-                  src="/favicon.ico" 
-                  alt="Apexion Logo" 
-                  width={24}
-                  height={24}
-                  className="w-6 h-6 sm:w-8 sm:h-8"
-                  onError={() => setShowFallback(true)}
-                />
-              ) : (
-                <span className="text-lg sm:text-2xl font-bold text-white">A</span>
-              )}
-            </div>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-800 mb-1 sm:mb-2">Apexion</h1>
-            <p className="text-gray-600 text-xs sm:text-sm">Secure access to your dashboard</p>
-          </div>
-
-          {/* Tab Navigation */}
-          <div className="flex bg-blue-50/80 rounded-xl p-1 mb-6 sm:mb-8 backdrop-blur-sm border border-blue-200/30">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => handleTabChange(tab.id as TabType)}
-                className={`flex-1 py-2.5 sm:py-3 px-2 sm:px-4 rounded-lg text-xs sm:text-sm font-medium transition-all duration-300 relative overflow-hidden ${
-                  activeTab === tab.id
-                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg transform scale-105'
-                    : 'text-gray-600 hover:text-blue-600 hover:bg-blue-100/50'
-                }`}
-              >
-                <span className="relative z-10">{tab.label}</span>
-                {activeTab === tab.id && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-blue-500 opacity-20 animate-pulse"></div>
-                )}
-              </button>
-            ))}
-          </div>
-
-          {/* Form Header */}
-          <div className="text-center mb-4 sm:mb-6">
-            <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-1">
-              {activeTab === 'signin' && 'Welcome Back'}
-              {activeTab === 'signup' && 'Create Account'}
-              {activeTab === 'forgot' && 'Reset Password'}
-            </h2>
-            <p className="text-gray-600 text-xs sm:text-sm">
-              {activeTab === 'signin' && 'Sign in to access your dashboard'}
-              {activeTab === 'signup' && 'Join Apexion today'}
-              {activeTab === 'forgot' && 'Enter your email to reset your password'}
-            </p>
-          </div>
-
-          {/* Form Content */}
-          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
-            {/* Email Field */}
-            <div className="space-y-1.5 sm:space-y-2">
-              <label htmlFor="email" className="block text-xs sm:text-sm font-medium text-gray-700">
-                Email Address
-              </label>
-              <div className="relative">
-                <input
-                  id="email"
-                  type="email"
-                  value={formState.email}
-                  onChange={(e) => updateFormState({ email: e.target.value })}
-                  required
-                  className="w-full px-10 sm:px-12 py-2.5 sm:py-3 bg-white/80 border border-blue-200 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-300 backdrop-blur-sm text-sm sm:text-base"
-                  placeholder="Enter your email address"
-                  disabled={formState.loading}
-                />
-                <div className="absolute inset-y-0 left-0 pl-3 sm:pl-4 flex items-center pointer-events-none">
-                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                  </svg>
-                </div>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        {/* Logo and Header */}
+        <div className="text-center">
+          <div className="flex justify-center mb-6">
+            {!showFallback ? (
+              <Image 
+                src="/favicon.ico" 
+                alt="Apexion Logo" 
+                width={40}
+                height={40}
+                className="w-10 h-10"
+                onError={() => setShowFallback(true)}
+              />
+            ) : (
+              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-xl">A</span>
               </div>
+            )}
+          </div>
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">
+            {activeTab === 'signin' && 'Welcome'}
+            {activeTab === 'signup' && 'Sign Up'}
+            {activeTab === 'forgot' && 'Reset Password'}
+          </h2>
+          <p className="text-gray-600 text-sm">
+            {activeTab === 'signin' && 'Please sign in to your account'}
+            {activeTab === 'signup' && 'Create your new account'}
+            {activeTab === 'forgot' && 'Enter your email to reset your password'}
+          </p>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="flex border-b border-gray-200">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => handleTabChange(tab.id as TabType)}
+              className={`flex-1 py-2 px-4 text-sm font-medium border-b-2 transition-colors duration-200 ${
+                activeTab === tab.id
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Form Container */}
+        <div className="bg-white shadow-lg rounded-lg p-8 border border-gray-200">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Email Field */}
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={formState.email}
+                onChange={(e) => updateFormState({ email: e.target.value })}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                placeholder="Enter your email"
+                disabled={formState.loading}
+              />
             </div>
 
             {/* Password Field - Hidden for forgot password */}
             {activeTab !== 'forgot' && (
-              <div className="space-y-1.5 sm:space-y-2">
-                <label htmlFor="password" className="block text-xs sm:text-sm font-medium text-gray-700">
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                   Password
                 </label>
-                <div className="relative">
-                  <input
-                    id="password"
-                    type="password"
-                    value={formState.password}
-                    onChange={(e) => updateFormState({ password: e.target.value })}
-                    required
-                    minLength={6}
-                    className="w-full px-10 sm:px-12 py-2.5 sm:py-3 bg-white/80 border border-blue-200 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-300 backdrop-blur-sm text-sm sm:text-base"
-                    placeholder="Enter your password"
-                    disabled={formState.loading}
-                  />
-                  <div className="absolute inset-y-0 left-0 pl-3 sm:pl-4 flex items-center pointer-events-none">
-                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                  </div>
-                </div>
+                <input
+                  id="password"
+                  type="password"
+                  value={formState.password}
+                  onChange={(e) => updateFormState({ password: e.target.value })}
+                  required
+                  minLength={6}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                  placeholder="Enter your password"
+                  disabled={formState.loading}
+                />
               </div>
             )}
 
             {/* Confirm Password Field - Only for signup */}
             {activeTab === 'signup' && (
-              <div className="space-y-1.5 sm:space-y-2">
-                <label htmlFor="confirmPassword" className="block text-xs sm:text-sm font-medium text-gray-700">
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
                   Confirm Password
                 </label>
-                <div className="relative">
-                  <input
-                    id="confirmPassword"
-                    type="password"
-                    value={formState.confirmPassword}
-                    onChange={(e) => updateFormState({ confirmPassword: e.target.value })}
-                    required
-                    minLength={6}
-                    className="w-full px-10 sm:px-12 py-2.5 sm:py-3 bg-white/80 border border-blue-200 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-300 backdrop-blur-sm text-sm sm:text-base"
-                    placeholder="Confirm your password"
-                    disabled={formState.loading}
-                  />
-                  <div className="absolute inset-y-0 left-0 pl-3 sm:pl-4 flex items-center pointer-events-none">
-                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                </div>
+                <input
+                  id="confirmPassword"
+                  type="password"
+                  value={formState.confirmPassword}
+                  onChange={(e) => updateFormState({ confirmPassword: e.target.value })}
+                  required
+                  minLength={6}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                  placeholder="Confirm your password"
+                  disabled={formState.loading}
+                />
               </div>
             )}
 
             {/* Error Message */}
             {formState.error && (
-              <div className="bg-red-500/20 border border-red-500/30 text-red-200 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm backdrop-blur-sm animate-fadeIn">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span className="break-words">{formState.error}</span>
-                </div>
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+                {formState.error}
               </div>
             )}
 
             {/* Success Message */}
             {formState.success && (
-              <div className="bg-green-500/20 border border-green-500/30 text-green-200 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm backdrop-blur-sm animate-fadeIn">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span className="break-words">{formState.success}</span>
-                </div>
+              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md text-sm">
+                {formState.success}
               </div>
             )}
 
@@ -262,17 +216,17 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={formState.loading}
-              className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 sm:py-3.5 px-4 sm:px-6 rounded-xl hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-transparent disabled:opacity-50 disabled:cursor-not-allowed transition duration-300 font-semibold shadow-lg transform hover:scale-105 active:scale-95 text-sm sm:text-base"
+              className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition duration-200"
             >
               {formState.loading ? (
-                <div className="flex items-center justify-center gap-2 sm:gap-3">
-                  <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                   <span>Processing...</span>
                 </div>
               ) : (
                 <span>
-                  {activeTab === 'signin' && 'Sign In to Dashboard'}
-                  {activeTab === 'signup' && 'Create Account'}
+                  {activeTab === 'signin' && 'Continue'}
+                  {activeTab === 'signup' && 'Sign Up'}
                   {activeTab === 'forgot' && 'Send Reset Email'}
                 </span>
               )}
@@ -280,64 +234,36 @@ export default function LoginPage() {
           </form>
 
           {/* Additional Links */}
-          {activeTab === 'signin' && (
-            <div className="mt-4 sm:mt-6 text-center">
+          <div className="mt-6 text-center">
+            {activeTab === 'signin' && (
               <button
                 onClick={() => handleTabChange('forgot')}
                 disabled={formState.loading}
-                className="text-blue-600 hover:text-blue-500 text-xs sm:text-sm font-medium disabled:opacity-50 transition duration-200 underline decoration-transparent hover:decoration-current"
+                className="text-blue-600 hover:text-blue-500 text-sm font-medium disabled:opacity-50 transition duration-200"
               >
                 Forgot your password?
               </button>
-            </div>
-          )}
+            )}
 
-          {activeTab === 'forgot' && (
-            <div className="mt-4 sm:mt-6 text-center">
+            {activeTab === 'forgot' && (
               <button
                 onClick={() => handleTabChange('signin')}
                 disabled={formState.loading}
-                className="text-blue-600 hover:text-blue-500 text-xs sm:text-sm font-medium disabled:opacity-50 transition duration-200 underline decoration-transparent hover:decoration-current"
+                className="text-blue-600 hover:text-blue-500 text-sm font-medium disabled:opacity-50 transition duration-200"
               >
-                Back to Sign In
+                ← Back to Sign In
               </button>
-            </div>
-          )}
-
-          {/* Security Footer */}
-          <div className="mt-6 sm:mt-8 text-center border-t border-blue-200/50 pt-4 sm:pt-6">
-            <div className="flex items-center justify-center gap-2 text-gray-500 text-xs">
-              <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-              <span className="text-center">Secured with enterprise-grade encryption</span>
-            </div>
+            )}
           </div>
         </div>
 
-        {/* Decorative elements */}
-        <div className="absolute -top-1 sm:-top-2 -left-1 sm:-left-2 w-3 h-3 sm:w-4 sm:h-4 bg-blue-500 rounded-full opacity-60 animate-ping"></div>
-        <div className="absolute -bottom-1 sm:-bottom-2 -right-1 sm:-right-2 w-2 h-2 sm:w-3 sm:h-3 bg-blue-400 rounded-full opacity-60 animate-ping animation-delay-1000"></div>
+        {/* Footer */}
+        <div className="text-center">
+          <p className="text-xs text-gray-500">
+            Secured by Apexion
+          </p>
+        </div>
       </div>
-
-      <style jsx>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(-10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fadeIn {
-          animation: fadeIn 0.3s ease-out;
-        }
-        .animation-delay-1000 {
-          animation-delay: 1s;
-        }
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-        .animation-delay-4000 {
-          animation-delay: 4s;
-        }
-      `}</style>
     </div>
   );
 }
