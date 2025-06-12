@@ -8,7 +8,7 @@ interface GeneratedImage {
   timestamp: number;
 }
 
-export default function ImageGenerator() {
+export function ImageGenerator() {
   const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<GeneratedImage | null>(null);
