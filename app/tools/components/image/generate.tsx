@@ -97,16 +97,16 @@ export function ImageGenerator() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100">
-      <div className="w-full max-w-none px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
-        <div className="w-full bg-white/95 backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-xl sm:shadow-2xl p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen w-full bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900">
+      <div className="w-full max-w-none px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 pb-20 sm:pb-24 lg:pb-32">
+        <div className="w-full bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-xl sm:shadow-2xl border border-gray-200/50 dark:border-gray-700/50 p-4 sm:p-6 lg:p-8">
 
           {/* Header */}
           <div className="text-center mb-4 sm:mb-6 lg:mb-8">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-2 sm:mb-4 bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-2 sm:mb-4 bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 dark:from-purple-400 dark:via-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
               🎨 AI Image Generator
             </h1>
-            <p className="text-gray-600 text-sm sm:text-base lg:text-lg">
+            <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base lg:text-lg">
               Turn your ideas into stunning images with AI
             </p>
           </div>
@@ -114,7 +114,7 @@ export function ImageGenerator() {
           {/* Input Section */}
           <div className="space-y-4 sm:space-y-6 mb-6 sm:mb-8">
             <div>
-              <label htmlFor="prompt" className="block text-base sm:text-lg font-semibold text-gray-700 mb-2 sm:mb-3">
+              <label htmlFor="prompt" className="block text-base sm:text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2 sm:mb-3">
                 ✨ Describe your image:
               </label>
               <textarea
@@ -123,17 +123,17 @@ export function ImageGenerator() {
                 onChange={(e) => setPrompt(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="e.g., a magical forest with glowing mushrooms under starlight..."
-                className="w-full px-3 sm:px-4 lg:px-6 py-3 sm:py-4 border-2 border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 sm:focus:ring-3 focus:ring-purple-300 focus:border-purple-400 transition-all duration-200 text-gray-700 text-sm sm:text-base lg:text-lg resize-none shadow-sm"
+                className="w-full px-3 sm:px-4 lg:px-6 py-3 sm:py-4 border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 rounded-lg sm:rounded-xl focus:ring-2 sm:focus:ring-3 focus:ring-purple-300 dark:focus:ring-purple-500 focus:border-purple-400 dark:focus:border-purple-500 transition-all duration-200 text-sm sm:text-base lg:text-lg resize-none shadow-sm"
                 rows={3}
                 disabled={loading}
                 maxLength={500}
               />
               <div className="flex justify-between items-center mt-2 text-xs sm:text-sm">
-                <small className="text-gray-500">
+                <small className="text-gray-500 dark:text-gray-400">
                   <span className="hidden sm:inline">Press Enter to generate, Shift+Enter for new line</span>
                   <span className="sm:hidden">Tap Generate to create</span>
                 </small>
-                <small className="text-gray-500">
+                <small className="text-gray-500 dark:text-gray-400">
                   {prompt.length}/500
                 </small>
               </div>
@@ -142,7 +142,7 @@ export function ImageGenerator() {
             <button
               onClick={generateImage}
               disabled={loading || !prompt.trim()}
-              className="w-full bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 text-white py-3 sm:py-4 px-6 sm:px-8 rounded-lg sm:rounded-xl font-bold text-sm sm:text-base lg:text-lg disabled:opacity-50 disabled:cursor-not-allowed hover:from-purple-700 hover:via-blue-700 hover:to-indigo-700 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl active:scale-95"
+              className="w-full bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 dark:from-purple-500 dark:via-blue-500 dark:to-indigo-500 text-white py-3 sm:py-4 px-6 sm:px-8 rounded-lg sm:rounded-xl font-bold text-sm sm:text-base lg:text-lg disabled:opacity-50 disabled:cursor-not-allowed hover:from-purple-700 hover:via-blue-700 hover:to-indigo-700 dark:hover:from-purple-600 dark:hover:via-blue-600 dark:hover:to-indigo-600 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl active:scale-95 shadow-lg"
             >
               {loading ? (
                 <span className="flex items-center justify-center">
@@ -160,7 +160,7 @@ export function ImageGenerator() {
 
           {/* Example Prompts */}
           <div className="mb-6 sm:mb-8">
-            <h3 className="text-base sm:text-lg lg:text-xl font-semibold mb-3 sm:mb-4 text-gray-700 flex items-center">
+            <h3 className="text-base sm:text-lg lg:text-xl font-semibold mb-3 sm:mb-4 text-gray-700 dark:text-gray-200 flex items-center">
               💡 Try these ideas:
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
@@ -168,7 +168,7 @@ export function ImageGenerator() {
                 <button
                   key={index}
                   onClick={() => setPrompt(example)}
-                  className="text-left p-3 sm:p-4 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-purple-50 hover:to-blue-50 rounded-lg transition-all duration-200 text-gray-700 hover:text-purple-700 border border-gray-200 hover:border-purple-200 transform hover:scale-[1.02] active:scale-95"
+                  className="text-left p-3 sm:p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 hover:from-purple-50 hover:to-blue-50 dark:hover:from-purple-800/50 dark:hover:to-blue-800/50 rounded-lg transition-all duration-200 text-gray-700 dark:text-gray-200 hover:text-purple-700 dark:hover:text-purple-300 border border-gray-200 dark:border-gray-600 hover:border-purple-200 dark:hover:border-purple-500 transform hover:scale-[1.02] active:scale-95 shadow-sm hover:shadow-md"
                   disabled={loading}
                 >
                   <span className="text-xs sm:text-sm font-medium">{example}</span>
@@ -179,15 +179,15 @@ export function ImageGenerator() {
 
           {/* Error Display */}
           {error && (
-            <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-red-50 border-l-4 border-red-400 rounded-lg">
+            <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-red-50 dark:bg-red-900/30 border-l-4 border-red-400 dark:border-red-500 rounded-lg">
               <div className="flex">
                 <div className="flex-shrink-0">
-                  <span className="text-red-400 text-lg sm:text-xl">⚠️</span>
+                  <span className="text-red-400 dark:text-red-300 text-lg sm:text-xl">⚠️</span>
                 </div>
                 <div className="ml-3">
-                  <p className="text-red-700 font-medium text-sm sm:text-base">{error}</p>
+                  <p className="text-red-700 dark:text-red-300 font-medium text-sm sm:text-base">{error}</p>
                   {error.includes('Model is loading') && (
-                    <p className="text-red-600 text-xs sm:text-sm mt-1">
+                    <p className="text-red-600 dark:text-red-400 text-xs sm:text-sm mt-1">
                       The AI model is starting up. Please wait a minute and try again.
                     </p>
                   )}
@@ -204,7 +204,7 @@ export function ImageGenerator() {
                   <img
                     src={generatedImage.url}
                     alt={generatedImage.prompt}
-                    className="w-full h-auto rounded-xl sm:rounded-2xl shadow-xl sm:shadow-2xl transition-transform duration-300 group-hover:scale-105"
+                    className="w-full h-auto rounded-xl sm:rounded-2xl shadow-xl sm:shadow-2xl transition-transform duration-300 group-hover:scale-105 border border-gray-200/50 dark:border-gray-700/50"
                     onError={() => setError('Failed to load generated image')}
                   />
                   <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 rounded-xl sm:rounded-2xl transition-opacity duration-300"></div>
@@ -214,7 +214,7 @@ export function ImageGenerator() {
               <div className="flex flex-col sm:flex-row justify-center items-center space-y-3 sm:space-y-0 sm:space-x-4">
                 <button
                   onClick={downloadImage}
-                  className="w-full sm:w-auto px-6 sm:px-8 py-3 bg-green-600 text-white rounded-lg sm:rounded-xl hover:bg-green-700 transition-colors duration-200 font-semibold flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 text-sm sm:text-base"
+                  className="w-full sm:w-auto px-6 sm:px-8 py-3 bg-green-600 dark:bg-green-500 text-white rounded-lg sm:rounded-xl hover:bg-green-700 dark:hover:bg-green-600 transition-colors duration-200 font-semibold flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 text-sm sm:text-base"
                 >
                   <span>📥</span>
                   <span>Download</span>
@@ -224,18 +224,18 @@ export function ImageGenerator() {
                     setGeneratedImage(null);
                     setError(null);
                   }}
-                  className="w-full sm:w-auto px-6 sm:px-8 py-3 bg-gray-600 text-white rounded-lg sm:rounded-xl hover:bg-gray-700 transition-colors duration-200 font-semibold flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 text-sm sm:text-base"
+                  className="w-full sm:w-auto px-6 sm:px-8 py-3 bg-gray-600 dark:bg-gray-500 text-white rounded-lg sm:rounded-xl hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-200 font-semibold flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 text-sm sm:text-base"
                 >
                   <span>🗑️</span>
                   <span>Clear</span>
                 </button>
               </div>
 
-              <div className="text-center bg-gray-50 p-3 sm:p-4 rounded-lg sm:rounded-xl">
-                <p className="text-gray-600 italic text-sm sm:text-base lg:text-lg">
+              <div className="text-center bg-gray-50 dark:bg-gray-700/50 border border-gray-200/50 dark:border-gray-600/50 p-3 sm:p-4 rounded-lg sm:rounded-xl">
+                <p className="text-gray-600 dark:text-gray-300 italic text-sm sm:text-base lg:text-lg">
                   {`"${generatedImage.prompt}"`}
                 </p>
-                <p className="text-gray-500 text-xs sm:text-sm mt-2">
+                <p className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm mt-2">
                   Generated on {new Date(generatedImage.timestamp).toLocaleDateString()} at {new Date(generatedImage.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                 </p>
               </div>
@@ -243,7 +243,7 @@ export function ImageGenerator() {
           )}
 
           {/* Footer */}
-          <div className="mt-8 sm:mt-12 text-center text-gray-500 text-xs sm:text-sm">
+          <div className="mt-8 sm:mt-12 text-center text-gray-500 dark:text-gray-400 text-xs sm:text-sm">
             <p>🔥 Powered by Hugging Face • 1000 free generations per month</p>
           </div>
         </div>
