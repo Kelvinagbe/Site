@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
@@ -11,16 +12,16 @@ import Dashboard from './components/Dashboard';
 import WallpaperApp from './components/WallpaperApp';
 import PDFConverter from './components/PDFConverter';
 import Settings from './components/Settings';
-import { HomeIcon, BrainIcon, ImageIcon, DocumentIcon, LightningIcon } from './components/icons';
+import { HomeIcon, BrainIcon, ImageIcon, DocumentIcon } from './components/icons';
 
-// Extend the Window interface
+// Global window interface
 declare global {
   interface Window {
     setActiveApp?: (appId: string) => void;
   }
 }
 
-// Simplified Icons
+// Icons
 const MenuIcon = ({ className }: { className?: string }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -107,9 +108,9 @@ export default function ToolsPage() {
   const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark');
 
   return (
-    <div className="h-screen bg-white dark:bg-gray-900 flex flex-col overflow-hidden">
+    <div className="h-screen flex flex-col bg-white dark:bg-gray-900">
       
-      {/* Slide-out Menu */}
+      {/* Slide-out Menu - Fixed position, doesn't affect scrolling */}
       {menuOpen && (
         <>
           <div className="fixed inset-0 bg-black/50 z-50" onClick={() => setMenuOpen(false)} />
@@ -146,13 +147,17 @@ export default function ToolsPage() {
         </>
       )}
 
-      {/* Top Navigation Bar */}
-      <nav className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
-        {/* Left: Logo & Current App */}
-        <div className="flex items-center space-x-4">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <LightningIcon className="w-5 h-5 text-white" />
-          </div>
+      {/* Fixed Top Navigation Bar */}
+      <nav className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm">
+        {/* Left: Favicon & Current App */}
+        <div className="flex items-center space-x-3">
+          <Image 
+            src="/favicon.ico" 
+            alt="Tools Hub" 
+            width={24} 
+            height={24}
+            className="w-6 h-6"
+          />
           <div className="hidden sm:block">
             <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
               {currentApp?.name || 'Tools Hub'}
@@ -187,13 +192,58 @@ export default function ToolsPage() {
         </div>
       </nav>
 
-      {/* Main Content Area */}
-      <main className={`flex-1 overflow-hidden ${isFullscreen ? '' : 'bg-gray-50 dark:bg-gray-900'}`}>
-        {ActiveComponent && <ActiveComponent />}
-      </main>
+      {/* Main Content Container - Scrollable */}
+      <div className="flex flex-1 pt-16 overflow-hidden">
+        
+        {/* Desktop Sidebar - Fixed, doesn't scroll */}
+        <aside className="hidden sm:block fixed left-0 top-16 bottom-16 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
+          <div className="p-4 space-y-2">
+            {allApps.map(({ id, name, icon: IconComponent }) => (
+              <button
+                key={id}
+                onClick={() => setActiveApp(id)}
+                className={`w-full flex items-center p-3 rounded-lg transition-colors ${
+                  activeApp === id 
+                    ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
+                    : 'hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                }`}
+              >
+                <IconComponent className="w-5 h-5 mr-3" />
+                <span className="font-medium">{name}</span>
+              </button>
+            ))}
+          </div>
 
-      {/* Bottom Navigation (Mobile) */}
-      <nav className="sm:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+          {/* User Info - Fixed at bottom of sidebar */}
+          <div className="absolute bottom-4 left-4 right-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+            <div className="flex items-center">
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mr-3">
+                <span className="text-sm font-medium text-white">
+                  {user.displayName?.charAt(0) || user.email?.charAt(0)?.toUpperCase()}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                  {user.displayName || 'User'}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                  {user.email}
+                </p>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        {/* Main Scrollable Content Area */}
+        <main className={`flex-1 overflow-y-auto sm:ml-64 ${isFullscreen ? '' : 'bg-gray-50 dark:bg-gray-900'} ${isFullscreen ? 'pb-0' : 'pb-16 sm:pb-0'}`}>
+          <div className={isFullscreen ? 'h-full' : 'min-h-full'}>
+            {ActiveComponent && <ActiveComponent />}
+          </div>
+        </main>
+      </div>
+
+      {/* Fixed Bottom Navigation (Mobile) */}
+      <nav className="fixed bottom-0 left-0 right-0 sm:hidden z-40 border-t border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm">
         <div className="flex">
           {mainApps.map(({ id, name, icon: IconComponent }) => (
             <button
@@ -211,54 +261,6 @@ export default function ToolsPage() {
           ))}
         </div>
       </nav>
-
-      {/* Desktop Sidebar (Hidden on mobile) */}
-      <aside className="hidden sm:block fixed left-0 top-16 bottom-0 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 p-4">
-        <div className="space-y-2">
-          {allApps.map(({ id, name, icon: IconComponent }) => (
-            <button
-              key={id}
-              onClick={() => setActiveApp(id)}
-              className={`w-full flex items-center p-3 rounded-lg transition-colors ${
-                activeApp === id 
-                  ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
-                  : 'hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
-              }`}
-            >
-              <IconComponent className="w-5 h-5 mr-3" />
-              <span className="font-medium">{name}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* User Info */}
-        <div className="absolute bottom-4 left-4 right-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-          <div className="flex items-center">
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mr-3">
-              <span className="text-sm font-medium text-white">
-                {user.displayName?.charAt(0) || user.email?.charAt(0)?.toUpperCase()}
-              </span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                {user.displayName || 'User'}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                {user.email}
-              </p>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      {/* Content offset for desktop sidebar */}
-      <style jsx>{`
-        @media (min-width: 640px) {
-          main {
-            margin-left: 256px;
-          }
-        }
-      `}</style>
     </div>
   );
 }
