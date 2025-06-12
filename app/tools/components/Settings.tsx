@@ -18,6 +18,12 @@ const LockIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const PaletteIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM7 3C5.239 3 4.239 4.216 4.239 6s1.239 3 3.239 3 3.239-1.216 3.239-3S9.239 3 7.239 3z" />
+  </svg>
+);
+
 // Theme options
 const themes = [
   { id: 'light', name: 'Light', preview: 'bg-white border-2 border-slate-200' },
