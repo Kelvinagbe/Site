@@ -27,14 +27,53 @@ const LoadingContext = React.createContext<{
 
 export const useLoading = () => React.useContext(LoadingContext);
 
-// Enhanced Loader Component
+// Skeleton Components
+const SkeletonLoader = () => (
+  <div className="animate-pulse p-6">
+    <div className="space-y-6">
+      {/* Header skeleton */}
+      <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-lg w-1/3"></div>
+      
+      {/* Content blocks */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className="bg-white dark:bg-gray-800 rounded-lg p-4 space-y-3">
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+            <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+            <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
+          </div>
+        ))}
+      </div>
+      
+      {/* List skeleton */}
+      <div className="space-y-3">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+            <div className="flex-1 space-y-2">
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
+// Content wrapper with skeleton
+const ContentWrapper = ({ isLoading, children }: { isLoading: boolean; children: React.ReactNode }) => {
+  if (isLoading) return <SkeletonLoader />;
+  return <>{children}</>;
+};
+
+// Enhanced Loader Component (simplified)
 const AppLoader = ({ isVisible, text = "Loading..." }: { isVisible: boolean; text?: string }) => {
   if (!isVisible) return null;
 
   return (
     <div className="fixed inset-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm z-50 flex items-center justify-center">
       <div className="flex flex-col items-center space-y-4">
-        {/* Animated Logo */}
         <div className="relative">
           <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center animate-pulse">
             <Image 
@@ -45,11 +84,8 @@ const AppLoader = ({ isVisible, text = "Loading..." }: { isVisible: boolean; tex
               className="w-8 h-8 animate-spin"
             />
           </div>
-          {/* Rotating border */}
           <div className="absolute inset-0 border-4 border-transparent border-t-blue-500 rounded-2xl animate-spin"></div>
         </div>
-        
-        {/* Loading text */}
         <div className="text-center">
           <p className="text-lg font-medium text-gray-900 dark:text-white mb-2">{text}</p>
           <div className="flex space-x-1">
@@ -147,14 +183,14 @@ const CloseIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-// App configurations
+// App configurations - AI Assistant moved to menu
 const mainApps = [
   { id: "home", name: "Dashboard", icon: HomeIcon, component: Dashboard },
   { id: "wallpaper", name: "Wallpapers", icon: ImageIcon, component: WallpaperApp },
-  { id: "ai-assistant", name: "AI Assistant", icon: BrainIcon, component: AIA },
 ];
 
 const menuApps = [
+  { id: "ai-assistant", name: "AI Assistant", icon: BrainIcon, component: AIA },
   { id: "pdf-converter", name: "PDF Converter", icon: DocumentIcon, component: PDFConverter },
   { id: "settings", name: "Settings", icon: SettingsIcon, component: Settings },
 ];
@@ -168,6 +204,7 @@ export default function ToolsPage() {
   const [activeApp, setActiveApp] = useState("home");
   const [menuOpen, setMenuOpen] = useState(false);
   const [appLoading, setAppLoading] = useState(false);
+  const [contentLoading, setContentLoading] = useState(false); // New: for skeleton loading
   const [loadingText, setLoadingText] = useState("Loading...");
   const router = useRouter();
   const { theme, setTheme } = useTheme();
@@ -184,9 +221,14 @@ export default function ToolsPage() {
       if (user) {
         setUser(user);
         setAuthLoading(false);
-        setIsLoading(true);
-        const timer = setTimeout(() => setIsLoading(false), 2500);
-        return () => clearTimeout(timer);
+        // Check if splash has been shown before
+        const splashShown = sessionStorage.getItem('splashShown');
+        if (!splashShown) {
+          setIsLoading(true);
+          sessionStorage.setItem('splashShown', 'true');
+          const timer = setTimeout(() => setIsLoading(false), 2500);
+          return () => clearTimeout(timer);
+        }
       } else {
         router.push('/login');
       }
@@ -197,11 +239,11 @@ export default function ToolsPage() {
   // Global app setter with loading
   useEffect(() => {
     window.setActiveApp = (appId: string) => {
-      setGlobalLoading(true, "Loading app...");
+      setContentLoading(true);
       setTimeout(() => {
         setActiveApp(appId);
-        setGlobalLoading(false);
-      }, 800); // Simulate app loading time
+        setContentLoading(false);
+      }, 800);
     };
     return () => { delete window.setActiveApp; };
   }, []);
@@ -222,14 +264,14 @@ export default function ToolsPage() {
 
   const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark');
 
-  // Handle app switching with loading
+  // Handle app switching with skeleton loading
   const handleAppSwitch = (appId: string) => {
     if (appId === activeApp) return;
-    
-    setGlobalLoading(true, "Switching apps...");
+
+    setContentLoading(true);
     setTimeout(() => {
       setActiveApp(appId);
-      setGlobalLoading(false);
+      setContentLoading(false);
     }, 600);
   };
 
@@ -246,16 +288,15 @@ export default function ToolsPage() {
       setLoading: setGlobalLoading 
     }}>
       <div className="h-screen flex flex-col bg-white dark:bg-gray-900">
-        
+
         {/* Global App Loader */}
         <AppLoader isVisible={appLoading} text={loadingText} />
-        
-        {/* Slide-out Menu - Fixed position, doesn't affect scrolling */}
+
+        {/* Slide-out Menu */}
         {menuOpen && (
           <>
             <div className="fixed inset-0 bg-black/50 z-50" onClick={() => setMenuOpen(false)} />
             <div className="fixed inset-y-0 right-0 w-80 bg-white dark:bg-gray-800 shadow-2xl z-50 flex flex-col">
-              {/* Menu Header */}
               <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Tools</h2>
                 <button 
@@ -265,13 +306,12 @@ export default function ToolsPage() {
                   <CloseIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                 </button>
               </div>
-              
-              {/* Menu Items */}
+
               <div className="flex-1 p-4 space-y-2">
                 {menuApps.map(({ id, name, icon: IconComponent }) => (
                   <LoadingButton
                     key={id}
-                    loading={appLoading && activeApp === id}
+                    loading={contentLoading && activeApp === id}
                     onClick={() => handleMenuItemClick(id)}
                     className={`w-full flex items-center p-4 rounded-lg transition-colors ${
                       activeApp === id 
@@ -290,7 +330,6 @@ export default function ToolsPage() {
 
       {/* Fixed Top Navigation Bar */}
       <nav className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm">
-        {/* Left: Favicon & Current App */}
         <div className="flex items-center space-x-3">
           <Image 
             src="/favicon.ico" 
@@ -306,7 +345,6 @@ export default function ToolsPage() {
           </div>
         </div>
 
-        {/* Right: Theme Toggle, Menu, User Avatar */}
         <div className="flex items-center space-x-3">
           <button
             onClick={toggleTheme}
@@ -317,7 +355,7 @@ export default function ToolsPage() {
               <MoonIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
             }
           </button>
-          
+
           <button
             onClick={() => setMenuOpen(true)}
             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
@@ -333,16 +371,16 @@ export default function ToolsPage() {
         </div>
       </nav>
 
-      {/* Main Content Container - Scrollable */}
+      {/* Main Content Container */}
       <div className="flex flex-1 pt-16 overflow-hidden">
-        
-        {/* Desktop Sidebar - Fixed, doesn't scroll */}
+
+        {/* Desktop Sidebar */}
         <aside className="hidden sm:block fixed left-0 top-16 bottom-16 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
           <div className="p-4 space-y-2">
             {allApps.map(({ id, name, icon: IconComponent }) => (
               <LoadingButton
                 key={id}
-                loading={appLoading && activeApp === id}
+                loading={contentLoading && activeApp === id}
                 onClick={() => handleAppSwitch(id)}
                 className={`w-full flex items-center p-3 rounded-lg transition-colors ${
                   activeApp === id 
@@ -356,7 +394,6 @@ export default function ToolsPage() {
             ))}
           </div>
 
-          {/* User Info - Fixed at bottom of sidebar */}
           <div className="absolute bottom-4 left-4 right-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
             <div className="flex items-center">
               <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mr-3">
@@ -376,29 +413,31 @@ export default function ToolsPage() {
           </div>
         </aside>
 
-        {/* Main Scrollable Content Area */}
+        {/* Main Content with Skeleton Loading */}
         <main className={`flex-1 overflow-y-auto sm:ml-64 ${isFullscreen ? '' : 'bg-gray-50 dark:bg-gray-900'} ${isFullscreen ? 'pb-0' : 'pb-16 sm:pb-0'}`}>
           <div className={isFullscreen ? 'h-full' : 'min-h-full'}>
-            {ActiveComponent && <ActiveComponent />}
+            <ContentWrapper isLoading={contentLoading}>
+              {ActiveComponent && <ActiveComponent />}
+            </ContentWrapper>
           </div>
         </main>
       </div>
 
-      {/* Fixed Bottom Navigation (Mobile) */}
+      {/* Bottom Navigation (Mobile) - Only main apps */}
       <nav className="fixed bottom-0 left-0 right-0 sm:hidden z-40 border-t border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm">
         <div className="flex">
           {mainApps.map(({ id, name, icon: IconComponent }) => (
             <button
               key={id}
               onClick={() => handleAppSwitch(id)}
-              disabled={appLoading}
+              disabled={contentLoading}
               className={`flex-1 flex flex-col items-center py-3 px-2 transition-colors relative ${
                 activeApp === id 
                   ? 'text-blue-600 dark:text-blue-400' 
                   : 'text-gray-500 dark:text-gray-400'
-              } ${appLoading ? 'opacity-70' : ''}`}
+              } ${contentLoading ? 'opacity-70' : ''}`}
             >
-              {appLoading && activeApp === id ? (
+              {contentLoading && activeApp === id ? (
                 <div className="w-6 h-6 mb-1 flex items-center justify-center">
                   <MiniLoader size="sm" />
                 </div>
