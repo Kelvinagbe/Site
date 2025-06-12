@@ -77,9 +77,14 @@ export const useLoading = () => {
 export const withLoading = <P extends object>(
   Component: React.ComponentType<P>
 ) => {
-  return (props: P) => (
+  const WrappedComponent = (props: P) => (
     <LoadingProvider>
       <Component {...props} />
     </LoadingProvider>
   );
+  
+  // Add display name for better debugging
+  WrappedComponent.displayName = `withLoading(${Component.displayName || Component.name || 'Component'})`;
+  
+  return WrappedComponent;
 };
