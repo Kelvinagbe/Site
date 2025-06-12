@@ -25,7 +25,7 @@ const LoadingContext = React.createContext<{
   setLoading: () => {},
 });
 
-export const useLoading = () => React.useContext(LoadingContext);
+const useLoading = () => React.useContext(LoadingContext);
 
 // Skeleton Components
 const SkeletonLoader = () => (
