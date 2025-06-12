@@ -34,7 +34,7 @@ export default function LoginPage() {
 
     try {
       await signInWithEmailAndPassword(auth, formState.email, formState.password);
-      router.push('/dashboard');
+      router.push('/tools');
     } catch (error: any) {
       updateFormState({ error: error.message || 'An error occurred during sign in' });
     } finally {
@@ -189,7 +189,7 @@ export default function LoginPage() {
 
             <div className="text-center">
               <p className="text-sm text-gray-600">
-                Don't have an account?{' '}
+                Don&apos;t have an account?{' '}
                 <a href="#" className="font-medium text-indigo-600 hover:text-indigo-500 transition duration-200">
                   Sign up for free
                 </a>
