@@ -14,9 +14,10 @@ export function ImageGenerator() {
   const [loading, setLoading] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<GeneratedImage | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isWatermarking, setIsWatermarking] = useState(false);
 
   // Your website details - replace with actual values
-  const websiteName = "Apexion"; // Replace with your website name
+  const websiteName = "AICreator"; // Replace with your website name
   const faviconUrl = "/favicon.ico"; // Replace with your favicon path
 
   const examplePrompts = [
@@ -82,8 +83,20 @@ export function ImageGenerator() {
       const data = await response.json();
 
       if (data.success) {
+        setIsWatermarking(true);
+        
+        // Add watermark to the generated image
+        let watermarkedImageUrl = data.imageUrl;
+        
+        try {
+          watermarkedImageUrl = await addWatermarkToImage(data.imageUrl);
+        } catch (error) {
+          console.error('Failed to add watermark to generated image:', error);
+          // Continue with original image if watermarking fails
+        }
+
         const imageData: GeneratedImage = {
-          url: data.imageUrl,
+          url: watermarkedImageUrl,
           prompt: prompt,
           timestamp: Date.now(),
         };
@@ -96,6 +109,7 @@ export function ImageGenerator() {
 
         setGeneratedImage(imageData);
         setError(null);
+        setIsWatermarking(false);
       } else {
         setError(data.error || 'Failed to generate image');
       }
@@ -107,29 +121,87 @@ export function ImageGenerator() {
     }
   };
 
+  // Function to add watermark to image
+  const addWatermarkToImage = (imageUrl: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        // Set canvas size to match image
+        canvas.width = img.width;
+        canvas.height = img.height;
+        
+        // Draw the original image
+        ctx!.drawImage(img, 0, 0);
+        
+        // Configure watermark styling
+        const fontSize = Math.max(16, Math.min(img.width / 25, img.height / 25));
+        ctx!.font = `bold ${fontSize}px Arial, sans-serif`;
+        ctx!.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx!.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx!.lineWidth = 2;
+        ctx!.textAlign = 'right';
+        ctx!.textBaseline = 'bottom';
+        
+        // Position watermark at bottom right
+        const padding = fontSize * 0.5;
+        const x = img.width - padding;
+        const y = img.height - padding;
+        
+        // Draw text with stroke (outline) and fill
+        const watermarkText = websiteName;
+        ctx!.strokeText(watermarkText, x, y);
+        ctx!.fillText(watermarkText, x, y);
+        
+        // Add favicon if available
+        const favicon = new Image();
+        favicon.crossOrigin = 'anonymous';
+        favicon.onload = () => {
+          const faviconSize = fontSize * 1.2;
+          ctx!.drawImage(
+            favicon, 
+            x - ctx!.measureText(watermarkText).width - faviconSize - (padding * 0.5), 
+            y - faviconSize + (padding * 0.2), 
+            faviconSize, 
+            faviconSize
+          );
+          resolve(canvas.toDataURL('image/png'));
+        };
+        favicon.onerror = () => {
+          // If favicon fails to load, just resolve with text watermark
+          resolve(canvas.toDataURL('image/png'));
+        };
+        favicon.src = faviconUrl;
+      };
+      
+      img.onerror = () => reject(new Error('Failed to load image'));
+      img.src = imageUrl;
+    });
+  };
+
   const downloadImage = async () => {
     if (!generatedImage) return;
 
     try {
-      if (generatedImage.url.startsWith('data:')) {
-        const link = document.createElement('a');
-        link.href = generatedImage.url;
-        link.download = `ai-image-${generatedImage.timestamp}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      } else {
-        const response = await fetch(generatedImage.url);
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `ai-image-${generatedImage.timestamp}.png`;
-        document.body.appendChild(link);
-        link.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(link);
+      let imageUrl = generatedImage.url;
+      
+      // Add watermark to the image before downloading
+      try {
+        imageUrl = await addWatermarkToImage(generatedImage.url);
+      } catch (error) {
+        console.error('Failed to add watermark:', error);
+        // Continue with original image if watermarking fails
       }
+
+      const link = document.createElement('a');
+      link.href = imageUrl;
+      link.download = `${websiteName.toLowerCase()}-ai-image-${generatedImage.timestamp}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } catch (err) {
       setError('Failed to download image');
     }
@@ -193,13 +265,13 @@ export function ImageGenerator() {
                 disabled={loading || !prompt.trim()}
                 className="w-full bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 dark:from-purple-500 dark:via-blue-500 dark:to-indigo-500 text-white py-4 px-8 rounded-xl font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed hover:from-purple-700 hover:via-blue-700 hover:to-indigo-700 dark:hover:from-purple-600 dark:hover:via-blue-600 dark:hover:to-indigo-600 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl active:scale-95 shadow-lg"
               >
-                {loading ? (
+                {(loading || isWatermarking) ? (
                   <span className="flex items-center justify-center">
                     <svg className="animate-spin -ml-1 mr-3 h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Generating... (30-60s)
+                    {loading ? 'Generating... (30-60s)' : 'Adding watermark...'}
                   </span>
                 ) : (
                   'Generate Image ✨'
