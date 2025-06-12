@@ -9,6 +9,7 @@ import AIA from './components/AIAssistant';
 import Dashboard from './components/Dashboard';
 import WallpaperApp from './components/WallpaperApp';
 import PDFConverter from './components/PDFConverter';
+import Settings from './components/Settings';
 import { HomeIcon, BrainIcon, ImageIcon, DocumentIcon, LightningIcon } from './components/icons';
 
 // Extend the Window interface
@@ -59,7 +60,7 @@ const menuApps = [
   { id: "pdf-converter", name: "PDF Converter", icon: DocumentIcon, component: PDFConverter },
   { id: "calculator", name: "Calculator", icon: CalculatorIcon, component: null },
   { id: "cloud-storage", name: "Cloud Storage", icon: CloudIcon, component: null },
-  { id: "settings", name: "Settings", icon: SettingsIcon, component: null },
+  { id: "settings", name: "Settings", icon: SettingsIcon, component: Settings },
 ];
 
 // All apps combined
@@ -174,7 +175,7 @@ export default function ToolsPage() {
                   : "text-slate-600 hover:text-slate-800 hover:bg-slate-100"
               }`}
               onClick={() => handleMenuItemClick(id)}
-              disabled={!menuApps.find(app => app.id === id)?.component && id !== 'pdf-converter'}
+              disabled={!menuApps.find(app => app.id === id)?.component && !['pdf-converter', 'settings'].includes(id)}
             >
               <div className={`w-8 h-8 rounded-lg flex items-center justify-center mr-3 transition-all duration-300 ${
                 activeApp === id 
@@ -185,7 +186,7 @@ export default function ToolsPage() {
               </div>
               <div className="flex-1 text-left">
                 <span className="font-medium block">{name}</span>
-                {!menuApps.find(app => app.id === id)?.component && id !== 'pdf-converter' && (
+                {!menuApps.find(app => app.id === id)?.component && !['pdf-converter', 'settings'].includes(id) && (
                   <span className="text-xs opacity-60">Coming Soon</span>
                 )}
               </div>
