@@ -15,19 +15,6 @@ import PDFConverter from './components/PDFConverter';
 import Settings from './components/Settings';
 import { HomeIcon, BrainIcon, ImageIcon, DocumentIcon } from './components/icons';
 
-// Loading Context
-const LoadingContext = React.createContext<{
-  isLoading: boolean;
-  loadingText: string;
-  setLoading: (loading: boolean, text?: string) => void;
-}>({
-  isLoading: false,
-  loadingText: '',
-  setLoading: () => {},
-});
-
-const useLoading = () => React.useContext(LoadingContext);
-
 // Skeleton Components
 const SkeletonLoader = () => (
   <div className="animate-pulse p-6">
