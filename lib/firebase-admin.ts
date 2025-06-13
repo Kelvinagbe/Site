@@ -48,6 +48,9 @@ try {
 // Export the database instance
 export { database };
 
+// Export as adminDb for backward compatibility
+export { database as adminDb };
+
 // Export app for other potential uses
 export { app };
 
