@@ -117,11 +117,11 @@ const LoadingButton = ({
     {...props}
   >
     {loading && (
-      <div className="absolute left-2 sm:left-3">
+      <div className="absolute left-3">
         <MiniLoader size="sm" />
       </div>
     )}
-    <span className={loading ? 'ml-4 sm:ml-6' : ''}>{children}</span>
+    <span className={loading ? 'ml-6' : ''}>{children}</span>
   </button>
 );
 
@@ -201,7 +201,7 @@ const SidebarSection = ({
   onToggle?: () => void;
   isCollapsible?: boolean;
 }) => (
-  <div className="mb-4">
+  <div className="mb-6">
     {/* Section Header */}
     {isCollapsible && onToggle ? (
       <button
@@ -221,26 +221,20 @@ const SidebarSection = ({
     <div className={`transition-all duration-300 ease-in-out ${
       isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
     }`}>
-      <div className="space-y-1">
+      <div className="space-y-1 px-2">
         {apps.map(({ id, name, icon: IconComponent }) => (
           <LoadingButton
             key={id}
             loading={isContentLoading && activeApp === id}
             onClick={() => onAppSwitch(id)}
-            className={`w-full flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 text-sm group ${
+            className={`w-full flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 text-sm font-medium ${
               activeApp === id 
-                ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 shadow-sm' 
-                : 'hover:bg-gray-50 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
+                ? 'bg-blue-600 text-white shadow-sm' 
+                : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
             }`}
           >
-            <div className={`flex items-center justify-center w-8 h-8 rounded-md mr-3 flex-shrink-0 transition-colors ${
-              activeApp === id 
-                ? 'bg-blue-100 dark:bg-blue-800/50' 
-                : 'bg-gray-100 dark:bg-gray-600 group-hover:bg-gray-200 dark:group-hover:bg-gray-500'
-            }`}>
-              <IconComponent className="w-4 h-4" />
-            </div>
-            <span className="font-medium truncate">{name}</span>
+            <IconComponent className="w-5 h-5 mr-3 flex-shrink-0" />
+            <span className="truncate">{name}</span>
           </LoadingButton>
         ))}
       </div>
@@ -330,11 +324,11 @@ function ToolsPageContent() {
     <div className="h-screen flex flex-col bg-white dark:bg-gray-900">
       <AppLoader isVisible={isAppLoading} text={loadingText} />
 
-      {/* Slide-out Menu */}
+      {/* Mobile Menu Overlay */}
       {menuOpen && (
         <>
-          <div className="fixed inset-0 bg-black/50 z-50 transition-opacity" onClick={() => setMenuOpen(false)} />
-          <div className="fixed inset-y-0 right-0 w-80 bg-white dark:bg-gray-800 shadow-2xl z-50 flex flex-col transform transition-transform">
+          <div className="fixed inset-0 bg-black/50 z-50 transition-opacity sm:hidden" onClick={() => setMenuOpen(false)} />
+          <div className="fixed inset-y-0 right-0 w-80 bg-white dark:bg-gray-800 shadow-2xl z-50 flex flex-col transform transition-transform sm:hidden">
             <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Menu</h2>
               <button 
@@ -380,24 +374,18 @@ function ToolsPageContent() {
               />
 
               {/* Settings Section */}
-              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 px-2">
                 <LoadingButton
                   loading={isContentLoading && activeApp === 'settings'}
                   onClick={() => handleAppSwitch('settings')}
-                  className={`w-full flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 text-sm group ${
+                  className={`w-full flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 text-sm font-medium ${
                     activeApp === 'settings'
-                      ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 shadow-sm' 
-                      : 'hover:bg-gray-50 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
+                      ? 'bg-blue-600 text-white shadow-sm' 
+                      : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
                   }`}
                 >
-                  <div className={`flex items-center justify-center w-8 h-8 rounded-md mr-3 flex-shrink-0 transition-colors ${
-                    activeApp === 'settings'
-                      ? 'bg-blue-100 dark:bg-blue-800/50' 
-                      : 'bg-gray-100 dark:bg-gray-600 group-hover:bg-gray-200 dark:group-hover:bg-gray-500'
-                  }`}>
-                    <SettingsIcon className="w-4 h-4" />
-                  </div>
-                  <span className="font-medium truncate">Settings</span>
+                  <SettingsIcon className="w-5 h-5 mr-3 flex-shrink-0" />
+                  <span className="truncate">Settings</span>
                 </LoadingButton>
               </div>
             </div>
@@ -405,7 +393,7 @@ function ToolsPageContent() {
         </>
       )}
 
-      {/* Fixed Top Navigation Bar */}
+      {/* Fixed Top Navigation Bar - Simplified */}
       <nav className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm">
         <div className="flex items-center space-x-3">
           <Image 
@@ -421,9 +409,10 @@ function ToolsPageContent() {
         </div>
 
         <div className="flex items-center space-x-3">
+          {/* Mobile Menu Button - Only visible on mobile */}
           <button
             onClick={() => setMenuOpen(true)}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors sm:hidden"
           >
             <MenuIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
           </button>
@@ -441,7 +430,7 @@ function ToolsPageContent() {
 
       {/* Main Content Container */}
       <div className="flex flex-1 pt-16 overflow-hidden">
-        {/* Desktop Sidebar */}
+        {/* Desktop Sidebar - Professional Design */}
         <aside className="hidden sm:block fixed left-0 top-16 bottom-0 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
           <div className="p-4 pb-20">
             {/* Main Apps */}
@@ -478,29 +467,22 @@ function ToolsPageContent() {
             />
 
             {/* Settings Section */}
-            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 px-2">
               <LoadingButton
                 loading={isContentLoading && activeApp === 'settings'}
                 onClick={() => handleAppSwitch('settings')}
-                className={`w-full flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 text-sm group ${
+                className={`w-full flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 text-sm font-medium ${
                   activeApp === 'settings'
-                    ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 shadow-sm' 
-                    : 'hover:bg-gray-50 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
+                    ? 'bg-blue-600 text-white shadow-sm' 
+                    : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
                 }`}
               >
-                <div className={`flex items-center justify-center w-8 h-8 rounded-md mr-3 flex-shrink-0 transition-colors ${
-                  activeApp === 'settings'
-                    ? 'bg-blue-100 dark:bg-blue-800/50' 
-                    : 'bg-gray-100 dark:bg-gray-600 group-hover:bg-gray-200 dark:group-hover:bg-gray-500'
-                }`}>
-                  <SettingsIcon className="w-4 h-4" />
-                </div>
-                <span className="font-medium truncate">Settings</span>
+                <SettingsIcon className="w-5 h-5 mr-3 flex-shrink-0" />
+                <span className="truncate">Settings</span>
               </LoadingButton>
             </div>
           </div>
 
-          
           {/* User Profile Section - Fixed at bottom */}
           <div className="absolute bottom-0 left-0 right-0 p-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700">
             <div className="flex items-center">
@@ -531,7 +513,7 @@ function ToolsPageContent() {
         </main>
       </div>
 
-      {/* Bottom Navigation - Main apps + Menu */}
+  {/* Bottom Navigation - Main apps + Menu (Mobile Only) */}
       <nav className="fixed bottom-0 left-0 right-0 sm:hidden z-40 border-t border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm">
         <div className="flex">
           {mainApps.map(({ id, name, icon: IconComponent }) => (
