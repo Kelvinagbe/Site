@@ -181,10 +181,12 @@ const WallpaperGenerator = () => {
             {generatedImage && (
               <div className="space-y-4">
                 <div className="relative">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={generatedImage}
                     alt="Generated wallpaper"
                     className="w-full rounded-lg shadow-2xl border border-white/20"
+                    style={{ maxHeight: '600px', objectFit: 'contain' }}
                   />
                   <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm rounded-lg px-3 py-1">
                     <span className="text-white text-sm font-medium">{width} × {height}</span>
@@ -220,7 +222,7 @@ const WallpaperGenerator = () => {
               <li>• Include composition details (center, left, panoramic)</li>
             </ul>
             <ul className="space-y-2">
-              <li>• Try keywords like "vibrant", "serene", "dramatic"</li>
+              <li>• Try keywords like &ldquo;vibrant&rdquo;, &ldquo;serene&rdquo;, &ldquo;dramatic&rdquo;</li>
               <li>• Generation may take 30-60 seconds</li>
               <li>• Higher resolutions may be scaled down during generation</li>
             </ul>
