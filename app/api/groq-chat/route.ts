@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful AI assistant. Provide clear and helpful responses.'
+            content: 'your name is V0 You are a helpful AI assistant. Provide clear and helpful responses.'
           },
           ...messages
         ],
