@@ -1,22 +1,55 @@
 "use client";
 
-import React, { useState, useRef, useEffect, createContext, useContext } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Send, MessageCircle } from "lucide-react";
 
-// Theme Context
-interface ThemeContextType {
-  theme: 'light' | 'dark';
-  toggleTheme: () => void;
-}
-
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
-
+// Theme detection
 const useTheme = () => {
-  const context = useContext(ThemeContext);
-  if (!context) {
-    throw new Error('useTheme must be used within a ThemeProvider');
-  }
-  return context;
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+
+  useEffect(() => {
+    // Check for system theme preference
+    const checkTheme = () => {
+      const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const hasDocumentClass = document.documentElement.classList.contains('dark');
+      const bodyHasDark = document.body.classList.contains('dark');
+      
+      // Check multiple sources for theme
+      if (hasDocumentClass || bodyHasDark || isDark) {
+        setTheme('dark');
+      } else {
+        setTheme('light');
+      }
+    };
+
+    checkTheme();
+    
+    // Listen for changes
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    mediaQuery.addEventListener('change', checkTheme);
+    
+    // Watch for class changes on document
+    const observer = new MutationObserver(checkTheme);
+    observer.observe(document.documentElement, { 
+      attributes: true, 
+      attributeFilter: ['class'] 
+    });
+    observer.observe(document.body, { 
+      attributes: true, 
+      attributeFilter: ['class'] 
+    });
+
+    // Check periodically as fallback
+    const interval = setInterval(checkTheme, 1000);
+
+    return () => {
+      mediaQuery.removeEventListener('change', checkTheme);
+      observer.disconnect();
+      clearInterval(interval);
+    };
+  }, []);
+
+  return { theme };
 };
 
 interface Message {
@@ -48,7 +81,7 @@ const processText = (text: string, isDark: boolean): React.ReactNode[] => {
 
     return parts.map((part, index) => {
       if (part.startsWith('**') && part.endsWith('**')) {
-        return <strong key={index} className="font-semibold">{part.slice(2, -2)}</strong>;
+        return <strong key={index} className="font-bold text-lg">{part.slice(2, -2)}</strong>;
       }
       else if (part.startsWith('*') && part.endsWith('*') && !part.startsWith('**')) {
         return <em key={index} className="italic">{part.slice(1, -1)}</em>;
@@ -217,8 +250,6 @@ const FloatingParticles = () => {
   );
 };
 
-
-
 const ChatInterface = () => {
   const { theme } = useTheme();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -375,12 +406,25 @@ const ChatInterface = () => {
                     ) : (
                       <div className="flex items-start space-x-3">
                         <div className="flex-shrink-0 mt-1">
-                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold ${
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center overflow-hidden ${
                             theme === 'dark'
                               ? 'bg-gradient-to-r from-blue-500 to-purple-600 opacity-80'
                               : 'bg-gradient-to-r from-blue-500 to-purple-600'
                           }`}>
-                            AI
+                            <img 
+                              src="/favicon.ico" 
+                              alt="AI" 
+                              className="w-4 h-4"
+                              onError={(e) => {
+                                // Fallback to text if favicon fails to load
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                                const parent = target.parentElement;
+                                if (parent) {
+                                  parent.innerHTML = '<span class="text-white text-xs font-bold">AI</span>';
+                                }
+                              }}
+                            />
                           </div>
                         </div>
                         <div className="flex-1 min-w-0 max-w-[85%]">
@@ -395,12 +439,25 @@ const ChatInterface = () => {
                   <div className="group animate-in slide-in-from-bottom-4 duration-300">
                     <div className="flex items-start space-x-3">
                       <div className="flex-shrink-0 mt-1">
-                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold ${
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center overflow-hidden ${
                           theme === 'dark'
                             ? 'bg-gradient-to-r from-blue-500 to-purple-600 opacity-60'
                             : 'bg-gradient-to-r from-blue-500 to-purple-600 opacity-80'
                         }`}>
-                          AI
+                          <img 
+                            src="/favicon.ico" 
+                            alt="AI" 
+                            className="w-4 h-4"
+                            onError={(e) => {
+                              // Fallback to text if favicon fails to load
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              const parent = target.parentElement;
+                              if (parent) {
+                                parent.innerHTML = '<span class="text-white text-xs font-bold">AI</span>';
+                              }
+                            }}
+                          />
                         </div>
                       </div>
                       <div className="flex items-center space-x-3">
@@ -424,6 +481,7 @@ const ChatInterface = () => {
           </div>
         </div>
 
+        
         {/* Input Area */}
         <div className={`border-t backdrop-blur-md ${
           theme === 'dark' 
@@ -504,15 +562,5 @@ const ChatInterface = () => {
 };
 
 export default function PremiumAIChat() {
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
-
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
-  };
-
-  return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
-      <ChatInterface />
-    </ThemeContext.Provider>
-  );
+  return <ChatInterface />;
 }
