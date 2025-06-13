@@ -168,6 +168,13 @@ const mainApps = [
   { id: "wallpaper", name: "Wallpapers", icon: ImageIcon, component: WallpaperApp },
 ];
 
+// Bottom navigation apps (for mobile) - Dashboard, Wallpapers, AI Assistant
+const bottomNavApps = [
+  { id: "home", name: "Dashboard", icon: HomeIcon, component: Dashboard },
+  { id: "wallpaper", name: "Wallpapers", icon: ImageIcon, component: WallpaperApp },
+  { id: "ai-assistant", name: "AI Assistant", icon: BrainIcon, component: AIA },
+];
+
 const imageApps = [
   { id: "image-generator", name: "Image Generator", icon: SparkleIcon, component: ImageGenerator },
 ];
@@ -492,7 +499,7 @@ function ToolsPageContent() {
         </aside>
 
         {/* Main Content */}
-        <main className={`flex-1 overflow-y-auto sm:ml-64 ${isFullscreen ? '' : 'bg-gray-50 dark:bg-gray-900'} ${isFullscreen ? 'pb-0' : 'pb-16 sm:pb-0'}`}>
+        <main className={`flex-1 overflow-y-auto sm:ml-64 ${isFullscreen ? '' : 'bg-gray-50 dark:bg-gray-900'} ${isFullscreen ? 'pb-0' : activeApp === 'ai-assistant' ? 'pb-0' : 'pb-16 sm:pb-0'}`}>
           <div className={isFullscreen ? 'h-full' : 'min-h-full'}>
             <ContentWrapper isLoading={isContentLoading}>
               {ActiveComponent && <ActiveComponent />}
@@ -501,40 +508,41 @@ function ToolsPageContent() {
         </main>
       </div>
 
-      
-      {/* Bottom Navigation - Main apps + Menu (Mobile Only) */}
-      <nav className="fixed bottom-0 left-0 right-0 sm:hidden z-40 border-t border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm">
-        <div className="flex">
-          {mainApps.map(({ id, name, icon: IconComponent }) => (
+       {/* Bottom Navigation - Hidden when AI Assistant is active (Mobile Only) */}
+      {activeApp !== 'ai-assistant' && (
+        <nav className="fixed bottom-0 left-0 right-0 sm:hidden z-40 border-t border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm">
+          <div className="flex">
+            {mainApps.map(({ id, name, icon: IconComponent }) => (
+              <button
+                key={id}
+                onClick={() => handleAppSwitch(id)}
+                disabled={isContentLoading}
+                className={`flex-1 flex flex-col items-center py-2 px-1 transition-colors relative ${
+                  activeApp === id 
+                    ? 'text-blue-600 dark:text-blue-400' 
+                    : 'text-gray-500 dark:text-gray-400'
+                } ${isContentLoading ? 'opacity-70' : ''}`}
+              >
+                {isContentLoading && activeApp === id ? (
+                  <div className="w-6 h-6 mb-1 flex items-center justify-center">
+                    <MiniLoader size="sm" />
+                  </div>
+                ) : (
+                  <IconComponent className="w-6 h-6 mb-1" />
+                )}
+                <span className="text-xs font-medium">{name}</span>
+              </button>
+            ))}
             <button
-              key={id}
-              onClick={() => handleAppSwitch(id)}
-              disabled={isContentLoading}
-              className={`flex-1 flex flex-col items-center py-2 px-1 transition-colors relative ${
-                activeApp === id 
-                  ? 'text-blue-600 dark:text-blue-400' 
-                  : 'text-gray-500 dark:text-gray-400'
-              } ${isContentLoading ? 'opacity-70' : ''}`}
+              onClick={() => setMenuOpen(true)}
+              className="flex-1 flex flex-col items-center py-2 px-1 transition-colors text-gray-500 dark:text-gray-400"
             >
-              {isContentLoading && activeApp === id ? (
-                <div className="w-6 h-6 mb-1 flex items-center justify-center">
-                  <MiniLoader size="sm" />
-                </div>
-              ) : (
-                <IconComponent className="w-6 h-6 mb-1" />
-              )}
-              <span className="text-xs font-medium">{name}</span>
+              <MenuIcon className="w-6 h-6 mb-1" />
+              <span className="text-xs font-medium">Menu</span>
             </button>
-          ))}
-          <button
-            onClick={() => setMenuOpen(true)}
-            className="flex-1 flex flex-col items-center py-2 px-1 transition-colors text-gray-500 dark:text-gray-400"
-          >
-            <MenuIcon className="w-6 h-6 mb-1" />
-            <span className="text-xs font-medium">Menu</span>
-          </button>
-        </div>
-      </nav>
+          </div>
+        </nav>
+      )}
     </div>
   );
 }
@@ -546,4 +554,3 @@ export default function ToolsPage() {
     </LoadingProvider>
   );
 }
-     
