@@ -125,7 +125,7 @@ const WallpaperGenerator = () => {
               <li>• Include lighting details</li>
             </ul>
             <ul className="space-y-2">
-              <li>• Try keywords like "vibrant", "serene"</li>
+              <li>• Try keywords like &ldquo;vibrant&rdquo;, &ldquo;serene&rdquo;</li>
               <li>• Generation takes 30-60 seconds</li>
               <li>• Perfect for mobile screens</li>
             </ul>
