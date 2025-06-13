@@ -20,10 +20,7 @@ import { HomeIcon, BrainIcon, ImageIcon, DocumentIcon } from './components/icons
 const SkeletonLoader = () => (
   <div className="animate-pulse p-4 sm:p-6">
     <div className="space-y-4 sm:space-y-6">
-      {/* Header skeleton */}
       <div className="h-6 sm:h-8 bg-gray-200 dark:bg-gray-700 rounded-lg w-1/3"></div>
-
-      {/* Content blocks */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {[...Array(6)].map((_, i) => (
           <div key={i} className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 space-y-3">
@@ -33,8 +30,6 @@ const SkeletonLoader = () => (
           </div>
         ))}
       </div>
-
-      {/* List skeleton */}
       <div className="space-y-3">
         {[...Array(4)].map((_, i) => (
           <div key={i} className="flex items-center space-x-3">
@@ -50,13 +45,11 @@ const SkeletonLoader = () => (
   </div>
 );
 
-// Content wrapper with skeleton
 const ContentWrapper = ({ isLoading, children }: { isLoading: boolean; children: React.ReactNode }) => {
   if (isLoading) return <SkeletonLoader />;
   return <>{children}</>;
 };
 
-// Enhanced Loader Component (simplified)
 const AppLoader = ({ isVisible, text = "Loading..." }: { isVisible: boolean; text?: string }) => {
   if (!isVisible) return null;
 
@@ -88,7 +81,6 @@ const AppLoader = ({ isVisible, text = "Loading..." }: { isVisible: boolean; tex
   );
 };
 
-// Mini Loader for smaller operations
 const MiniLoader = ({ size = "sm" }: { size?: "sm" | "md" | "lg" }) => {
   const sizeClasses = {
     sm: "w-3 h-3 sm:w-4 sm:h-4",
@@ -101,7 +93,6 @@ const MiniLoader = ({ size = "sm" }: { size?: "sm" | "md" | "lg" }) => {
   );
 };
 
-// Button with loading state
 const LoadingButton = ({ 
   loading, 
   children, 
@@ -134,7 +125,6 @@ const LoadingButton = ({
   </button>
 );
 
-// Global window interface
 declare global {
   interface Window {
     setActiveApp?: (appId: string) => void;
@@ -154,56 +144,42 @@ const SettingsIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-const SunIcon = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-  </svg>
-);
-
-const MoonIcon = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-  </svg>
-);
-
 const CloseIcon = ({ className }: { className?: string }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
   </svg>
 );
 
-// Chevron Down Icon for dropdown
 const ChevronDownIcon = ({ className }: { className?: string }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
   </svg>
 );
 
-// Sparkle Icon for Image Generator
 const SparkleIcon = ({ className }: { className?: string }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3l1.5 1.5L5 6l-1.5-1.5L5 3zM19 3l1.5 1.5L19 6l-1.5-1.5L19 3zM12 1l2 2-2 2-2-2 2-2zM12 19l2 2-2 2-2-2 2-2zM5 21l1.5-1.5L5 18l-1.5 1.5L5 21zM19 21l1.5-1.5L19 18l-1.5 1.5L19 21z" />
   </svg>
 );
 
-// App configurations - reorganized with image section
+// App configurations with better structure
 const mainApps = [
   { id: "home", name: "Dashboard", icon: HomeIcon, component: Dashboard },
   { id: "wallpaper", name: "Wallpapers", icon: ImageIcon, component: WallpaperApp },
 ];
 
-const menuApps = [
-  { id: "ai-assistant", name: "AI Assistant", icon: BrainIcon, component: AIA },
-  { id: "pdf-converter", name: "PDF Converter", icon: DocumentIcon, component: PDFConverter },
-  { id: "settings", name: "Settings", icon: SettingsIcon, component: Settings },
-];
-
-// Image section apps
 const imageApps = [
   { id: "image-generator", name: "Image Generator", icon: SparkleIcon, component: ImageGenerator },
 ];
 
-const allApps = [...mainApps, ...menuApps, ...imageApps];
+const toolApps = [
+  { id: "ai-assistant", name: "AI Assistant", icon: BrainIcon, component: AIA },
+  { id: "pdf-converter", name: "PDF Converter", icon: DocumentIcon, component: PDFConverter },
+];
+
+const allApps = [...mainApps, ...imageApps, ...toolApps, 
+  { id: "settings", name: "Settings", icon: SettingsIcon, component: Settings }
+];
 
 // Sidebar Section Component
 const SidebarSection = ({ 
@@ -223,35 +199,35 @@ const SidebarSection = ({
   isExpanded?: boolean;
   onToggle?: () => void;
 }) => (
-  <div className="mb-4 sm:mb-6">
+  <div className="mb-6">
     {onToggle ? (
       <button
         onClick={onToggle}
-        className="flex items-center justify-between w-full px-3 py-2 text-xs sm:text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+        className="flex items-center justify-between w-full px-3 py-2 text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
       >
         <span>{title}</span>
-        <ChevronDownIcon className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+        <ChevronDownIcon className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
       </button>
     ) : (
-      <h3 className="px-3 py-2 text-xs sm:text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+      <h3 className="px-3 py-2 text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
         {title}
       </h3>
     )}
-    
+
     {isExpanded && (
-      <div className="space-y-1 sm:space-y-2 mt-2">
+      <div className="space-y-2 mt-2">
         {apps.map(({ id, name, icon: IconComponent }) => (
           <LoadingButton
             key={id}
             loading={isContentLoading && activeApp === id}
             onClick={() => onAppSwitch(id)}
-            className={`w-full flex items-center p-2 sm:p-3 rounded-lg transition-colors text-sm sm:text-base ${
+            className={`w-full flex items-center p-3 rounded-lg transition-colors text-base ${
               activeApp === id 
                 ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
                 : 'hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
             }`}
           >
-            <IconComponent className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3 flex-shrink-0" />
+            <IconComponent className="w-5 h-5 mr-3 flex-shrink-0" />
             <span className="font-medium truncate">{name}</span>
           </LoadingButton>
         ))}
@@ -271,7 +247,6 @@ function ToolsPageContent() {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
 
-  // Use the loading context
   const { 
     isAppLoading, 
     isContentLoading, 
@@ -286,7 +261,6 @@ function ToolsPageContent() {
       if (user) {
         setUser(user);
         setAuthLoading(false);
-        // Check if splash has been shown before
         const splashShown = sessionStorage.getItem('splashShown');
         if (!splashShown) {
           setIsLoading(true);
@@ -301,7 +275,6 @@ function ToolsPageContent() {
     return () => unsubscribe();
   }, [router]);
 
-  // Global app setter with loading
   useEffect(() => {
     window.setActiveApp = (appId: string) => {
       setContentLoading(true);
@@ -313,7 +286,6 @@ function ToolsPageContent() {
     return () => { delete window.setActiveApp; };
   }, [setContentLoading]);
 
-  // Make loading function available globally
   useEffect(() => {
     (window as any).setGlobalLoading = setAppLoading;
     return () => { delete (window as any).setGlobalLoading; };
@@ -327,128 +299,119 @@ function ToolsPageContent() {
   const ActiveComponent = currentApp?.component;
   const isFullscreen = ['ai-assistant', 'wallpaper', 'image-generator'].includes(activeApp);
 
-  const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark');
-
-  // Handle app switching with skeleton loading
   const handleAppSwitch = (appId: string) => {
     if (appId === activeApp) return;
-
     setContentLoading(true);
     setTimeout(() => {
       setActiveApp(appId);
       setContentLoading(false);
     }, 600);
+    setMenuOpen(false);
   };
 
-  // Handle menu item clicks with loading
-  const handleMenuItemClick = (appId: string) => {
-    setMenuOpen(false);
-    handleAppSwitch(appId);
+  const handleProfileClick = () => {
+    handleAppSwitch('settings');
   };
 
   return (
     <div className="h-screen flex flex-col bg-white dark:bg-gray-900">
-
-      {/* Global App Loader */}
       <AppLoader isVisible={isAppLoading} text={loadingText} />
 
       {/* Slide-out Menu */}
       {menuOpen && (
         <>
           <div className="fixed inset-0 bg-black/50 z-50" onClick={() => setMenuOpen(false)} />
-          <div className="fixed inset-y-0 right-0 w-72 sm:w-80 bg-white dark:bg-gray-800 shadow-2xl z-50 flex flex-col">
-            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">Tools</h2>
+          <div className="fixed inset-y-0 right-0 w-80 bg-white dark:bg-gray-800 shadow-2xl z-50 flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Menu</h2>
               <button 
                 onClick={() => setMenuOpen(false)}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
               >
-                <CloseIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 dark:text-gray-400" />
+                <CloseIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
               </button>
             </div>
 
-            <div className="flex-1 p-3 sm:p-4 space-y-1 sm:space-y-2 overflow-y-auto">
+            <div className="flex-1 p-4 space-y-2 overflow-y-auto">
               {/* Image Section */}
               <SidebarSection
-                title="Image"
+                title="Images"
                 apps={imageApps}
                 activeApp={activeApp}
                 isContentLoading={isContentLoading}
-                onAppSwitch={handleMenuItemClick}
+                onAppSwitch={handleAppSwitch}
                 isExpanded={imageExpanded}
                 onToggle={() => setImageExpanded(!imageExpanded)}
               />
 
-              {/* Other Apps */}
-              {menuApps.map(({ id, name, icon: IconComponent }) => (
+              {/* Tools Section */}
+              <SidebarSection
+                title="Tools"
+                apps={toolApps}
+                activeApp={activeApp}
+                isContentLoading={isContentLoading}
+                onAppSwitch={handleAppSwitch}
+              />
+
+              {/* Settings */}
+              <div className="mb-6">
                 <LoadingButton
-                  key={id}
-                  loading={isContentLoading && activeApp === id}
-                  onClick={() => handleMenuItemClick(id)}
-                  className={`w-full flex items-center p-3 sm:p-4 rounded-lg transition-colors text-sm sm:text-base ${
-                    activeApp === id 
+                  loading={isContentLoading && activeApp === 'settings'}
+                  onClick={() => handleAppSwitch('settings')}
+                  className={`w-full flex items-center p-3 rounded-lg transition-colors text-base ${
+                    activeApp === 'settings'
                       ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
                       : 'hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
                   }`}
                 >
-                  <IconComponent className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3 flex-shrink-0" />
-                  <span className="font-medium truncate">{name}</span>
+                  <SettingsIcon className="w-5 h-5 mr-3 flex-shrink-0" />
+                  <span className="font-medium truncate">Settings</span>
                 </LoadingButton>
-              ))}
+              </div>
             </div>
           </div>
         </>
       )}
 
       {/* Fixed Top Navigation Bar */}
-      <nav className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm">
-        <div className="flex items-center space-x-2 sm:space-x-3">
+      <nav className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm">
+        <div className="flex items-center space-x-3">
           <Image 
             src="/favicon.ico" 
             alt="Tools Hub" 
             width={24} 
             height={24}
-            className="w-5 h-5 sm:w-6 sm:h-6"
+            className="w-6 h-6"
           />
-          <div className="hidden sm:block">
-            <h1 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
-              {currentApp?.name || 'Tools Hub'}
-            </h1>
-          </div>
+          <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
+            {currentApp?.name || 'Tools Hub'}
+          </h1>
         </div>
 
-        <div className="flex items-center space-x-2 sm:space-x-3">
-          <button
-            onClick={toggleTheme}
-            className="p-1.5 sm:p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-          >
-            {theme === 'dark' ? 
-              <SunIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-400" /> : 
-              <MoonIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-400" />
-            }
-          </button>
-
+        <div className="flex items-center space-x-3">
           <button
             onClick={() => setMenuOpen(true)}
-            className="p-1.5 sm:p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
           >
-            <MenuIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-400" />
+            <MenuIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
           </button>
 
-          <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-            <span className="text-xs sm:text-sm font-medium text-white">
+          <button
+            onClick={handleProfileClick}
+            className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center hover:scale-105 transition-transform"
+          >
+            <span className="text-sm font-medium text-white">
               {user.displayName?.charAt(0) || user.email?.charAt(0)?.toUpperCase()}
             </span>
-          </div>
+          </button>
         </div>
       </nav>
 
       {/* Main Content Container */}
-      <div className="flex flex-1 pt-12 sm:pt-16 overflow-hidden">
-
+      <div className="flex flex-1 pt-16 overflow-hidden">
         {/* Desktop Sidebar */}
-        <aside className="hidden sm:block fixed left-0 top-12 sm:top-16 bottom-12 sm:bottom-16 w-56 sm:w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
-          <div className="p-3 sm:p-4">
+        <aside className="hidden sm:block fixed left-0 top-16 bottom-16 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
+          <div className="p-4">
             {/* Main Apps */}
             <SidebarSection
               title="Main"
@@ -458,9 +421,9 @@ function ToolsPageContent() {
               onAppSwitch={handleAppSwitch}
             />
 
-            {/* Image Section */}
+            {/* Images Section */}
             <SidebarSection
-              title="Image"
+              title="Images"
               apps={imageApps}
               activeApp={activeApp}
               isContentLoading={isContentLoading}
@@ -469,26 +432,42 @@ function ToolsPageContent() {
               onToggle={() => setImageExpanded(!imageExpanded)}
             />
 
-            {/* Other Apps */}
+            {/* Tools Section */}
             <SidebarSection
               title="Tools"
-              apps={menuApps}
+              apps={toolApps}
               activeApp={activeApp}
               isContentLoading={isContentLoading}
               onAppSwitch={handleAppSwitch}
             />
+
+            {/* Settings */}
+            <div className="mb-6">
+              <LoadingButton
+                loading={isContentLoading && activeApp === 'settings'}
+                onClick={() => handleAppSwitch('settings')}
+                className={`w-full flex items-center p-3 rounded-lg transition-colors text-base ${
+                  activeApp === 'settings'
+                    ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
+                    : 'hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                }`}
+              >
+                <SettingsIcon className="w-5 h-5 mr-3 flex-shrink-0" />
+                <span className="font-medium truncate">Settings</span>
+              </LoadingButton>
+            </div>
           </div>
 
           {/* User Profile Section */}
-          <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 right-3 sm:right-4 p-2 sm:p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <div className="absolute bottom-4 left-4 right-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
             <div className="flex items-center">
-              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mr-2 sm:mr-3 flex-shrink-0">
-                <span className="text-xs sm:text-sm font-medium text-white">
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                <span className="text-sm font-medium text-white">
                   {user.displayName?.charAt(0) || user.email?.charAt(0)?.toUpperCase()}
                 </span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white truncate">
+                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                   {user.displayName || 'User'}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
@@ -499,8 +478,8 @@ function ToolsPageContent() {
           </div>
         </aside>
 
-        {/* Main Content with Skeleton Loading */}
-        <main className={`flex-1 overflow-y-auto sm:ml-56 sm:ml-64 ${isFullscreen ? '' : 'bg-gray-50 dark:bg-gray-900'} ${isFullscreen ? 'pb-0' : 'pb-16 sm:pb-0'}`}>
+        {/* Main Content */}
+        <main className={`flex-1 overflow-y-auto sm:ml-64 ${isFullscreen ? '' : 'bg-gray-50 dark:bg-gray-900'} ${isFullscreen ? 'pb-0' : 'pb-16 sm:pb-0'}`}>
           <div className={isFullscreen ? 'h-full' : 'min-h-full'}>
             <ContentWrapper isLoading={isContentLoading}>
               {ActiveComponent && <ActiveComponent />}
@@ -509,7 +488,7 @@ function ToolsPageContent() {
         </main>
       </div>
 
-      {/* Bottom Navigation (Mobile) - Only main apps */}
+       {/* Bottom Navigation - Main apps + Menu */}
       <nav className="fixed bottom-0 left-0 right-0 sm:hidden z-40 border-t border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm">
         <div className="flex">
           {mainApps.map(({ id, name, icon: IconComponent }) => (
@@ -517,29 +496,35 @@ function ToolsPageContent() {
               key={id}
               onClick={() => handleAppSwitch(id)}
               disabled={isContentLoading}
-              className={`flex-1 flex flex-col items-center py-2 sm:py-3 px-1 sm:px-2 transition-colors relative ${
+              className={`flex-1 flex flex-col items-center py-2 px-1 transition-colors relative ${
                 activeApp === id 
                   ? 'text-blue-600 dark:text-blue-400' 
                   : 'text-gray-500 dark:text-gray-400'
               } ${isContentLoading ? 'opacity-70' : ''}`}
             >
               {isContentLoading && activeApp === id ? (
-                <div className="w-5 h-5 sm:w-6 sm:h-6 mb-1 flex items-center justify-center">
+                <div className="w-6 h-6 mb-1 flex items-center justify-center">
                   <MiniLoader size="sm" />
                 </div>
               ) : (
-                <IconComponent className="w-5 h-5 sm:w-6 sm:h-6 mb-1" />
+                <IconComponent className="w-6 h-6 mb-1" />
               )}
               <span className="text-xs font-medium">{name}</span>
             </button>
           ))}
+          <button
+            onClick={() => setMenuOpen(true)}
+            className="flex-1 flex flex-col items-center py-2 px-1 transition-colors text-gray-500 dark:text-gray-400"
+          >
+            <MenuIcon className="w-6 h-6 mb-1" />
+            <span className="text-xs font-medium">Menu</span>
+          </button>
         </div>
       </nav>
     </div>
   );
 }
 
-// Main export with LoadingProvider wrapper
 export default function ToolsPage() {
   return (
     <LoadingProvider>
