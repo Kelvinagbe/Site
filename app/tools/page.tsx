@@ -9,7 +9,7 @@ import { useTheme } from 'next-themes';
 import { LoadingProvider, useLoading } from './context/LoadingContext';
 import SplashScreen from './components/SplashScreen';
 import AIA from './components/AIAssistant';
-import Dashboard from './components/Dashboard';
+import { Dashboard } from './components/Dashboard';
 import WallpaperApp from './components/WallpaperApp';
 import PDFConverter from './components/PDFConverter';
 import Settings from './components/Settings';
