@@ -1,6 +1,6 @@
 // app/api/user-data/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { database } from '@/lib/firebase-admin'; // Import database instead of db
+import { database } from '@/lib/firebase-admin';
 
 interface Transaction {
   id: string;
@@ -67,7 +67,9 @@ export async function GET(request: NextRequest) {
       transactions.sort((a, b) => b.timestamp - a.timestamp);
 
       // Limit to 100 most recent
-      transactions.splice(100);
+      if (transactions.length > 100) {
+        transactions.splice(100);
+      }
     }
 
     // Calculate statistics
@@ -97,47 +99,54 @@ export async function GET(request: NextRequest) {
     console.error('API Error:', error);
     
     // Return more specific error messages for Realtime Database
-    if (error.code === 'PERMISSION_DENIED') {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Permission denied. Check Realtime Database security rules.'
-        },
-        { status: 403 }
-      );
-    }
+    const errorMessage = error.message || 'Unknown error';
+    const errorCode = error.code || 'UNKNOWN';
 
-    if (error.code === 'NETWORK_ERROR') {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Network error. Please check your connection.'
-        },
-        { status: 503 }
-      );
+    switch (errorCode) {
+      case 'PERMISSION_DENIED':
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Permission denied. Check Realtime Database security rules.',
+            code: errorCode
+          },
+          { status: 403 }
+        );
+      
+      case 'NETWORK_ERROR':
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Network error. Please check your connection.',
+            code: errorCode
+          },
+          { status: 503 }
+        );
+      
+      case 'DISCONNECTED':
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Database disconnected. Please try again.',
+            code: errorCode
+          },
+          { status: 503 }
+        );
+      
+      default:
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Database error: ${errorMessage}`,
+            code: errorCode
+          },
+          { status: 500 }
+        );
     }
-
-    if (error.code === 'DISCONNECTED') {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Database disconnected. Please try again.'
-        },
-        { status: 503 }
-      );
-    }
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: `Database error: ${error.message}`
-      },
-      { status: 500 }
-    );
   }
 }
 
-// Handle other HTTP methods
+// Handle other HTTP methods with proper error responses
 export async function POST() {
   return NextResponse.json(
     { success: false, error: 'POST method not supported on this endpoint' },
