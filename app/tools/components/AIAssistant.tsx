@@ -3,47 +3,58 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Send, MessageCircle } from "lucide-react";
 
-// Theme detection
+// Enhanced theme detection that works with next-themes and other theme systems
 const useTheme = () => {
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
 
   useEffect(() => {
-    // Check for system theme preference
     const checkTheme = () => {
-      const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const hasDocumentClass = document.documentElement.classList.contains('dark');
-      const bodyHasDark = document.body.classList.contains('dark');
+      // Multiple ways to detect theme
+      const hasDocumentDark = document.documentElement.classList.contains('dark');
+      const hasBodyDark = document.body.classList.contains('dark');
+      const hasHtmlDark = document.querySelector('html')?.classList.contains('dark');
+      const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       
-      // Check multiple sources for theme
-      if (hasDocumentClass || bodyHasDark || isDark) {
+      // Check for next-themes or other theme attributes
+      const themeAttribute = document.documentElement.getAttribute('data-theme');
+      const nextThemeAttribute = document.documentElement.getAttribute('class');
+      
+      // Priority: explicit theme classes/attributes > system preference
+      if (hasDocumentDark || hasBodyDark || hasHtmlDark || themeAttribute === 'dark' || nextThemeAttribute?.includes('dark')) {
+        setTheme('dark');
+      } else if (themeAttribute === 'light' || nextThemeAttribute?.includes('light')) {
+        setTheme('light');
+      } else if (systemDark) {
         setTheme('dark');
       } else {
         setTheme('light');
       }
     };
 
+    // Initial check
     checkTheme();
     
-    // Listen for changes
+    // Listen for system theme changes
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    mediaQuery.addEventListener('change', checkTheme);
+    const handleMediaChange = () => checkTheme();
+    mediaQuery.addEventListener('change', handleMediaChange);
     
-    // Watch for class changes on document
+    // Watch for DOM changes (theme switches)
     const observer = new MutationObserver(checkTheme);
     observer.observe(document.documentElement, { 
       attributes: true, 
-      attributeFilter: ['class'] 
+      attributeFilter: ['class', 'data-theme'] 
     });
     observer.observe(document.body, { 
       attributes: true, 
-      attributeFilter: ['class'] 
+      attributeFilter: ['class', 'data-theme'] 
     });
 
-    // Check periodically as fallback
-    const interval = setInterval(checkTheme, 1000);
+    // Frequent checks to ensure theme sync
+    const interval = setInterval(checkTheme, 500);
 
     return () => {
-      mediaQuery.removeEventListener('change', checkTheme);
+      mediaQuery.removeEventListener('change', handleMediaChange);
       observer.disconnect();
       clearInterval(interval);
     };
@@ -250,6 +261,31 @@ const FloatingParticles = () => {
   );
 };
 
+// AI Avatar Component with better fallback
+const AIAvatar = ({ className = "w-6 h-6" }: { className?: string }) => {
+  const { theme } = useTheme();
+  const [imageError, setImageError] = useState(false);
+
+  return (
+    <div className={`${className} rounded-full flex items-center justify-center overflow-hidden ${
+      theme === 'dark'
+        ? 'bg-gradient-to-r from-blue-500 to-purple-600'
+        : 'bg-gradient-to-r from-blue-500 to-purple-600'
+    }`}>
+      {!imageError ? (
+        <img 
+          src="/favicon.ico" 
+          alt="AI Assistant" 
+          className="w-4 h-4"
+          onError={() => setImageError(true)}
+        />
+      ) : (
+        <MessageCircle className="w-4 h-4 text-white" />
+      )}
+    </div>
+  );
+};
+
 const ChatInterface = () => {
   const { theme } = useTheme();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -326,16 +362,16 @@ const ChatInterface = () => {
 
   return (
     <div className="flex flex-col h-screen relative overflow-hidden">
-      {/* Animated Background */}
-      <div className={`fixed inset-0 transition-all duration-500 ${
+      {/* Dynamic Background that adapts to theme */}
+      <div className={`fixed inset-0 transition-all duration-700 ${
         theme === 'dark'
-          ? 'bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900'
+          ? 'bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900'
           : 'bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50'
       } animate-gradient-xy`}></div>
-      <div className={`fixed inset-0 transition-all duration-500 animate-pulse ${
+      <div className={`fixed inset-0 transition-all duration-700 animate-pulse ${
         theme === 'dark'
-          ? 'bg-gradient-to-tr from-blue-500/20 via-purple-500/20 to-pink-500/20'
-          : 'bg-gradient-to-tr from-blue-200/30 via-purple-200/30 to-pink-200/30'
+          ? 'bg-gradient-to-tr from-blue-500/10 via-purple-500/10 to-pink-500/10'
+          : 'bg-gradient-to-tr from-blue-200/20 via-purple-200/20 to-pink-200/20'
       }`}></div>
       
       {/* Floating Particles */}
@@ -363,12 +399,12 @@ const ChatInterface = () => {
                       : 'bg-gradient-to-r from-blue-500 to-purple-600'
                   }`}></div>
                 </div>
-                <h2 className={`text-3xl font-bold mb-4 ${
+                <h2 className={`text-3xl font-bold mb-4 transition-colors duration-500 ${
                   theme === 'dark' ? 'text-white' : 'text-gray-900'
                 }`}>
                   Ready to assist you
                 </h2>
-                <p className={`text-lg mb-8 max-w-md mx-auto leading-relaxed ${
+                <p className={`text-lg mb-8 max-w-md mx-auto leading-relaxed transition-colors duration-500 ${
                   theme === 'dark' ? 'text-white/80' : 'text-gray-600'
                 }`}>
                   Ask me anything! I can help with coding, writing, analysis, creative projects, and much more.
@@ -406,26 +442,7 @@ const ChatInterface = () => {
                     ) : (
                       <div className="flex items-start space-x-3">
                         <div className="flex-shrink-0 mt-1">
-                          <div className={`w-6 h-6 rounded-full flex items-center justify-center overflow-hidden ${
-                            theme === 'dark'
-                              ? 'bg-gradient-to-r from-blue-500 to-purple-600 opacity-80'
-                              : 'bg-gradient-to-r from-blue-500 to-purple-600'
-                          }`}>
-                            <img 
-                              src="/favicon.ico" 
-                              alt="AI" 
-                              className="w-4 h-4"
-                              onError={(e) => {
-                                // Fallback to text if favicon fails to load
-                                const target = e.target as HTMLImageElement;
-                                target.style.display = 'none';
-                                const parent = target.parentElement;
-                                if (parent) {
-                                  parent.innerHTML = '<span class="text-white text-xs font-bold">AI</span>';
-                                }
-                              }}
-                            />
-                          </div>
+                          <AIAvatar />
                         </div>
                         <div className="flex-1 min-w-0 max-w-[85%]">
                           <MessageContent content={content} />
@@ -439,36 +456,17 @@ const ChatInterface = () => {
                   <div className="group animate-in slide-in-from-bottom-4 duration-300">
                     <div className="flex items-start space-x-3">
                       <div className="flex-shrink-0 mt-1">
-                        <div className={`w-6 h-6 rounded-full flex items-center justify-center overflow-hidden ${
-                          theme === 'dark'
-                            ? 'bg-gradient-to-r from-blue-500 to-purple-600 opacity-60'
-                            : 'bg-gradient-to-r from-blue-500 to-purple-600 opacity-80'
-                        }`}>
-                          <img 
-                            src="/favicon.ico" 
-                            alt="AI" 
-                            className="w-4 h-4"
-                            onError={(e) => {
-                              // Fallback to text if favicon fails to load
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                              const parent = target.parentElement;
-                              if (parent) {
-                                parent.innerHTML = '<span class="text-white text-xs font-bold">AI</span>';
-                              }
-                            }}
-                          />
-                        </div>
+                        <AIAvatar />
                       </div>
                       <div className="flex items-center space-x-3">
                         <div className="flex space-x-1">
                           {[0, 1, 2].map(i => (
-                            <div key={i} className={`w-2 h-2 rounded-full animate-bounce ${
+                            <div key={i} className={`w-2 h-2 rounded-full animate-bounce transition-colors duration-500 ${
                               theme === 'dark' ? 'bg-white/60' : 'bg-gray-600/60'
                             }`} style={{animationDelay: `${i * 0.1}s`}}></div>
                           ))}
                         </div>
-                        <span className={`text-sm font-medium ${
+                        <span className={`text-sm font-medium transition-colors duration-500 ${
                           theme === 'dark' ? 'text-white/70' : 'text-gray-600'
                         }`}>AI is thinking...</span>
                       </div>
@@ -482,8 +480,8 @@ const ChatInterface = () => {
         </div>
 
         
-        {/* Input Area */}
-        <div className={`border-t backdrop-blur-md ${
+       {/* Input Area */}
+        <div className={`border-t backdrop-blur-md transition-all duration-500 ${
           theme === 'dark' 
             ? 'border-white/20 bg-black/20' 
             : 'border-gray-200 bg-white/80'
@@ -501,7 +499,7 @@ const ChatInterface = () => {
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Type your message..."
-                  className={`w-full resize-none border-0 bg-transparent px-4 py-3 focus:outline-none focus:ring-0 max-h-32 ${
+                  className={`w-full resize-none border-0 bg-transparent px-4 py-3 focus:outline-none focus:ring-0 max-h-32 transition-colors duration-500 ${
                     theme === 'dark'
                       ? 'text-white placeholder-gray-400'
                       : 'text-gray-900 placeholder-gray-500'
@@ -532,7 +530,7 @@ const ChatInterface = () => {
                 </button>
               </div>
             </div>
-            <div className={`flex justify-between items-center text-xs mt-2 px-1 ${
+            <div className={`flex justify-between items-center text-xs mt-2 px-1 transition-colors duration-500 ${
               theme === 'dark' ? 'text-white/60' : 'text-gray-500'
             }`}>
               <span>Press Enter to send, Shift+Enter for new line</span>
