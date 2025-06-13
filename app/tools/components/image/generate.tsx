@@ -11,6 +11,12 @@ interface GeneratedImage {
   transactionId?: string;
 }
 
+interface UserUsage {
+  userId: string;
+  generations: number;
+  lastReset: number;
+}
+
 export function ImageGenerator() {
   const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,12 +25,17 @@ export function ImageGenerator() {
   const [isWatermarking, setIsWatermarking] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'generate' | 'result'>('generate');
+  const [showModal, setShowModal] = useState(false);
+  const [showLimitModal, setShowLimitModal] = useState(false);
+  const [limitResetTime, setLimitResetTime] = useState<number>(0);
+  const [userUsage, setUserUsage] = useState<UserUsage | null>(null);
 
   // Auto-detect website name from domain
   const websiteName = typeof window !== 'undefined' ? 
     window.location.hostname.split('.')[0].charAt(0).toUpperCase() + 
     window.location.hostname.split('.')[0].slice(1) : 'AICreator';
-  
+
   const faviconUrl = "/favicon.ico";
 
   // Listen for auth state changes
@@ -32,10 +43,68 @@ export function ImageGenerator() {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
       setAuthLoading(false);
+      if (user) {
+        checkUserUsage(user.uid);
+      }
     });
 
     return () => unsubscribe();
   }, []);
+
+  // Check user's current usage
+  const checkUserUsage = async (userId: string) => {
+    try {
+      const response = await fetch('/api/check-usage', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setUserUsage(data.usage);
+      }
+    } catch (error) {
+      console.error('Failed to check usage:', error);
+    }
+  };
+
+  // Check if user has reached the limit
+  const hasReachedLimit = () => {
+    if (!userUsage) return false;
+    
+    const now = Date.now();
+    const oneHour = 60 * 60 * 1000; // 1 hour in milliseconds
+    
+    // Reset if more than an hour has passed
+    if (now - userUsage.lastReset > oneHour) {
+      return false;
+    }
+    
+    return userUsage.generations >= 2; // Limit is 2 images per hour
+  };
+
+  // Get remaining time until reset
+  const getRemainingTime = () => {
+    if (!userUsage) return 0;
+    
+    const oneHour = 60 * 60 * 1000;
+    const elapsed = Date.now() - userUsage.lastReset;
+    const remaining = oneHour - elapsed;
+    
+    return Math.max(0, remaining);
+  };
+
+  // Format remaining time
+  const formatRemainingTime = (milliseconds: number) => {
+    const minutes = Math.ceil(milliseconds / (60 * 1000));
+    if (minutes >= 60) {
+      return '1 hour';
+    }
+    return `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+  };
 
   const examplePrompts = [
     "cozy coffee shop with warm lighting",
@@ -52,7 +121,7 @@ export function ImageGenerator() {
 
     try {
       const transactionId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
+
       const transaction = {
         prompt: imageData.prompt,
         timestamp: imageData.timestamp,
@@ -91,6 +160,14 @@ export function ImageGenerator() {
       return;
     }
 
+    // Check usage limit
+    if (hasReachedLimit()) {
+      const remainingTime = getRemainingTime();
+      setLimitResetTime(remainingTime);
+      setShowLimitModal(true);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -110,9 +187,9 @@ export function ImageGenerator() {
 
       if (data.success) {
         setIsWatermarking(true);
-        
+
         let watermarkedImageUrl = data.imageUrl;
-        
+
         try {
           watermarkedImageUrl = await addWatermarkToImage(data.imageUrl);
         } catch (error) {
@@ -130,9 +207,16 @@ export function ImageGenerator() {
           imageData.transactionId = transactionId;
         }
 
+        // Update usage after successful generation
+        await updateUserUsage(currentUser.uid);
+
         setGeneratedImage(imageData);
         setError(null);
         setIsWatermarking(false);
+        
+        // Auto-switch to result tab and show modal
+        setActiveTab('result');
+        setShowModal(true);
       } else {
         setError(data.error || 'Failed to generate image');
       }
@@ -144,19 +228,39 @@ export function ImageGenerator() {
     }
   };
 
+  // Update user usage after successful generation
+  const updateUserUsage = async (userId: string) => {
+    try {
+      const response = await fetch('/api/update-usage', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setUserUsage(data.usage);
+      }
+    } catch (error) {
+      console.error('Failed to update usage:', error);
+    }
+  };
+
   const addWatermarkToImage = (imageUrl: string): Promise<string> => {
     return new Promise((resolve, reject) => {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       const img = new Image();
-      
+
       img.crossOrigin = 'anonymous';
       img.onload = () => {
         canvas.width = img.width;
         canvas.height = img.height;
-        
+
         ctx!.drawImage(img, 0, 0);
-        
+
         const fontSize = Math.max(16, Math.min(img.width / 25, img.height / 25));
         ctx!.font = `bold ${fontSize}px Arial, sans-serif`;
         ctx!.fillStyle = 'rgba(255, 255, 255, 0.8)';
@@ -164,15 +268,15 @@ export function ImageGenerator() {
         ctx!.lineWidth = 2;
         ctx!.textAlign = 'right';
         ctx!.textBaseline = 'bottom';
-        
+
         const padding = fontSize * 0.5;
         const x = img.width - padding;
         const y = img.height - padding;
-        
+
         const watermarkText = websiteName;
         ctx!.strokeText(watermarkText, x, y);
         ctx!.fillText(watermarkText, x, y);
-        
+
         const favicon = new Image();
         favicon.crossOrigin = 'anonymous';
         favicon.onload = () => {
@@ -191,7 +295,7 @@ export function ImageGenerator() {
         };
         favicon.src = faviconUrl;
       };
-      
+
       img.onerror = () => reject(new Error('Failed to load image'));
       img.src = imageUrl;
     });
@@ -202,7 +306,7 @@ export function ImageGenerator() {
 
     try {
       let imageUrl = generatedImage.url;
-      
+
       try {
         imageUrl = await addWatermarkToImage(generatedImage.url);
       } catch (error) {
@@ -225,6 +329,13 @@ export function ImageGenerator() {
       e.preventDefault();
       generateImage();
     }
+  };
+
+  const clearResult = () => {
+    setGeneratedImage(null);
+    setError(null);
+    setActiveTab('generate');
+    setShowModal(false);
   };
 
   // Show loading while checking auth
@@ -283,113 +394,155 @@ export function ImageGenerator() {
           </p>
         </div>
 
-        {/* Main Content Grid */}
-        <div className="grid lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
-          
-          {/* Left Column - Input Section */}
-          <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 p-6 h-fit">
-            
-            <div className="space-y-6 mb-6">
-              <div>
-                <label htmlFor="prompt" className="block text-lg font-semibold text-gray-700 dark:text-gray-200 mb-3">
-                  ✨ Describe your image:
-                </label>
-                <textarea
-                  id="prompt"
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="e.g., a magical forest with glowing mushrooms under starlight..."
-                  className="w-full px-4 py-4 border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 rounded-xl focus:ring-3 focus:ring-purple-300 dark:focus:ring-purple-500 focus:border-purple-400 dark:focus:border-purple-500 transition-all duration-200 text-base resize-none shadow-sm"
-                  rows={4}
-                  disabled={loading}
-                  maxLength={500}
-                />
-                <div className="flex justify-between items-center mt-2 text-sm">
-                  <small className="text-gray-500 dark:text-gray-400">
-                    Press Enter to generate, Shift+Enter for new line
-                  </small>
-                  <small className="text-gray-500 dark:text-gray-400">
-                    {prompt.length}/500
-                  </small>
-                </div>
-              </div>
-
-              <button
-                onClick={generateImage}
-                disabled={loading || !prompt.trim()}
-                className="w-full bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 dark:from-purple-500 dark:via-blue-500 dark:to-indigo-500 text-white py-4 px-8 rounded-xl font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed hover:from-purple-700 hover:via-blue-700 hover:to-indigo-700 dark:hover:from-purple-600 dark:hover:via-blue-600 dark:hover:to-indigo-600 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl active:scale-95 shadow-lg"
-              >
-                {(loading || isWatermarking) ? (
-                  <span className="flex items-center justify-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    {loading ? 'Generating... (30-60s)' : 'Adding watermark...'}
-                  </span>
-                ) : (
-                  'Generate Image ✨'
-                )}
-              </button>
-            </div>
-
-            {/* Example Prompts */}
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold mb-4 text-gray-700 dark:text-gray-200 flex items-center">
-                💡 Try these ideas:
-              </h3>
-              <div className="grid grid-cols-1 gap-3">
-                {examplePrompts.map((example, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setPrompt(example)}
-                    className="text-left p-3 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 hover:from-purple-50 hover:to-blue-50 dark:hover:from-purple-800/50 dark:hover:to-blue-800/50 rounded-lg transition-all duration-200 text-gray-700 dark:text-gray-200 hover:text-purple-700 dark:hover:text-purple-300 border border-gray-200 dark:border-gray-600 hover:border-purple-200 dark:hover:border-purple-500 transform hover:scale-[1.02] active:scale-95 shadow-sm hover:shadow-md"
-                    disabled={loading}
-                  >
-                    <span className="text-sm font-medium">{example}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Error Display */}
-            {error && (
-              <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/30 border-l-4 border-red-400 dark:border-red-500 rounded-lg">
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <span className="text-red-400 dark:text-red-300 text-xl">⚠️</span>
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-red-700 dark:text-red-300 font-medium">{error}</p>
-                    {error.includes('Model is loading') && (
-                      <p className="text-red-600 dark:text-red-400 text-sm mt-1">
-                        The AI model is starting up. Please wait a minute and try again.
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
+        {/* Tab Navigation */}
+        <div className="flex justify-center mb-8">
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl p-1 shadow-lg border border-gray-200/50 dark:border-gray-700/50">
+            <button
+              onClick={() => setActiveTab('generate')}
+              className={`px-6 py-3 rounded-lg font-semibold transition-all duration-300 ${
+                activeTab === 'generate'
+                  ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400'
+              }`}
+            >
+              ✨ Generate
+            </button>
+            <button
+              onClick={() => setActiveTab('result')}
+              disabled={!generatedImage}
+              className={`px-6 py-3 rounded-lg font-semibold transition-all duration-300 ${
+                activeTab === 'result' && generatedImage
+                  ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
+                  : generatedImage 
+                    ? 'text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400'
+                    : 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
+              }`}
+            >
+              🖼️ Result
+            </button>
           </div>
+        </div>
 
-          {/* Right Column - Generated Image */}
-          <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 p-6">
-            {generatedImage ? (
+        {/* Tab Content */}
+        <div className="max-w-4xl mx-auto">
+          {activeTab === 'generate' && (
+            <div className="space-y-8">
+              {/* Input Section - No Box, Background Blend */}
               <div className="space-y-6">
                 <div className="text-center">
-                  <div className="relative inline-block group w-full">
-                    <img
-                      src={generatedImage.url}
-                      alt={generatedImage.prompt}
-                      className="w-full h-auto max-h-96 object-contain rounded-2xl shadow-2xl transition-transform duration-300 group-hover:scale-105 border border-gray-200/50 dark:border-gray-700/50"
-                      onError={() => setError('Failed to load generated image')}
-                    />
-                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 rounded-2xl transition-opacity duration-300"></div>
+                  <label className="block text-2xl font-bold text-gray-700 dark:text-gray-200 mb-6">
+                    ✨ Describe your image
+                  </label>
+                  <textarea
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="e.g., a magical forest with glowing mushrooms under starlight..."
+                    className="w-full px-6 py-6 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border-2 border-white/30 dark:border-gray-700/30 text-gray-700 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 rounded-2xl focus:ring-3 focus:ring-purple-300/50 dark:focus:ring-purple-500/50 focus:border-purple-400/50 dark:focus:border-purple-500/50 transition-all duration-300 text-lg resize-none shadow-lg hover:shadow-xl"
+                    rows={4}
+                    disabled={loading}
+                    maxLength={500}
+                  />
+                  <div className="flex justify-between items-center mt-3 text-sm">
+                    <small className="text-gray-500 dark:text-gray-400">
+                      Press Enter to generate, Shift+Enter for new line
+                    </small>
+                    <small className="text-gray-500 dark:text-gray-400">
+                      {prompt.length}/500
+                    </small>
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row justify-center items-center space-y-3 sm:space-y-0 sm:space-x-4">
+                <div className="text-center space-y-4">
+                  <button
+                    onClick={generateImage}
+                    disabled={loading || !prompt.trim() || hasReachedLimit()}
+                    className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 dark:from-purple-500 dark:via-blue-500 dark:to-indigo-500 text-white py-4 px-12 rounded-2xl font-bold text-xl disabled:opacity-50 disabled:cursor-not-allowed hover:from-purple-700 hover:via-blue-700 hover:to-indigo-700 dark:hover:from-purple-600 dark:hover:via-blue-600 dark:hover:to-indigo-600 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl active:scale-95 shadow-xl"
+                  >
+                    {(loading || isWatermarking) ? (
+                      <span className="flex items-center justify-center">
+                        <svg className="animate-spin -ml-1 mr-3 h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        {loading ? 'Generating... (30-60s)' : 'Adding watermark...'}
+                      </span>
+                    ) : hasReachedLimit() ? (
+                      'Limit Reached 🚫'
+                    ) : (
+                      'Generate Image ✨'
+                    )}
+                  </button>
+                  
+                  {/* Usage Counter */}
+                  {userUsage && (
+                    <div className="text-center">
+                      <div className="inline-flex items-center space-x-2 bg-white/40 dark:bg-gray-800/40 backdrop-blur-sm rounded-xl px-4 py-2 border border-white/20 dark:border-gray-700/20">
+                        <span className="text-sm text-gray-600 dark:text-gray-300">
+                          🎨 {userUsage.generations}/2 images this hour
+                        </span>
+                        {userUsage.generations >= 2 && (
+                          <span className="text-xs text-orange-600 dark:text-orange-400 font-medium">
+                            Reset in {formatRemainingTime(getRemainingTime())}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Example Prompts - No Box */}
+              <div className="text-center">
+                <h3 className="text-xl font-bold mb-6 text-gray-700 dark:text-gray-200 flex items-center justify-center">
+                  💡 Try these ideas
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto">
+                  {examplePrompts.map((example, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setPrompt(example)}
+                      className="text-left p-4 bg-white/30 dark:bg-gray-800/30 backdrop-blur-sm hover:bg-white/50 dark:hover:bg-gray-800/50 rounded-xl transition-all duration-300 text-gray-700 dark:text-gray-200 hover:text-purple-700 dark:hover:text-purple-300 border border-white/20 dark:border-gray-700/20 hover:border-purple-200/50 dark:hover:border-purple-500/50 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
+                      disabled={loading}
+                    >
+                      <span className="font-medium">{example}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Error Display */}
+              {error && (
+                <div className="max-w-2xl mx-auto p-4 bg-red-50/80 dark:bg-red-900/30 backdrop-blur-sm border-l-4 border-red-400 dark:border-red-500 rounded-xl shadow-lg">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <span className="text-red-400 dark:text-red-300 text-xl">⚠️</span>
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-red-700 dark:text-red-300 font-medium">{error}</p>
+                      {error.includes('Model is loading') && (
+                        <p className="text-red-600 dark:text-red-400 text-sm mt-1">
+                          The AI model is starting up. Please wait a minute and try again.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'result' && generatedImage && (
+            <div className="text-center">
+              <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 p-8 max-w-2xl mx-auto">
+                <img
+                  src={generatedImage.url}
+                  alt={generatedImage.prompt}
+                  className="w-full h-auto max-h-96 object-contain rounded-xl shadow-lg mb-6"
+                  onError={() => setError('Failed to load generated image')}
+                />
+
+                <div className="flex flex-col sm:flex-row justify-center items-center space-y-3 sm:space-y-0 sm:space-x-4 mb-6">
                   <button
                     onClick={downloadImage}
                     className="w-full sm:w-auto px-8 py-3 bg-green-600 dark:bg-green-500 text-white rounded-xl hover:bg-green-700 dark:hover:bg-green-600 transition-colors duration-200 font-semibold flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
@@ -398,22 +551,19 @@ export function ImageGenerator() {
                     <span>Download</span>
                   </button>
                   <button
-                    onClick={() => {
-                      setGeneratedImage(null);
-                      setError(null);
-                    }}
+                    onClick={clearResult}
                     className="w-full sm:w-auto px-8 py-3 bg-gray-600 dark:bg-gray-500 text-white rounded-xl hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-200 font-semibold flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
                   >
-                    <span>🗑️</span>
-                    <span>Clear</span>
+                    <span>🔄</span>
+                    <span>Generate New</span>
                   </button>
                 </div>
 
-                <div className="text-center bg-gray-50 dark:bg-gray-700/50 border border-gray-200/50 dark:border-gray-600/50 p-4 rounded-xl">
-                  <p className="text-gray-600 dark:text-gray-300 italic text-base">
+                <div className="bg-gray-50/80 dark:bg-gray-700/50 backdrop-blur-sm border border-gray-200/50 dark:border-gray-600/50 p-4 rounded-xl">
+                  <p className="text-gray-600 dark:text-gray-300 italic text-base mb-2">
                     {`"${generatedImage.prompt}"`}
                   </p>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm mt-2">
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">
                     Generated on {new Date(generatedImage.timestamp).toLocaleDateString()} at {new Date(generatedImage.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                   </p>
                   {generatedImage.transactionId && (
@@ -423,25 +573,118 @@ export function ImageGenerator() {
                   )}
                 </div>
               </div>
-            ) : (
-              <div className="flex items-center justify-center h-96 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-2xl">
-                <div className="text-center">
-                  <div className="text-6xl mb-4">🖼️</div>
-                  <p className="text-gray-500 dark:text-gray-400 text-lg">
-                    Your generated image will appear here
-                  </p>
-                  <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">
-                    Enter a prompt and click generate to start
-                  </p>
+            </div>
+          )}
+        </div>
+
+        {/* Image Generation Modal */}
+        {showModal && generatedImage && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-200/50 dark:border-gray-700/50">
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 dark:from-purple-400 dark:to-blue-400 bg-clip-text text-transparent">
+                    🎉 Image Generated!
+                  </h3>
+                  <button
+                    onClick={() => setShowModal(false)}
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-2xl font-bold transition-colors"
+                  >
+                    ×
+                  </button>
+                </div>
+                
+                <img
+                  src={generatedImage.url}
+                  alt={generatedImage.prompt}
+                  className="w-full h-auto max-h-64 object-contain rounded-xl shadow-lg mb-4"
+                  onError={() => setError('Failed to load generated image')}
+                />
+                
+                <p className="text-gray-600 dark:text-gray-300 italic text-center mb-4">
+                  {`"${generatedImage.prompt}"`}
+                </p>
+                
+                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                  <button
+                    onClick={() => {
+                      downloadImage();
+                      setShowModal(false);
+                    }}
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-xl font-semibold transition-colors duration-200 flex items-center justify-center space-x-2"
+                  >
+                    <span>📥</span>
+                    <span>Download</span>
+                  </button>
+                  <button
+                    onClick={() => setShowModal(false)}
+                    className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-3 px-6 rounded-xl font-semibold transition-colors duration-200 flex items-center justify-center space-x-2"
+                  >
+                    <span>👀</span>
+                    <span>View Full</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      clearResult();
+                      setShowModal(false);
+                    }}
+                    className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-3 px-6 rounded-xl font-semibold transition-colors duration-200 flex items-center justify-center space-x-2"
+                  >
+                    <span>🔄</span>
+                    <span>New</span>
+                  </button>
                 </div>
               </div>
-            )}
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Usage Limit Modal */}
+        {showLimitModal && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full shadow-2xl border border-gray-200/50 dark:border-gray-700/50">
+              <div className="p-6 text-center">
+                <div className="text-6xl mb-4">⏱️</div>
+                <h3 className="text-2xl font-bold mb-4 bg-gradient-to-r from-orange-600 to-red-600 dark:from-orange-400 dark:to-red-400 bg-clip-text text-transparent">
+                  Generation Limit Reached
+                </h3>
+                <p className="text-gray-600 dark:text-gray-300 mb-4">
+                  You've reached your limit of 2 images per hour.
+                </p>
+                <div className="bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-700 rounded-xl p-4 mb-6">
+                  <p className="text-orange-700 dark:text-orange-300 font-medium">
+                    ⏳ Come back in {formatRemainingTime(limitResetTime)}
+                  </p>
+                  <p className="text-orange-600 dark:text-orange-400 text-sm mt-1">
+                    Your limit will reset automatically
+                  </p>
+                </div>
+                <div className="flex flex-col space-y-3">
+                  <button
+                    onClick={() => setShowLimitModal(false)}
+                    className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105"
+                  >
+                    Got it, thanks! 👍
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowLimitModal(false);
+                      setActiveTab('result');
+                    }}
+                    disabled={!generatedImage}
+                    className="w-full bg-gray-600 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105"
+                  >
+                    View Previous Images 🖼️
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Footer */}
         <div className="mt-12 text-center">
-          <div className="flex flex-col items-center space-y-4 p-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 max-w-md mx-auto">
+          <div className="flex flex-col items-center space-y-4 p-6 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200/30 dark:border-gray-700/30 max-w-md mx-auto">
             <div className="flex items-center space-x-3">
               <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 dark:from-purple-400 dark:to-blue-400 bg-clip-text text-transparent">
                 {websiteName}
