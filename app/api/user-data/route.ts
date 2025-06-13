@@ -35,19 +35,14 @@ export async function GET(request: NextRequest) {
   try {
     console.log('Fetching data for user:', userId);
 
-    // Fetch user transactions from Realtime Database
-    const transactionsRef = database.ref('transactions');
-    
-    // Query transactions for specific user
-    const userTransactionsQuery = transactionsRef
-      .orderByChild('userId')
-      .equalTo(userId);
+    // Fetch user transactions from the correct path: users/{userId}/transactions
+    const transactionsRef = database.ref(`users/${userId}/transactions`);
 
-    const snapshot = await userTransactionsQuery.once('value');
+    const snapshot = await transactionsRef.once('value');
     const transactionsData = snapshot.val();
 
     const transactions: Transaction[] = [];
-    
+
     if (transactionsData) {
       // Convert object to array and sort by timestamp
       Object.keys(transactionsData).forEach((key) => {
@@ -97,7 +92,7 @@ export async function GET(request: NextRequest) {
 
   } catch (error: any) {
     console.error('API Error:', error);
-    
+
     // Return more specific error messages for Realtime Database
     const errorMessage = error.message || 'Unknown error';
     const errorCode = error.code || 'UNKNOWN';
@@ -112,7 +107,7 @@ export async function GET(request: NextRequest) {
           },
           { status: 403 }
         );
-      
+
       case 'NETWORK_ERROR':
         return NextResponse.json(
           {
@@ -122,7 +117,7 @@ export async function GET(request: NextRequest) {
           },
           { status: 503 }
         );
-      
+
       case 'DISCONNECTED':
         return NextResponse.json(
           {
@@ -132,7 +127,7 @@ export async function GET(request: NextRequest) {
           },
           { status: 503 }
         );
-      
+
       default:
         return NextResponse.json(
           {
