@@ -187,7 +187,7 @@ const allApps = [...mainApps, ...sidebarApps,
   { id: "settings", name: "Settings", icon: SettingsIcon, component: Settings }
 ];
 
-// Improved Sidebar Section Component
+// Improved Sidebar Section Component with Icons Beside Text
 const SidebarSection = ({ 
   title, 
   apps, 
@@ -233,14 +233,14 @@ const SidebarSection = ({
             key={id}
             loading={isContentLoading && activeApp === id}
             onClick={() => onAppSwitch(id)}
-            className={`w-full flex flex-col items-center justify-center px-3 py-4 rounded-lg transition-all duration-200 text-xs font-medium ${
+            className={`w-full flex items-center px-3 py-3 rounded-lg transition-all duration-200 text-sm font-medium ${
               activeApp === id 
                 ? 'bg-blue-600 text-white shadow-sm' 
                 : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
             }`}
           >
-            <IconComponent className="w-6 h-6 mb-2 flex-shrink-0" />
-            <span className="text-center leading-tight">{name}</span>
+            <IconComponent className="w-5 h-5 mr-3 flex-shrink-0" />
+            <span className="text-left">{name}</span>
           </LoadingButton>
         ))}
       </div>
@@ -375,14 +375,14 @@ function ToolsPageContent() {
                 <LoadingButton
                   loading={isContentLoading && activeApp === 'settings'}
                   onClick={() => handleAppSwitch('settings')}
-                  className={`w-full flex flex-col items-center justify-center px-3 py-4 rounded-lg transition-all duration-200 text-xs font-medium ${
+                  className={`w-full flex items-center px-3 py-3 rounded-lg transition-all duration-200 text-sm font-medium ${
                     activeApp === 'settings'
                       ? 'bg-blue-600 text-white shadow-sm' 
                       : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
                   }`}
                 >
-                  <SettingsIcon className="w-6 h-6 mb-2 flex-shrink-0" />
-                  <span className="text-center leading-tight">Settings</span>
+                  <SettingsIcon className="w-5 h-5 mr-3 flex-shrink-0" />
+                  <span className="text-left">Settings</span>
                 </LoadingButton>
               </div>
             </div>
@@ -459,14 +459,14 @@ function ToolsPageContent() {
               <LoadingButton
                 loading={isContentLoading && activeApp === 'settings'}
                 onClick={() => handleAppSwitch('settings')}
-                className={`w-full flex flex-col items-center justify-center px-3 py-4 rounded-lg transition-all duration-200 text-xs font-medium ${
+                className={`w-full flex items-center px-3 py-3 rounded-lg transition-all duration-200 text-sm font-medium ${
                   activeApp === 'settings'
                     ? 'bg-blue-600 text-white shadow-sm' 
                     : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
                 }`}
               >
-                <SettingsIcon className="w-6 h-6 mb-2 flex-shrink-0" />
-                <span className="text-center leading-tight">Settings</span>
+                <SettingsIcon className="w-5 h-5 mr-3 flex-shrink-0" />
+                <span className="text-left">Settings</span>
               </LoadingButton>
             </div>
           </div>
@@ -501,7 +501,7 @@ function ToolsPageContent() {
         </main>
       </div>
 
-     
+      
       {/* Bottom Navigation - Main apps + Menu (Mobile Only) */}
       <nav className="fixed bottom-0 left-0 right-0 sm:hidden z-40 border-t border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm">
         <div className="flex">
@@ -546,3 +546,4 @@ export default function ToolsPage() {
     </LoadingProvider>
   );
 }
+     
