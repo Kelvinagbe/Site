@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '@/lib/firebase'; // Your Firebase config
+import { auth } from '@/lib/firebase';
 
 interface GeneratedImage {
   url: string;
@@ -22,89 +22,16 @@ export function ImageGenerator() {
   const [loading, setLoading] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<GeneratedImage | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isWatermarking, setIsWatermarking] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'generate' | 'result'>('generate');
   const [showModal, setShowModal] = useState(false);
   const [showLimitModal, setShowLimitModal] = useState(false);
-  const [limitResetTime, setLimitResetTime] = useState<number>(0);
   const [userUsage, setUserUsage] = useState<UserUsage | null>(null);
 
-  // Auto-detect website name from domain
   const websiteName = typeof window !== 'undefined' ? 
     window.location.hostname.split('.')[0].charAt(0).toUpperCase() + 
     window.location.hostname.split('.')[0].slice(1) : 'AICreator';
-
-  const faviconUrl = "/favicon.ico";
-
-  // Listen for auth state changes
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-      setAuthLoading(false);
-      if (user) {
-        checkUserUsage(user.uid);
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  // Check user's current usage
-  const checkUserUsage = async (userId: string) => {
-    try {
-      const response = await fetch('/api/check-usage', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId }),
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        setUserUsage(data.usage);
-      }
-    } catch (error) {
-      console.error('Failed to check usage:', error);
-    }
-  };
-
-  // Check if user has reached the limit
-  const hasReachedLimit = () => {
-    if (!userUsage) return false;
-    
-    const now = Date.now();
-    const oneHour = 60 * 60 * 1000; // 1 hour in milliseconds
-    
-    // Reset if more than an hour has passed
-    if (now - userUsage.lastReset > oneHour) {
-      return false;
-    }
-    
-    return userUsage.generations >= 2; // Limit is 2 images per hour
-  };
-
-  // Get remaining time until reset
-  const getRemainingTime = () => {
-    if (!userUsage) return 0;
-    
-    const oneHour = 60 * 60 * 1000;
-    const elapsed = Date.now() - userUsage.lastReset;
-    const remaining = oneHour - elapsed;
-    
-    return Math.max(0, remaining);
-  };
-
-  // Format remaining time
-  const formatRemainingTime = (milliseconds: number) => {
-    const minutes = Math.ceil(milliseconds / (60 * 1000));
-    if (minutes >= 60) {
-      return '1 hour';
-    }
-    return `${minutes} minute${minutes !== 1 ? 's' : ''}`;
-  };
 
   const examplePrompts = [
     "cozy coffee shop with warm lighting",
@@ -115,140 +42,50 @@ export function ImageGenerator() {
     "magical forest with glowing mushrooms"
   ];
 
-  // Store minimal transaction reference in Firebase
-  const storeTransaction = async (imageData: GeneratedImage) => {
-    if (!currentUser) return null;
+  // Auth and usage management
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      setAuthLoading(false);
+      if (user) checkUserUsage(user.uid);
+    });
+    return () => unsubscribe();
+  }, []);
 
+  const checkUserUsage = async (userId: string) => {
     try {
-      const transactionId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-      const transaction = {
-        prompt: imageData.prompt,
-        timestamp: imageData.timestamp,
-        status: 'completed'
-      };
-
-      const response = await fetch('/api/store-transaction', {
+      const response = await fetch('/api/check-usage', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: currentUser.uid,
-          transactionId,
-          transaction
-        }),
-      });
-
-      if (response.ok) {
-        return transactionId;
-      }
-    } catch (error) {
-      console.error('Failed to store transaction:', error);
-    }
-    return null;
-  };
-
-  const generateImage = async () => {
-    if (!currentUser) {
-      setError('Please log in to generate images');
-      return;
-    }
-
-    if (!prompt.trim()) {
-      setError('Please enter a prompt');
-      return;
-    }
-
-    // Check usage limit
-    if (hasReachedLimit()) {
-      const remainingTime = getRemainingTime();
-      setLimitResetTime(remainingTime);
-      setShowLimitModal(true);
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch('/api/generate-image', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          prompt: prompt.trim(),
-          userId: currentUser.uid 
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        setIsWatermarking(true);
-
-        let watermarkedImageUrl = data.imageUrl;
-
-        try {
-          watermarkedImageUrl = await addWatermarkToImage(data.imageUrl);
-        } catch (error) {
-          console.error('Failed to add watermark:', error);
-        }
-
-        const imageData: GeneratedImage = {
-          url: watermarkedImageUrl,
-          prompt: prompt,
-          timestamp: Date.now(),
-        };
-
-        const transactionId = await storeTransaction(imageData);
-        if (transactionId) {
-          imageData.transactionId = transactionId;
-        }
-
-        // Update usage after successful generation
-        await updateUserUsage(currentUser.uid);
-
-        setGeneratedImage(imageData);
-        setError(null);
-        setIsWatermarking(false);
-        
-        // Auto-switch to result tab and show modal
-        setActiveTab('result');
-        setShowModal(true);
-      } else {
-        setError(data.error || 'Failed to generate image');
-      }
-    } catch (err) {
-      setError('Network error. Please try again.');
-      console.error('Generation error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Update user usage after successful generation
-  const updateUserUsage = async (userId: string) => {
-    try {
-      const response = await fetch('/api/update-usage', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId }),
       });
-
       const data = await response.json();
-      if (data.success) {
-        setUserUsage(data.usage);
-      }
+      if (data.success) setUserUsage(data.usage);
     } catch (error) {
-      console.error('Failed to update usage:', error);
+      console.error('Failed to check usage:', error);
     }
   };
 
-  const addWatermarkToImage = (imageUrl: string): Promise<string> => {
+  const hasReachedLimit = () => {
+    if (!userUsage) return false;
+    const oneHour = 60 * 60 * 1000;
+    return Date.now() - userUsage.lastReset <= oneHour && userUsage.generations >= 2;
+  };
+
+  const getRemainingTime = () => {
+    if (!userUsage) return 0;
+    const oneHour = 60 * 60 * 1000;
+    const remaining = oneHour - (Date.now() - userUsage.lastReset);
+    return Math.max(0, remaining);
+  };
+
+  const formatRemainingTime = (ms: number) => {
+    const minutes = Math.ceil(ms / (60 * 1000));
+    return minutes >= 60 ? '1 hour' : `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+  };
+
+  // Image generation and processing
+  const addWatermark = (imageUrl: string): Promise<string> => {
     return new Promise((resolve, reject) => {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
@@ -258,7 +95,6 @@ export function ImageGenerator() {
       img.onload = () => {
         canvas.width = img.width;
         canvas.height = img.height;
-
         ctx!.drawImage(img, 0, 0);
 
         const fontSize = Math.max(16, Math.min(img.width / 25, img.height / 25));
@@ -273,27 +109,9 @@ export function ImageGenerator() {
         const x = img.width - padding;
         const y = img.height - padding;
 
-        const watermarkText = websiteName;
-        ctx!.strokeText(watermarkText, x, y);
-        ctx!.fillText(watermarkText, x, y);
-
-        const favicon = new Image();
-        favicon.crossOrigin = 'anonymous';
-        favicon.onload = () => {
-          const faviconSize = fontSize * 1.2;
-          ctx!.drawImage(
-            favicon, 
-            x - ctx!.measureText(watermarkText).width - faviconSize - (padding * 0.5), 
-            y - faviconSize + (padding * 0.2), 
-            faviconSize, 
-            faviconSize
-          );
-          resolve(canvas.toDataURL('image/png'));
-        };
-        favicon.onerror = () => {
-          resolve(canvas.toDataURL('image/png'));
-        };
-        favicon.src = faviconUrl;
+        ctx!.strokeText(websiteName, x, y);
+        ctx!.fillText(websiteName, x, y);
+        resolve(canvas.toDataURL('image/png'));
       };
 
       img.onerror = () => reject(new Error('Failed to load image'));
@@ -301,20 +119,97 @@ export function ImageGenerator() {
     });
   };
 
-  const downloadImage = async () => {
-    if (!generatedImage) return;
+  const generateImage = async () => {
+    if (!currentUser) {
+      setError('Please log in to generate images');
+      return;
+    }
+
+    if (!prompt.trim()) {
+      setError('Please enter a prompt');
+      return;
+    }
+
+    if (hasReachedLimit()) {
+      setShowLimitModal(true);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
 
     try {
-      let imageUrl = generatedImage.url;
+      const response = await fetch('/api/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: prompt.trim(), userId: currentUser.uid }),
+      });
 
-      try {
-        imageUrl = await addWatermarkToImage(generatedImage.url);
-      } catch (error) {
-        console.error('Failed to add watermark:', error);
+      const data = await response.json();
+
+      if (data.success) {
+        let watermarkedUrl = data.imageUrl;
+        try {
+          watermarkedUrl = await addWatermark(data.imageUrl);
+        } catch (error) {
+          console.error('Watermark failed:', error);
+        }
+
+        const imageData: GeneratedImage = {
+          url: watermarkedUrl,
+          prompt,
+          timestamp: Date.now(),
+        };
+
+        // Store transaction
+        try {
+          const transactionId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          await fetch('/api/store-transaction', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: currentUser.uid,
+              transactionId,
+              transaction: { prompt, timestamp: imageData.timestamp, status: 'completed' }
+            }),
+          });
+          imageData.transactionId = transactionId;
+        } catch (error) {
+          console.error('Transaction storage failed:', error);
+        }
+
+        // Update usage
+        try {
+          const usageResponse = await fetch('/api/update-usage', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: currentUser.uid }),
+          });
+          const usageData = await usageResponse.json();
+          if (usageData.success) setUserUsage(usageData.usage);
+        } catch (error) {
+          console.error('Usage update failed:', error);
+        }
+
+        setGeneratedImage(imageData);
+        setActiveTab('result');
+        setShowModal(true);
+      } else {
+        setError(data.error || 'Failed to generate image');
       }
+    } catch (err) {
+      setError('Network error. Please try again.');
+      console.error('Generation error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  const downloadImage = async () => {
+    if (!generatedImage) return;
+    try {
       const link = document.createElement('a');
-      link.href = imageUrl;
+      link.href = generatedImage.url;
       link.download = `${websiteName.toLowerCase()}-ai-image-${generatedImage.timestamp}.png`;
       document.body.appendChild(link);
       link.click();
@@ -324,21 +219,7 @@ export function ImageGenerator() {
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey && !loading) {
-      e.preventDefault();
-      generateImage();
-    }
-  };
-
-  const clearResult = () => {
-    setGeneratedImage(null);
-    setError(null);
-    setActiveTab('generate');
-    setShowModal(false);
-  };
-
-  // Show loading while checking auth
+  // Loading state
   if (authLoading) {
     return (
       <div className="min-h-screen w-full bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 flex items-center justify-center">
@@ -350,7 +231,7 @@ export function ImageGenerator() {
     );
   }
 
-  // Show login prompt if not authenticated
+  // Not authenticated
   if (!currentUser) {
     return (
       <div className="min-h-screen w-full bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 flex items-center justify-center">
@@ -376,7 +257,7 @@ export function ImageGenerator() {
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900">
       <div className="container mx-auto px-4 py-8">
-        {/* Header with user info */}
+        {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-between mb-4">
             <div></div>
@@ -423,11 +304,11 @@ export function ImageGenerator() {
           </div>
         </div>
 
-        {/* Tab Content */}
+        {/* Main Content */}
         <div className="max-w-4xl mx-auto">
           {activeTab === 'generate' && (
             <div className="space-y-8">
-              {/* Input Section - No Box, Background Blend */}
+              {/* Input Section */}
               <div className="space-y-6">
                 <div className="text-center">
                   <label className="block text-2xl font-bold text-gray-700 dark:text-gray-200 mb-6">
@@ -436,7 +317,12 @@ export function ImageGenerator() {
                   <textarea
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
-                    onKeyPress={handleKeyPress}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey && !loading) {
+                        e.preventDefault();
+                        generateImage();
+                      }
+                    }}
                     placeholder="e.g., a magical forest with glowing mushrooms under starlight..."
                     className="w-full px-6 py-6 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border-2 border-white/30 dark:border-gray-700/30 text-gray-700 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 rounded-2xl focus:ring-3 focus:ring-purple-300/50 dark:focus:ring-purple-500/50 focus:border-purple-400/50 dark:focus:border-purple-500/50 transition-all duration-300 text-lg resize-none shadow-lg hover:shadow-xl"
                     rows={4}
@@ -459,13 +345,13 @@ export function ImageGenerator() {
                     disabled={loading || !prompt.trim() || hasReachedLimit()}
                     className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 dark:from-purple-500 dark:via-blue-500 dark:to-indigo-500 text-white py-4 px-12 rounded-2xl font-bold text-xl disabled:opacity-50 disabled:cursor-not-allowed hover:from-purple-700 hover:via-blue-700 hover:to-indigo-700 dark:hover:from-purple-600 dark:hover:via-blue-600 dark:hover:to-indigo-600 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl active:scale-95 shadow-xl"
                   >
-                    {(loading || isWatermarking) ? (
+                    {loading ? (
                       <span className="flex items-center justify-center">
                         <svg className="animate-spin -ml-1 mr-3 h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        {loading ? 'Generating... (30-60s)' : 'Adding watermark...'}
+                        Generating... (30-60s)
                       </span>
                     ) : hasReachedLimit() ? (
                       'Limit Reached 🚫'
@@ -473,7 +359,7 @@ export function ImageGenerator() {
                       'Generate Image ✨'
                     )}
                   </button>
-                  
+
                   {/* Usage Counter */}
                   {userUsage && (
                     <div className="text-center">
@@ -492,7 +378,7 @@ export function ImageGenerator() {
                 </div>
               </div>
 
-              {/* Example Prompts - No Box */}
+              {/* Example Prompts */}
               <div className="text-center">
                 <h3 className="text-xl font-bold mb-6 text-gray-700 dark:text-gray-200 flex items-center justify-center">
                   💡 Try these ideas
@@ -511,7 +397,7 @@ export function ImageGenerator() {
                 </div>
               </div>
 
-              {/* Error Display */}
+{/* Error Display */}
               {error && (
                 <div className="max-w-2xl mx-auto p-4 bg-red-50/80 dark:bg-red-900/30 backdrop-blur-sm border-l-4 border-red-400 dark:border-red-500 rounded-xl shadow-lg">
                   <div className="flex">
@@ -551,7 +437,12 @@ export function ImageGenerator() {
                     <span>Download</span>
                   </button>
                   <button
-                    onClick={clearResult}
+                    onClick={() => {
+                      setGeneratedImage(null);
+                      setError(null);
+                      setActiveTab('generate');
+                      setShowModal(false);
+                    }}
                     className="w-full sm:w-auto px-8 py-3 bg-gray-600 dark:bg-gray-500 text-white rounded-xl hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-200 font-semibold flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
                   >
                     <span>🔄</span>
@@ -561,7 +452,7 @@ export function ImageGenerator() {
 
                 <div className="bg-gray-50/80 dark:bg-gray-700/50 backdrop-blur-sm border border-gray-200/50 dark:border-gray-600/50 p-4 rounded-xl">
                   <p className="text-gray-600 dark:text-gray-300 italic text-base mb-2">
-                    {`"${generatedImage.prompt}"`}
+                    &quot;{generatedImage.prompt}&quot;
                   </p>
                   <p className="text-gray-500 dark:text-gray-400 text-sm">
                     Generated on {new Date(generatedImage.timestamp).toLocaleDateString()} at {new Date(generatedImage.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
@@ -577,7 +468,7 @@ export function ImageGenerator() {
           )}
         </div>
 
-        {/* Image Generation Modal */}
+        {/* Success Modal */}
         {showModal && generatedImage && (
           <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-200/50 dark:border-gray-700/50">
@@ -593,18 +484,17 @@ export function ImageGenerator() {
                     ×
                   </button>
                 </div>
-                
+
                 <img
                   src={generatedImage.url}
                   alt={generatedImage.prompt}
                   className="w-full h-auto max-h-64 object-contain rounded-xl shadow-lg mb-4"
-                  onError={() => setError('Failed to load generated image')}
                 />
-                
+
                 <p className="text-gray-600 dark:text-gray-300 italic text-center mb-4">
-                  {`"${generatedImage.prompt}"`}
+                  &quot;{generatedImage.prompt}&quot;
                 </p>
-                
+
                 <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
                   <button
                     onClick={() => {
@@ -623,16 +513,6 @@ export function ImageGenerator() {
                     <span>👀</span>
                     <span>View Full</span>
                   </button>
-                  <button
-                    onClick={() => {
-                      clearResult();
-                      setShowModal(false);
-                    }}
-                    className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-3 px-6 rounded-xl font-semibold transition-colors duration-200 flex items-center justify-center space-x-2"
-                  >
-                    <span>🔄</span>
-                    <span>New</span>
-                  </button>
                 </div>
               </div>
             </div>
@@ -649,34 +529,22 @@ export function ImageGenerator() {
                   Generation Limit Reached
                 </h3>
                 <p className="text-gray-600 dark:text-gray-300 mb-4">
-                  You've reached your limit of 2 images per hour.
+                  You&apos;ve reached your limit of 2 images per hour.
                 </p>
                 <div className="bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-700 rounded-xl p-4 mb-6">
                   <p className="text-orange-700 dark:text-orange-300 font-medium">
-                    ⏳ Come back in {formatRemainingTime(limitResetTime)}
+                    ⏳ Come back in {formatRemainingTime(getRemainingTime())}
                   </p>
                   <p className="text-orange-600 dark:text-orange-400 text-sm mt-1">
                     Your limit will reset automatically
                   </p>
                 </div>
-                <div className="flex flex-col space-y-3">
-                  <button
-                    onClick={() => setShowLimitModal(false)}
-                    className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105"
-                  >
-                    Got it, thanks! 👍
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowLimitModal(false);
-                      setActiveTab('result');
-                    }}
-                    disabled={!generatedImage}
-                    className="w-full bg-gray-600 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105"
-                  >
-                    View Previous Images 🖼️
-                  </button>
-                </div>
+                <button
+                  onClick={() => setShowLimitModal(false)}
+                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105"
+                >
+                  Got it, thanks! 👍
+                </button>
               </div>
             </div>
           </div>
@@ -685,11 +553,9 @@ export function ImageGenerator() {
         {/* Footer */}
         <div className="mt-12 text-center">
           <div className="flex flex-col items-center space-y-4 p-6 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200/30 dark:border-gray-700/30 max-w-md mx-auto">
-            <div className="flex items-center space-x-3">
-              <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 dark:from-purple-400 dark:to-blue-400 bg-clip-text text-transparent">
-                {websiteName}
-              </span>
-            </div>
+            <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 dark:from-purple-400 dark:to-blue-400 bg-clip-text text-transparent">
+              {websiteName}
+            </span>
             <p className="text-gray-500 dark:text-gray-400 text-sm">
               🔥 Powered by AI • Generate unlimited images
             </p>
