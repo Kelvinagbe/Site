@@ -14,11 +14,11 @@ const useTheme = () => {
       const hasBodyDark = document.body.classList.contains('dark');
       const hasHtmlDark = document.querySelector('html')?.classList.contains('dark');
       const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      
+
       // Check for next-themes or other theme attributes
       const themeAttribute = document.documentElement.getAttribute('data-theme');
       const nextThemeAttribute = document.documentElement.getAttribute('class');
-      
+
       // Priority: explicit theme classes/attributes > system preference
       if (hasDocumentDark || hasBodyDark || hasHtmlDark || themeAttribute === 'dark' || nextThemeAttribute?.includes('dark')) {
         setTheme('dark');
@@ -33,12 +33,12 @@ const useTheme = () => {
 
     // Initial check
     checkTheme();
-    
+
     // Listen for system theme changes
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleMediaChange = () => checkTheme();
     mediaQuery.addEventListener('change', handleMediaChange);
-    
+
     // Watch for DOM changes (theme switches)
     const observer = new MutationObserver(checkTheme);
     observer.observe(document.documentElement, { 
@@ -242,7 +242,7 @@ const FloatingParticles = () => {
   }, []);
 
   return (
-    <div className="fixed inset-0 pointer-events-none overflow-hidden">
+    <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
       {particles.map((particle) => (
         <div
           key={particle.id}
@@ -333,7 +333,7 @@ const ChatInterface = () => {
       }
 
       const data = await response.json();
-      
+
       setMessages(prev => [...prev, {
         id: crypto.randomUUID(),
         role: "bot",
@@ -361,7 +361,7 @@ const ChatInterface = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen relative overflow-hidden">
+    <div className="h-screen relative overflow-hidden">
       {/* Dynamic Background that adapts to theme */}
       <div className={`fixed inset-0 transition-all duration-700 ${
         theme === 'dark'
@@ -373,15 +373,13 @@ const ChatInterface = () => {
           ? 'bg-gradient-to-tr from-blue-500/10 via-purple-500/10 to-pink-500/10'
           : 'bg-gradient-to-tr from-blue-200/20 via-purple-200/20 to-pink-200/20'
       }`}></div>
-      
+
       {/* Floating Particles */}
       <FloatingParticles />
 
-      {/* Main Chat Container */}
-      <div className="relative z-10 flex flex-col h-full pt-8">
-        
-        {/* Messages Container */}
-        <div className="flex-1 overflow-y-auto">
+      {/* Messages Container - Fixed height with bottom padding for input area */}
+      <div className="absolute inset-0 z-10 pb-32">
+        <div className="h-full overflow-y-auto">
           <div className="max-w-4xl mx-auto px-4 py-8">
             {messages.length === 0 ? (
               <div className="text-center mt-20">
@@ -478,64 +476,63 @@ const ChatInterface = () => {
             )}
           </div>
         </div>
+      </div>
 
-        
-       {/* Input Area */}
-        <div className={`border-t backdrop-blur-md transition-all duration-500 ${
-          theme === 'dark' 
-            ? 'border-white/20 bg-black/20' 
-            : 'border-gray-200 bg-white/80'
-        }`}>
-          <div className="max-w-4xl mx-auto px-4 py-4">
-            <div className={`flex items-end space-x-3 backdrop-blur-sm border rounded-2xl shadow-lg transition-all duration-200 ${
-              theme === 'dark'
-                ? 'bg-white/10 border-white/20 hover:border-white/40 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-400/20'
-                : 'bg-white/95 border-gray-200 hover:border-gray-300 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-400/20'
-            }`}>
-              <div className="flex-1">
-                <textarea
-                  ref={textareaRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Type your message..."
-                  className={`w-full resize-none border-0 bg-transparent px-4 py-3 focus:outline-none focus:ring-0 max-h-32 transition-colors duration-500 ${
-                    theme === 'dark'
-                      ? 'text-white placeholder-gray-400'
-                      : 'text-gray-900 placeholder-gray-500'
-                  }`}
-                  rows={1}
-                  disabled={loading}
-                />
-              </div>
-              <div className="flex items-end pb-2 pr-2">
-                <button
-                  onClick={sendMessage}
-                  disabled={loading || !input.trim()}
-                  className={`flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200 ${
-                    loading || !input.trim()
-                      ? theme === 'dark'
-                        ? "bg-white/10 text-white/40 cursor-not-allowed"
-                        : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                      : "bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 shadow-md hover:shadow-lg transform hover:scale-105"
-                  }`}
-                >
-                  {loading ? (
-                    <div className={`w-4 h-4 border-2 border-t-transparent rounded-full animate-spin ${
-                      theme === 'dark' ? 'border-white/30' : 'border-gray-300'
-                    }`}></div>
-                  ) : (
-                    <Send className="w-4 h-4" />
-                  )}
-                </button>
-              </div>
+      {/* Fixed Input Area at Bottom */}
+      <div className={`fixed bottom-0 left-0 right-0 z-20 border-t backdrop-blur-md transition-all duration-500 ${
+        theme === 'dark' 
+          ? 'border-white/20 bg-black/20' 
+          : 'border-gray-200 bg-white/80'
+      }`}>
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <div className={`flex items-end space-x-3 backdrop-blur-sm border rounded-2xl shadow-lg transition-all duration-200 ${
+            theme === 'dark'
+              ? 'bg-white/10 border-white/20 hover:border-white/40 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-400/20'
+              : 'bg-white/95 border-gray-200 hover:border-gray-300 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-400/20'
+          }`}>
+            <div className="flex-1">
+              <textarea
+                ref={textareaRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Type your message..."
+                className={`w-full resize-none border-0 bg-transparent px-4 py-3 focus:outline-none focus:ring-0 max-h-32 transition-colors duration-500 ${
+                  theme === 'dark'
+                    ? 'text-white placeholder-gray-400'
+                    : 'text-gray-900 placeholder-gray-500'
+                }`}
+                rows={1}
+                disabled={loading}
+              />
             </div>
-            <div className={`flex justify-between items-center text-xs mt-2 px-1 transition-colors duration-500 ${
-              theme === 'dark' ? 'text-white/60' : 'text-gray-500'
-            }`}>
-              <span>Press Enter to send, Shift+Enter for new line</span>
-              <span>Supports **bold**, *italic*, `code`, and links</span>
+            <div className="flex items-end pb-2 pr-2">
+              <button
+                onClick={sendMessage}
+                disabled={loading || !input.trim()}
+                className={`flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200 ${
+                  loading || !input.trim()
+                    ? theme === 'dark'
+                      ? "bg-white/10 text-white/40 cursor-not-allowed"
+                      : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 shadow-md hover:shadow-lg transform hover:scale-105"
+                }`}
+              >
+                {loading ? (
+                  <div className={`w-4 h-4 border-2 border-t-transparent rounded-full animate-spin ${
+                    theme === 'dark' ? 'border-white/30' : 'border-gray-300'
+                  }`}></div>
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
+              </button>
             </div>
+          </div>
+          <div className={`flex justify-between items-center text-xs mt-2 px-1 transition-colors duration-500 ${
+            theme === 'dark' ? 'text-white/60' : 'text-gray-500'
+          }`}>
+            <span>Press Enter to send, Shift+Enter for new line</span>
+            <span>Supports **bold**, *italic*, `code`, and links</span>
           </div>
         </div>
       </div>
