@@ -2,13 +2,6 @@
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getDatabase } from 'firebase-admin/database';
 
-// Debug environment variables (remove after debugging)
-console.log('Firebase Admin Config Check:');
-console.log('PROJECT_ID:', process.env.FIREBASE_PROJECT_ID);
-console.log('CLIENT_EMAIL:', process.env.FIREBASE_CLIENT_EMAIL);
-console.log('PRIVATE_KEY exists:', !!process.env.FIREBASE_PRIVATE_KEY);
-console.log('Database URL:', `https://${process.env.FIREBASE_PROJECT_ID}-default-rtdb.firebaseio.com/`);
-
 const firebaseAdminConfig = {
   credential: cert({
     projectId: process.env.FIREBASE_PROJECT_ID,
