@@ -177,7 +177,13 @@ const toolApps = [
   { id: "pdf-converter", name: "PDF Converter", icon: DocumentIcon, component: PDFConverter },
 ];
 
-const allApps = [...mainApps, ...imageApps, ...toolApps, 
+// Sidebar only apps (excluding dashboard and wallpaper)
+const sidebarApps = [
+  ...imageApps,
+  ...toolApps
+];
+
+const allApps = [...mainApps, ...sidebarApps, 
   { id: "settings", name: "Settings", icon: SettingsIcon, component: Settings }
 ];
 
@@ -221,20 +227,20 @@ const SidebarSection = ({
     <div className={`transition-all duration-300 ease-in-out ${
       isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
     }`}>
-      <div className="space-y-1 px-2">
+      <div className="space-y-2 px-2">
         {apps.map(({ id, name, icon: IconComponent }) => (
           <LoadingButton
             key={id}
             loading={isContentLoading && activeApp === id}
             onClick={() => onAppSwitch(id)}
-            className={`w-full flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 text-sm font-medium ${
+            className={`w-full flex flex-col items-center justify-center px-3 py-4 rounded-lg transition-all duration-200 text-xs font-medium ${
               activeApp === id 
                 ? 'bg-blue-600 text-white shadow-sm' 
                 : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
             }`}
           >
-            <IconComponent className="w-5 h-5 mr-3 flex-shrink-0" />
-            <span className="truncate">{name}</span>
+            <IconComponent className="w-6 h-6 mb-2 flex-shrink-0" />
+            <span className="text-center leading-tight">{name}</span>
           </LoadingButton>
         ))}
       </div>
@@ -340,16 +346,7 @@ function ToolsPageContent() {
             </div>
 
             <div className="flex-1 p-4 overflow-y-auto">
-              {/* Main Section */}
-              <SidebarSection
-                title="Main"
-                apps={mainApps}
-                activeApp={activeApp}
-                isContentLoading={isContentLoading}
-                onAppSwitch={handleAppSwitch}
-              />
-
-              {/* Image Section */}
+              {/* Images Section */}
               <SidebarSection
                 title="Images"
                 apps={imageApps}
@@ -378,14 +375,14 @@ function ToolsPageContent() {
                 <LoadingButton
                   loading={isContentLoading && activeApp === 'settings'}
                   onClick={() => handleAppSwitch('settings')}
-                  className={`w-full flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 text-sm font-medium ${
+                  className={`w-full flex flex-col items-center justify-center px-3 py-4 rounded-lg transition-all duration-200 text-xs font-medium ${
                     activeApp === 'settings'
                       ? 'bg-blue-600 text-white shadow-sm' 
                       : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
                   }`}
                 >
-                  <SettingsIcon className="w-5 h-5 mr-3 flex-shrink-0" />
-                  <span className="truncate">Settings</span>
+                  <SettingsIcon className="w-6 h-6 mb-2 flex-shrink-0" />
+                  <span className="text-center leading-tight">Settings</span>
                 </LoadingButton>
               </div>
             </div>
@@ -433,15 +430,6 @@ function ToolsPageContent() {
         {/* Desktop Sidebar - Professional Design */}
         <aside className="hidden sm:block fixed left-0 top-16 bottom-0 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
           <div className="p-4 pb-20">
-            {/* Main Apps */}
-            <SidebarSection
-              title="Main"
-              apps={mainApps}
-              activeApp={activeApp}
-              isContentLoading={isContentLoading}
-              onAppSwitch={handleAppSwitch}
-            />
-
             {/* Images Section */}
             <SidebarSection
               title="Images"
@@ -471,14 +459,14 @@ function ToolsPageContent() {
               <LoadingButton
                 loading={isContentLoading && activeApp === 'settings'}
                 onClick={() => handleAppSwitch('settings')}
-                className={`w-full flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 text-sm font-medium ${
+                className={`w-full flex flex-col items-center justify-center px-3 py-4 rounded-lg transition-all duration-200 text-xs font-medium ${
                   activeApp === 'settings'
                     ? 'bg-blue-600 text-white shadow-sm' 
                     : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
                 }`}
               >
-                <SettingsIcon className="w-5 h-5 mr-3 flex-shrink-0" />
-                <span className="truncate">Settings</span>
+                <SettingsIcon className="w-6 h-6 mb-2 flex-shrink-0" />
+                <span className="text-center leading-tight">Settings</span>
               </LoadingButton>
             </div>
           </div>
@@ -513,7 +501,8 @@ function ToolsPageContent() {
         </main>
       </div>
 
-  {/* Bottom Navigation - Main apps + Menu (Mobile Only) */}
+     
+      {/* Bottom Navigation - Main apps + Menu (Mobile Only) */}
       <nav className="fixed bottom-0 left-0 right-0 sm:hidden z-40 border-t border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm">
         <div className="flex">
           {mainApps.map(({ id, name, icon: IconComponent }) => (
