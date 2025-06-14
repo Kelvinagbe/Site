@@ -14,6 +14,15 @@ const WallpaperGenerator = () => {
   const [height, setHeight] = useState(1612);
   const [showSizeModal, setShowSizeModal] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [usage, setUsage] = useState<{
+    generations: number;
+    canGenerate: boolean;
+    remainingGenerations: number;
+    timeUntilReset: number;
+    limit: number;
+  } | null>(null);
+  const [userId, setUserId] = useState<string>('');
+  const [isCheckingUsage, setIsCheckingUsage] = useState(false);
 
   // Auto-detect site name (fallback to default)
   const siteName = typeof window !== 'undefined' ? 
@@ -48,9 +57,116 @@ const WallpaperGenerator = () => {
     };
   }, []);
 
+  // Initialize user ID and check usage
+  useEffect(() => {
+    const initializeUser = () => {
+      // Try to get user ID from various sources
+      const storedUserId = typeof window !== 'undefined' 
+        ? window.localStorage?.getItem('userId') || 
+          window.sessionStorage?.getItem('userId') ||
+          document.cookie.split(';').find(row => row.trim().startsWith('userId='))?.split('=')[1]
+        : null;
+
+      let currentUserId = storedUserId;
+
+      // If no user ID found, generate a unique one
+      if (!currentUserId) {
+        currentUserId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        // Try to store it (fallback to memory if storage fails)
+        try {
+          if (typeof window !== 'undefined' && window.localStorage) {
+            window.localStorage.setItem('userId', currentUserId);
+          }
+        } catch (e) {
+          console.warn('Could not store user ID in localStorage');
+        }
+      }
+
+      setUserId(currentUserId);
+      checkUsage(currentUserId);
+    };
+
+    initializeUser();
+  }, []);
+
+  const checkUsage = async (uid: string) => {
+    if (!uid) return;
+    
+    setIsCheckingUsage(true);
+    try {
+      const response = await fetch('/api/check-usage', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: uid }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setUsage({
+            generations: data.usage.generations,
+            canGenerate: data.canGenerate,
+            remainingGenerations: data.remainingGenerations,
+            timeUntilReset: data.timeUntilReset,
+            limit: data.limit,
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error checking usage:', error);
+    } finally {
+      setIsCheckingUsage(false);
+    }
+  };
+
+  const updateUsage = async () => {
+    if (!userId) return false;
+    
+    try {
+      const response = await fetch('/api/update-usage', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          // Refresh usage data
+          await checkUsage(userId);
+          return true;
+        }
+      }
+      return false;
+    } catch (error) {
+      console.error('Error updating usage:', error);
+      return false;
+    }
+  };
+
+  const formatTime = (milliseconds: number) => {
+    const minutes = Math.floor(milliseconds / (1000 * 60));
+    const seconds = Math.floor((milliseconds % (1000 * 60)) / 1000);
+    return `${minutes}m ${seconds}s`;
+  };
+
   const handleGenerate = async () => {
     if (!prompt.trim()) {
       setError('Enter a prompt');
+      return;
+    }
+
+    // Check usage limit before generating
+    if (!usage?.canGenerate) {
+      if (usage?.timeUntilReset && usage.timeUntilReset > 0) {
+        setError(`Generation limit reached. Try again in ${formatTime(usage.timeUntilReset)}`);
+      } else {
+        setError('Generation limit reached. Please try again later.');
+      }
       return;
     }
 
@@ -58,6 +174,12 @@ const WallpaperGenerator = () => {
     setError(null);
 
     try {
+      // First, update usage count
+      const usageUpdated = await updateUsage();
+      if (!usageUpdated) {
+        throw new Error('Failed to update usage count');
+      }
+
       const response = await fetch('/api/generate-wallpaper', {
         method: 'POST',
         headers: {
@@ -84,6 +206,10 @@ const WallpaperGenerator = () => {
     } catch (err) {
       console.error('Generation error:', err);
       setError(err instanceof Error ? err.message : 'Generation failed');
+      // If generation failed, refresh usage to get accurate count
+      if (userId) {
+        await checkUsage(userId);
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -179,6 +305,25 @@ const WallpaperGenerator = () => {
               </div>
             </div>
 
+            {/* Usage Information */}
+            {usage && (
+              <div className={`mb-4 p-3 rounded-lg ${theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-100'}`}>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="opacity-70">
+                    Generations: {usage.generations}/{usage.limit}
+                  </span>
+                  <span className="opacity-70">
+                    Remaining: {usage.remainingGenerations}
+                  </span>
+                </div>
+                {usage.remainingGenerations === 0 && usage.timeUntilReset > 0 && (
+                  <div className="mt-1 text-xs text-orange-500">
+                    Reset in: {formatTime(usage.timeUntilReset)}
+                  </div>
+                )}
+              </div>
+            )}
+
             <textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
@@ -189,10 +334,12 @@ const WallpaperGenerator = () => {
 
             <button
               onClick={handleGenerate}
-              disabled={isGenerating || !prompt.trim()}
+              disabled={isGenerating || !prompt.trim() || !usage?.canGenerate || isCheckingUsage}
               className="w-full mt-3 py-3 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white font-medium rounded-lg transition-colors text-sm"
             >
-              {isGenerating ? 'Creating...' : 'Generate'}
+              {isGenerating ? 'Creating...' : 
+               isCheckingUsage ? 'Checking limits...' :
+               !usage?.canGenerate ? 'Limit reached' : 'Generate'}
             </button>
 
             {error && (
@@ -204,11 +351,12 @@ const WallpaperGenerator = () => {
 
           {/* Tips */}
           <div className={`rounded-xl border ${currentTheme.cardBorder} ${currentTheme.card} p-4`}>
-            <h3 className="font-medium mb-2 text-sm">Tips</h3>
+            <h3 className="font-medium mb-2 text-sm">Tips & Limits</h3>
             <ul className="text-xs space-y-1 opacity-70">
               <li>• Be specific about colors and mood</li>
               <li>• Mention artistic styles (e.g., minimalist, abstract)</li>
               <li>• Include lighting preferences (bright, soft, dramatic)</li>
+              <li>• Limit: 2 generations per hour</li>
               <li>• Auto-branded with {siteName}</li>
             </ul>
           </div>
