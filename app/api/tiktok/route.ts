@@ -25,17 +25,27 @@ async function resolveTikTokUrl(url: string): Promise<string> {
 // Helper function to extract video ID from TikTok URL
 function extractVideoId(url: string): string | null {
   const patterns = [
+    // Standard format: @username/video/123456
     /tiktok\.com\/@[^/]+\/video\/(\d+)/,
+    // Malformed format: @/video/123456 (missing username)
+    /tiktok\.com\/@\/video\/(\d+)/,
+    // Direct video format: /v/123456
     /tiktok\.com\/v\/(\d+)/,
+    // Query parameter format: ?v=123456 or &v=123456
     /tiktok\.com.*[?&]v=(\d+)/,
+    // Short URLs
     /vm\.tiktok\.com\/([A-Za-z0-9]+)/,
-    /vt\.tiktok\.com\/([A-Za-z0-9]+)/
+    /vt\.tiktok\.com\/([A-Za-z0-9]+)/,
+    // Extract from any URL that has /video/ followed by digits
+    /\/video\/(\d+)/,
+    // Extract from share_item_id parameter
+    /share_item_id=(\d+)/
   ];
   
   for (const pattern of patterns) {
     const match = url.match(pattern);
     if (match && match[1]) {
-      console.log('Extracted video ID:', match[1]);
+      console.log('Extracted video ID:', match[1], 'using pattern:', pattern.source);
       return match[1];
     }
   }
@@ -100,7 +110,7 @@ export async function POST(request: NextRequest) {
 
     console.log('Original URL:', url);
 
-    // Validate URL format
+    // Validate and potentially fix URL format
     if (!url.includes('tiktok.com')) {
       console.error('Invalid TikTok URL format');
       return NextResponse.json(
@@ -109,9 +119,62 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Clean the URL - remove extra text
-    cleanUrl = url.split(' ')[0].trim();
-    console.log('Cleaned URL:', cleanUrl);
+    // Check for malformed URL (missing username)
+    if (url.includes('tiktok.com/@/video/')) {
+      console.log('Detected malformed URL with missing username');
+      // Extract video ID from malformed URL
+      const videoIdMatch = url.match(/\/video\/(\d+)/);
+      if (videoIdMatch) {
+        const videoId = videoIdMatch[1];
+        console.log('Extracted video ID from malformed URL:', videoId);
+        
+        // Return early with basic info since we have the video ID
+        return NextResponse.json({
+          success: true,
+          data: {
+            title: 'TikTok Video (Malformed URL)',
+            duration: 0,
+            view_count: 0,
+            like_count: 0,
+            download_url: cleanUrl,
+            thumbnail: '',
+            uploader: 'Unknown',
+            upload_date: new Date().toISOString().split('T')[0],
+            video_id: videoId,
+            original_url: originalUrl,
+            resolved_url: cleanUrl,
+            method: 'malformed_url_extraction',
+            note: 'Video ID extracted from malformed URL structure'
+          }
+        });
+      }
+    }
+
+// Helper function to clean and normalize TikTok URLs
+function cleanTikTokUrl(url: string): string {
+  try {
+    // Remove extra parameters that might cause issues
+    const urlObj = new URL(url);
+    
+    // Keep only essential parameters
+    const essentialParams = ['_r', '_d'];
+    const newSearchParams = new URLSearchParams();
+    
+    essentialParams.forEach(param => {
+      if (urlObj.searchParams.has(param)) {
+        newSearchParams.set(param, urlObj.searchParams.get(param)!);
+      }
+    });
+    
+    // Reconstruct clean URL
+    const cleanUrl = `${urlObj.protocol}//${urlObj.host}${urlObj.pathname}`;
+    return newSearchParams.toString() ? `${cleanUrl}?${newSearchParams.toString()}` : cleanUrl;
+  } catch (error) {
+    console.error('Error cleaning URL:', error);
+    // If URL parsing fails, just return the original
+    return url.split(' ')[0].trim();
+  }
+}
 
     // Resolve shortened URLs
     try {
