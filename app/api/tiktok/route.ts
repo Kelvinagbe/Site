@@ -116,7 +116,9 @@ export async function POST(request: NextRequest) {
       { 
         error: 'Failed to process TikTok URL',
         details: error instanceof Error ? error.message : 'Unknown error',
-        url_received: request.url
+        stack: error instanceof Error ? error.stack : 'No stack trace',
+        url_received: url,
+        resolved_url: 'Error before resolution'
       },
       { status: 500 }
     );
