@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import YTDlpWrap from 'yt-dlp-wrap';
+import fetch from 'node-fetch';
 
 // Helper function to resolve TikTok URLs
 async function resolveTikTokUrl(url: string): Promise<string> {
@@ -59,9 +61,8 @@ export async function POST(request: NextRequest) {
 
     // Try different approaches for TikTok data extraction
     
-    // Method 1: Try with yt-dlp-wrap
+    // Method 1: Try with yt-dlp-wrap (using your installed package)
     try {
-      const YTDlpWrap = require('yt-dlp-wrap');
       const ytDlpWrap = new YTDlpWrap();
       const videoInfo = await ytDlpWrap.getVideoInfo(resolvedUrl);
       
