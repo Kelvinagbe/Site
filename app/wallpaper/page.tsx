@@ -576,4 +576,184 @@ const WallpaperGenerator = () => {
                   onClick={() => handleDownload(generatedImage, prompt, width, height)}
                   className="flex-1 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium"
                 >
-                 
+                  <Download size={14} className="inline mr-1" />
+                  Download
+                </button>
+                <button
+                  onClick={() => {
+                    setShowPreview(false);
+                    setGeneratedImage(null);
+                  }}
+                  className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg text-sm"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Gallery Image Preview Modal */}
+      {selectedImage && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="max-w-xs w-full">
+            <button
+              onClick={() => setSelectedImage(null)}
+              className="absolute -top-10 right-0 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-white"
+            >
+              <X size={16} />
+            </button>
+
+            <div className="bg-white rounded-2xl p-3 shadow-2xl">
+              <div className="relative">
+                <img
+                  src={selectedImage.url}
+                  alt="Generated wallpaper"
+                  className="w-full rounded-lg"
+                  style={{ 
+                    maxHeight: '400px', 
+                    objectFit: 'contain',
+                    aspectRatio: `${selectedImage.width}/${selectedImage.height}`
+                  }}
+                />
+              </div>
+
+              <div className="mt-3 space-y-2">
+                <p className="text-sm text-gray-700">{selectedImage.prompt}</p>
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>{selectedImage.width} × {selectedImage.height}</span>
+                  <span>{formatDate(selectedImage.timestamp)}</span>
+                </div>
+              </div>
+
+              <div className="flex gap-2 mt-3">
+                <button
+                  onClick={() => handleDownload(selectedImage.url, selectedImage.prompt, selectedImage.width, selectedImage.height)}
+                  className="flex-1 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium"
+                >
+                  <Download size={14} className="inline mr-1" />
+                  Download
+                </button>
+                <button
+                  onClick={() => deleteImage(selectedImage.id)}
+                  className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm"
+                >
+                  <Trash2 size={14} className="inline mr-1" />
+                  Delete
+                </button>
+                <button
+                  onClick={() => setSelectedImage(null)}
+                  className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg text-sm"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Size Settings Modal */}
+      {showSizeModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className={`${currentTheme.modal} rounded-2xl p-4 w-full max-w-sm`}>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Image Size</h3>
+              <button
+                onClick={() => setShowSizeModal(false)}
+                className={`w-8 h-8 ${currentTheme.button} rounded-full flex items-center justify-center`}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Preset Sizes */}
+            <div className="space-y-2 mb-4">
+              <h4 className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Presets</h4>
+              {presetSizes.map((preset) => (
+                <button
+                  key={preset.name}
+                  onClick={() => {
+                    setWidth(preset.width);
+                    setHeight(preset.height);
+                    setShowSizeModal(false);
+                  }}
+                  className={`w-full p-2 rounded-lg text-left text-sm ${
+                    width === preset.width && height === preset.height
+                      ? 'bg-blue-600 text-white'
+                      : theme === 'dark'
+                      ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  <div className="font-medium">{preset.name}</div>
+                  <div className="text-xs opacity-70">{preset.width} × {preset.height}</div>
+                </button>
+              ))}
+            </div>
+
+            {/* Custom Size */}
+            <div className="space-y-3">
+              <h4 className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Custom Size</h4>
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <label className={`block text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} mb-1`}>Width</label>
+                  <input
+                    type="text"
+                    value={width}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^0-9]/g, '');
+                      if (value === '') {
+                        setWidth(0);
+                      } else {
+                        const num = parseInt(value);
+                        if (num >= 1 && num <= 8000) {
+                          setWidth(num);
+                        }
+                      }
+                    }}
+                    placeholder="e.g. 1080"
+                    className={`w-full p-2 ${currentTheme.input} rounded-lg text-sm`}
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className={`block text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} mb-1`}>Height</label>
+                  <input
+                    type="text"
+                    value={height}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^0-9]/g, '');
+                      if (value === '') {
+                        setHeight(0);
+                      } else {
+                        const num = parseInt(value);
+                        if (num >= 1 && num <= 8000) {
+                          setHeight(num);
+                        }
+                      }
+                    }}
+                    placeholder="e.g. 1920"
+                    className={`w-full p-2 ${currentTheme.input} rounded-lg text-sm`}
+                  />
+                </div>
+              </div>
+              <div className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} text-center`}>
+                Range: 1 - 8000 pixels
+              </div>
+              <button
+                onClick={() => setShowSizeModal(false)}
+                disabled={!width || !height || width < 1 || height < 1}
+                className="w-full py-2 bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium"
+              >
+                Apply Custom Size
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default WallpaperGenerator;
