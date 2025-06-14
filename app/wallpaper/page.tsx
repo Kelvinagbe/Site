@@ -6,8 +6,8 @@ import { Download, X, Wand2, Settings } from 'lucide-react';
 const WallpaperGenerator = () => {
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedImage, setGeneratedImage] = useState(null);
-  const [error, setError] = useState(null);
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null); // Fixed: Properly typed
   const [showPreview, setShowPreview] = useState(false);
   const [activeTab, setActiveTab] = useState('generate');
   const [width, setWidth] = useState(721);
@@ -36,6 +36,10 @@ const WallpaperGenerator = () => {
       canvas.width = width;
       canvas.height = height;
       const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
+        throw new Error('Could not get canvas context');
+      }
       
       // Sample gradient background
       const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
@@ -264,7 +268,7 @@ const WallpaperGenerator = () => {
                     onChange={(e) => {
                       const value = e.target.value.replace(/[^0-9]/g, '');
                       if (value === '') {
-                        setWidth('');
+                        setWidth(0);
                       } else {
                         const num = parseInt(value);
                         if (num >= 1 && num <= 8000) {
@@ -284,7 +288,7 @@ const WallpaperGenerator = () => {
                     onChange={(e) => {
                       const value = e.target.value.replace(/[^0-9]/g, '');
                       if (value === '') {
-                        setHeight('');
+                        setHeight(0);
                       } else {
                         const num = parseInt(value);
                         if (num >= 1 && num <= 8000) {
