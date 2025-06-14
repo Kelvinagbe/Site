@@ -66,11 +66,11 @@ export default function TikTokTestPage() {
 
     setDownloading(true);
     setDownloadProgress(0);
-    
+
     try {
       // Method 1: Try direct download with fetch and blob
       const response = await fetch(data.download_url);
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -86,10 +86,10 @@ export default function TikTokTestPage() {
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-          
+
           chunks.push(value);
           loaded += value.length;
-          
+
           if (total > 0) {
             setDownloadProgress(Math.round((loaded / total) * 100));
           }
@@ -98,29 +98,29 @@ export default function TikTokTestPage() {
 
       // Create blob from chunks
       const blob = new Blob(chunks, { type: 'video/mp4' });
-      
+
       // Create download link
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
-      
+
       // Generate filename
       const filename = `tiktok_${data.video_id || Date.now()}.mp4`;
       link.download = filename;
-      
+
       // Trigger download
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       // Clean up
       window.URL.revokeObjectURL(downloadUrl);
-      
+
       setDownloadProgress(100);
-      
+
     } catch (error) {
       console.error('Download error:', error);
-      
+
       // Fallback: Open in new tab (user can right-click save)
       const link = document.createElement('a');
       link.href = data.download_url;
@@ -129,7 +129,7 @@ export default function TikTokTestPage() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       setError('Direct download failed. Video opened in new tab - right-click to save.');
     } finally {
       setDownloading(false);
@@ -314,8 +314,8 @@ export default function TikTokTestPage() {
         <ol className="text-sm text-blue-700 space-y-1 list-decimal list-inside">
           <li>Copy a TikTok video URL (from the share button)</li>
           <li>Paste it in the input field above</li>
-          <li>Click "Get Video Info" to process the URL</li>
-          <li>Click "Download Video" to save the video to your device</li>
+          <li>Click &quot;Get Video Info&quot; to process the URL</li>
+          <li>Click &quot;Download Video&quot; to save the video to your device</li>
         </ol>
       </div>
     </div>
