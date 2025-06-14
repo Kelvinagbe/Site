@@ -39,8 +39,12 @@ function extractVideoId(url: string): string | null {
 }
 
 export async function POST(request: NextRequest) {
+  let originalUrl = '';
+  let resolvedUrl = '';
+  
   try {
     const { url } = await request.json();
+    originalUrl = url; // Store for error handling
     
     if (!url) {
       return NextResponse.json(
@@ -56,7 +60,7 @@ export async function POST(request: NextRequest) {
     console.log('Cleaned URL:', cleanUrl);
 
     // Resolve shortened URLs
-    const resolvedUrl = await resolveTikTokUrl(cleanUrl);
+    resolvedUrl = await resolveTikTokUrl(cleanUrl);
     console.log('Resolved URL:', resolvedUrl);
 
     // Try different approaches for TikTok data extraction
@@ -117,8 +121,8 @@ export async function POST(request: NextRequest) {
         error: 'Failed to process TikTok URL',
         details: error instanceof Error ? error.message : 'Unknown error',
         stack: error instanceof Error ? error.stack : 'No stack trace',
-        url_received: url,
-        resolved_url: 'Error before resolution'
+        url_received: originalUrl,
+        resolved_url: resolvedUrl || 'Error before resolution'
       },
       { status: 500 }
     );
