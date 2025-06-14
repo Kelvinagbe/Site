@@ -13,7 +13,7 @@ const WallpaperGenerator = () => {
   const [width, setWidth] = useState(721);
   const [height, setHeight] = useState(1612);
   const [showSizeModal, setShowSizeModal] = useState(false);
-  const [theme, setTheme] = useState('dark');
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
 
   // Auto-detect site name (fallback to default)
   const siteName = typeof window !== 'undefined' ? 
@@ -129,7 +129,7 @@ const WallpaperGenerator = () => {
     }
   };
 
-  const currentTheme = themeClasses[theme];
+  const currentTheme = themeClasses[theme as keyof typeof themeClasses];
 
   return (
     <div className={`min-h-screen ${currentTheme.bg} ${currentTheme.text} p-4 transition-colors`}>
