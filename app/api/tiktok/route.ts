@@ -10,8 +10,7 @@ async function resolveTikTokUrl(url: string): Promise<string> {
     if (url.includes('vm.tiktok.com') || url.includes('vt.tiktok.com')) {
       const response = await fetch(url, { 
         method: 'HEAD',
-        redirect: 'follow',
-        timeout: 10000 // 10 second timeout
+        redirect: 'follow'
       });
       console.log('Resolved to:', response.url);
       return response.url;
@@ -53,8 +52,7 @@ async function scrapeTikTokBasicInfo(url: string) {
     const response = await fetch(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-      },
-      timeout: 15000
+      }
     });
     
     if (!response.ok) {
