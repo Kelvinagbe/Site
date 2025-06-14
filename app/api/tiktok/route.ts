@@ -54,6 +54,32 @@ function extractVideoId(url: string): string | null {
   return null;
 }
 
+// Helper function to clean and normalize TikTok URLs
+function cleanTikTokUrl(url: string): string {
+  try {
+    // Remove extra parameters that might cause issues
+    const urlObj = new URL(url);
+    
+    // Keep only essential parameters
+    const essentialParams = ['_r', '_d'];
+    const newSearchParams = new URLSearchParams();
+    
+    essentialParams.forEach(param => {
+      if (urlObj.searchParams.has(param)) {
+        newSearchParams.set(param, urlObj.searchParams.get(param)!);
+      }
+    });
+    
+    // Reconstruct clean URL
+    const cleanUrl = `${urlObj.protocol}//${urlObj.host}${urlObj.pathname}`;
+    return newSearchParams.toString() ? `${cleanUrl}?${newSearchParams.toString()}` : cleanUrl;
+  } catch (error) {
+    console.error('Error cleaning URL:', error);
+    // If URL parsing fails, just return the original
+    return url.split(' ')[0].trim();
+  }
+}
+
 // Alternative method using puppeteer-like scraping (fallback)
 async function scrapeTikTokBasicInfo(url: string) {
   try {
@@ -119,6 +145,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Clean the URL first
+    cleanUrl = cleanTikTokUrl(url);
+    console.log('Cleaned URL:', cleanUrl);
+
     // Check for malformed URL (missing username)
     if (url.includes('tiktok.com/@/video/')) {
       console.log('Detected malformed URL with missing username');
@@ -149,32 +179,6 @@ export async function POST(request: NextRequest) {
         });
       }
     }
-
-// Helper function to clean and normalize TikTok URLs
-function cleanTikTokUrl(url: string): string {
-  try {
-    // Remove extra parameters that might cause issues
-    const urlObj = new URL(url);
-    
-    // Keep only essential parameters
-    const essentialParams = ['_r', '_d'];
-    const newSearchParams = new URLSearchParams();
-    
-    essentialParams.forEach(param => {
-      if (urlObj.searchParams.has(param)) {
-        newSearchParams.set(param, urlObj.searchParams.get(param)!);
-      }
-    });
-    
-    // Reconstruct clean URL
-    const cleanUrl = `${urlObj.protocol}//${urlObj.host}${urlObj.pathname}`;
-    return newSearchParams.toString() ? `${cleanUrl}?${newSearchParams.toString()}` : cleanUrl;
-  } catch (error) {
-    console.error('Error cleaning URL:', error);
-    // If URL parsing fails, just return the original
-    return url.split(' ')[0].trim();
-  }
-}
 
     // Resolve shortened URLs
     try {
