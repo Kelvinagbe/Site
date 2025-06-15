@@ -142,18 +142,18 @@ export default function TikTokTestPage() {
 
     } catch (error) {
       console.error('Download error:', error);
-      
+
       // Fallback: Try iframe download method
       try {
         const iframe = document.createElement('iframe');
         iframe.style.display = 'none';
         iframe.src = `/api/download-iframe?url=${encodeURIComponent(data.download_url)}&filename=${encodeURIComponent(`tiktok_${data.video_id || Date.now()}.mp4`)}`;
         document.body.appendChild(iframe);
-        
+
         setTimeout(() => {
           document.body.removeChild(iframe);
         }, 5000);
-        
+
         setError('Download initiated via alternative method. Check your downloads folder.');
       } catch (iframeError) {
         // Final fallback: Open in new tab
@@ -165,7 +165,7 @@ export default function TikTokTestPage() {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
+
         setError('Direct download failed. Video opened in new tab - right-click to save as.');
       }
     } finally {
@@ -378,7 +378,7 @@ export default function TikTokTestPage() {
         <ol className="text-sm text-blue-700 space-y-1 list-decimal list-inside">
           <li>Copy a TikTok video URL (from the share button)</li>
           <li>Paste it in the input field above</li>
-          <li>Click "Get Video Info" to process the URL</li>
+          <li>Click &quot;Get Video Info&quot; to process the URL</li>
           <li>Try different download methods if one fails</li>
         </ol>
         <div className="mt-3 p-2 bg-blue-100 rounded text-xs">
@@ -387,7 +387,7 @@ export default function TikTokTestPage() {
             <li><strong>Download:</strong> Attempts multiple download strategies</li>
             <li><strong>Open Video:</strong> Opens video in new tab for manual save</li>
             <li><strong>Copy URL:</strong> Copies direct URL to clipboard</li>
-            <li><strong>Direct Link:</strong> Browser's native download attempt</li>
+            <li><strong>Direct Link:</strong> Browser&apos;s native download attempt</li>
           </ul>
         </div>
       </div>
