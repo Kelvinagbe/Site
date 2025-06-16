@@ -1,0 +1,423 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { Download, X, Sparkles, Clock } from 'lucide-react';
+
+interface SavedImage {
+  id: string;
+  url: string;
+  prompt: string;
+  width: number;
+  height: number;
+  timestamp: number;
+}
+
+interface UsageData {
+  userId: string;
+  generations: number;
+  lastResetDate: string;
+  canGenerate: boolean;
+  remainingGenerations: number;
+  timeUntilReset: number;
+  limit: number;
+}
+
+interface WallpaperGeneratorProps {
+  theme?: 'dark' | 'light';
+  width?: number;
+  height?: number;
+  onImageGenerated?: (image: SavedImage) => void;
+}
+
+const Generator: React.FC<WallpaperGeneratorProps> = ({
+  theme = 'dark',
+  width = 1920,
+  height = 1080,
+  onImageGenerated = () => {}
+}) => {
+  const [prompt, setPrompt] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const [showPromptModal, setShowPromptModal] = useState(false);
+  const [usage, setUsage] = useState<UsageData>({
+    userId: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    generations: 0,
+    canGenerate: true,
+    remainingGenerations: 2,
+    timeUntilReset: 0,
+    limit: 2,
+    lastResetDate: new Date().toDateString()
+  });
+
+  const siteName = 'WallCraft';
+
+  // Initialize usage data and reset timer
+  useEffect(() => {
+    const resetTimer = setInterval(() => {
+      const now = new Date();
+      const today = now.toDateString();
+      
+      if (usage.lastResetDate !== today) {
+        // Reset for new day
+        setUsage(prev => ({
+          ...prev,
+          generations: 0,
+          lastResetDate: today,
+          canGenerate: true,
+          remainingGenerations: 2,
+          timeUntilReset: getTimeUntilReset()
+        }));
+      } else {
+        // Update time until reset
+        setUsage(prev => ({
+          ...prev,
+          timeUntilReset: getTimeUntilReset()
+        }));
+      }
+    }, 60000); // Update every minute
+
+    return () => clearInterval(resetTimer);
+  }, [usage.lastResetDate]);
+
+  const getTimeUntilReset = () => {
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    return tomorrow.getTime() - now.getTime();
+  };
+
+  const addWatermark = (canvas: HTMLCanvasElement, imageUrl: string): Promise<string> => {
+    return new Promise((resolve) => {
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      
+      const img = new Image();
+      
+      img.onload = () => {
+        // Draw the original image
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        
+        // Add watermark
+        const fontSize = Math.max(12, Math.min(canvas.width, canvas.height) / 40);
+        ctx.font = `${fontSize}px Arial`;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.lineWidth = 1;
+        
+        const watermarkText = siteName;
+        const textMetrics = ctx.measureText(watermarkText);
+        const x = canvas.width - textMetrics.width - 20;
+        const y = canvas.height - 20;
+        
+        ctx.strokeText(watermarkText, x, y);
+        ctx.fillText(watermarkText, x, y);
+        
+        // Convert to blob and create URL
+        canvas.toBlob((blob) => {
+          if (blob) {
+            resolve(URL.createObjectURL(blob));
+          }
+        }, 'image/jpeg', 0.9);
+      };
+      
+      img.src = imageUrl;
+    });
+  };
+
+  const simulateImageGeneration = async (prompt: string, width: number, height: number): Promise<string> => {
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 3000));
+    
+    // Create a sample canvas with gradient and text
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    
+    if (ctx) {
+      // Create gradient background
+      const gradient = ctx.createLinearGradient(0, 0, width, height);
+      const colors = ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#00f2fe'];
+      const color1 = colors[Math.floor(Math.random() * colors.length)];
+      const color2 = colors[Math.floor(Math.random() * colors.length)];
+      
+      gradient.addColorStop(0, color1);
+      gradient.addColorStop(1, color2);
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, width, height);
+      
+      // Add some abstract shapes
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+      for (let i = 0; i < 5; i++) {
+        ctx.beginPath();
+        ctx.arc(
+          Math.random() * width,
+          Math.random() * height,
+          Math.random() * 200 + 50,
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+      }
+      
+      // Add prompt text
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+      ctx.font = `${Math.max(24, width / 50)}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.fillText(
+        prompt.length > 50 ? prompt.substring(0, 50) + '...' : prompt,
+        width / 2,
+        height / 2
+      );
+    }
+    
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => {
+        if (blob) {
+          resolve(URL.createObjectURL(blob));
+        }
+      }, 'image/jpeg', 0.9);
+    });
+  };
+
+  const handleGenerate = async () => {
+    if (!prompt.trim()) {
+      setError('Enter a prompt');
+      return;
+    }
+
+    if (!usage?.canGenerate) {
+      setError('Generation limit reached. Please wait until tomorrow.');
+      return;
+    }
+
+    setIsGenerating(true);
+    setError(null);
+    setShowPromptModal(false);
+
+    try {
+      // Simulate image generation (replace with actual API call)
+      const imageUrl = await simulateImageGeneration(prompt.trim(), width, height);
+
+      // Create canvas and add watermark
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      
+      const watermarkedImageUrl = await addWatermark(canvas, imageUrl);
+      
+      setGeneratedImage(watermarkedImageUrl);
+      setShowPreview(true);
+      
+      const newImage: SavedImage = {
+        id: `img_${Date.now()}`,
+        url: watermarkedImageUrl,
+        prompt,
+        width,
+        height,
+        timestamp: Date.now(),
+      };
+      
+      onImageGenerated(newImage);
+      
+      // Update usage
+      setUsage(prev => ({
+        ...prev,
+        generations: prev.generations + 1,
+        remainingGenerations: prev.remainingGenerations - 1,
+        canGenerate: prev.remainingGenerations > 1,
+        timeUntilReset: getTimeUntilReset()
+      }));
+      
+    } catch (error) {
+      console.error('Error generating image:', error);
+      setError(error instanceof Error ? error.message : 'Failed to generate image');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleDownload = (imageUrl: string, prompt: string, width: number, height: number) => {
+    const link = document.createElement('a');
+    link.href = imageUrl;
+    link.download = `${siteName}-wallpaper-${width}x${height}-${Date.now()}.jpg`;
+    link.click();
+  };
+
+  const formatTimeUntilReset = (ms: number) => {
+    const hours = Math.floor(ms / (1000 * 60 * 60));
+    const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+    return `${hours}h ${minutes}m`;
+  };
+
+  const themeClasses = {
+    dark: {
+      bg: 'bg-gray-900',
+      text: 'text-white',
+      card: 'bg-gray-800',
+      input: 'bg-gray-700 border-gray-600 text-white',
+      button: 'bg-gray-800 hover:bg-gray-700',
+      modal: 'bg-gray-800',
+    },
+    light: {
+      bg: 'bg-gray-50',
+      text: 'text-gray-900',
+      card: 'bg-white',
+      input: 'bg-white border-gray-300 text-gray-900',
+      button: 'bg-gray-200 hover:bg-gray-300',
+      modal: 'bg-white',
+    }
+  };
+
+  const currentTheme = themeClasses[theme];
+
+  return (
+    <div className={`min-h-screen ${currentTheme.bg} ${currentTheme.text} p-4`}>
+      <div className="max-w-md mx-auto">
+        {/* Header */}
+        <div className="text-center mb-6">
+          <h1 className="text-2xl font-bold mb-2">AI Wallpaper Generator</h1>
+          <p className="text-sm opacity-75">Create stunning wallpapers with AI</p>
+        </div>
+
+        {/* Usage Display */}
+        <div className={`px-2 py-1 rounded-lg text-xs mb-4 inline-block ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'}`}>
+          {usage.canGenerate ? (
+            `${usage.remainingGenerations} generations left`
+          ) : (
+            <div className="flex items-center gap-1">
+              <Clock size={12} />
+              Reset in {formatTimeUntilReset(usage.timeUntilReset)}
+            </div>
+          )}
+        </div>
+
+        {/* Generate Section */}
+        <div className="space-y-4">
+          <div className={`rounded-2xl ${currentTheme.card} p-6 text-center`}>
+            <div className={`inline-block px-3 py-1 rounded-full text-xs mb-6 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'}`}>
+              {width} × {height}
+            </div>
+            
+            <button
+              onClick={() => setShowPromptModal(true)}
+              disabled={!usage.canGenerate}
+              className="w-full py-4 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 text-white font-medium rounded-xl transition-all text-lg"
+            >
+              <Sparkles className="inline mr-2" size={20} />
+              {usage.canGenerate ? 'Generate Wallpaper' : 'Limit Reached'}
+            </button>
+
+            {!usage.canGenerate && (
+              <div className="mt-4 p-3 bg-yellow-500/20 border border-yellow-500/30 rounded-xl text-yellow-300 text-sm">
+                Daily limit reached. Reset in {formatTimeUntilReset(usage.timeUntilReset)}
+              </div>
+            )}
+
+            {error && (
+              <div className="mt-4 p-3 bg-red-500/20 border border-red-500/30 rounded-xl text-red-300 text-sm">
+                {error}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Prompt Modal */}
+        {showPromptModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50 p-4">
+            <div className={`${currentTheme.modal} rounded-t-3xl w-full max-w-md transform transition-transform duration-300`}>
+              <div className="p-6">
+                <div className="w-12 h-1 bg-gray-400 rounded-full mx-auto mb-4"></div>
+                <h3 className="text-lg font-semibold mb-4">Describe your wallpaper</h3>
+                
+                <textarea
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  placeholder="e.g., Minimalist sunset over mountains with purple and orange gradient..."
+                  className={`w-full p-4 rounded-2xl ${currentTheme.input} resize-none text-sm border`}
+                  rows={4}
+                  autoFocus
+                />
+
+                <div className="flex gap-3 mt-4">
+                  <button
+                    onClick={() => setShowPromptModal(false)}
+                    className={`flex-1 py-3 ${currentTheme.button} rounded-xl text-sm`}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleGenerate}
+                    disabled={!prompt.trim() || !usage.canGenerate}
+                    className="flex-1 py-3 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white rounded-xl text-sm font-medium"
+                  >
+                    Generate
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Magic Loading Overlay */}
+        {isGenerating && (
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+            <div className="text-center text-white">
+              <div className="relative mb-6">
+                <div className="w-20 h-20 rounded-full border-4 border-purple-500/30 border-t-purple-500 animate-spin mx-auto"></div>
+                <Sparkles className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-purple-400 animate-pulse" size={32} />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Creating Magic ✨</h3>
+              <p className="text-purple-300 text-sm">AI is generating your wallpaper...</p>
+              <p className="text-purple-400 text-xs mt-2">This may take 30-60 seconds</p>
+            </div>
+          </div>
+        )}
+
+        {/* Download Preview Modal */}
+        {showPreview && generatedImage && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="max-w-xs w-full relative">
+              <button
+                onClick={() => { setShowPreview(false); setGeneratedImage(null); }}
+                className="absolute -top-10 right-0 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-white"
+              >
+                <X size={16} />
+              </button>
+
+              <div className="bg-white rounded-3xl p-4 shadow-2xl">
+                <img
+                  src={generatedImage}
+                  alt="Generated wallpaper"
+                  className="w-full rounded-2xl"
+                  style={{ maxHeight: '280px', objectFit: 'cover' }}
+                />
+
+                <div className="flex gap-3 mt-4">
+                  <button
+                    onClick={() => handleDownload(generatedImage, prompt, width, height)}
+                    className="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white rounded-2xl text-sm font-medium"
+                  >
+                    <Download size={14} className="inline mr-2" />
+                    Download
+                  </button>
+                  <button
+                    onClick={() => { setShowPreview(false); setGeneratedImage(null); }}
+                    className="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white rounded-2xl text-sm"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default Generator;
