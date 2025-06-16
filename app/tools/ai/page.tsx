@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Settings, Moon, Sun, Smartphone, Monitor, Tablet } from 'lucide-react';
-import WallpaperGenerator from './components/WallpaperGenerator';
+import Generator from './components/Generator';
 import WallpaperGallery from './components/WallpaperGallery';
 
 interface SavedImage {
@@ -34,34 +34,12 @@ export default function HomePage() {
   const [showSettings, setShowSettings] = useState(false);
   const [activeTab, setActiveTab] = useState<'generate' | 'gallery'>('generate');
 
-  // Load saved images and theme on mount
+  // Initialize data on mount (using in-memory storage)
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('wallcraft_images');
-      if (saved) {
-        setSavedImages(JSON.parse(saved));
-      }
-
-      const savedTheme = localStorage.getItem('wallcraft_theme') as 'dark' | 'light';
-      if (savedTheme) {
-        setTheme(savedTheme);
-      }
-    }
+    // Set default values - in a real app, you'd load from localStorage
+    setSavedImages([]);
+    setTheme('dark');
   }, []);
-
-  // Save images when updated
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('wallcraft_images', JSON.stringify(savedImages));
-    }
-  }, [savedImages]);
-
-  // Save theme when updated
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('wallcraft_theme', theme);
-    }
-  }, [theme]);
 
   const handleImageGenerated = (newImage: SavedImage) => {
     setSavedImages(prev => [newImage, ...prev]);
@@ -151,7 +129,7 @@ export default function HomePage() {
         {/* Content */}
         <div className="px-4 pb-8">
           {activeTab === 'generate' ? (
-            <WallpaperGenerator
+            <Generator
               theme={theme}
               width={currentDevice.width}
               height={currentDevice.height}
@@ -172,7 +150,7 @@ export default function HomePage() {
               <div className="p-6">
                 <div className="w-12 h-1 bg-gray-400 rounded-full mx-auto mb-4"></div>
                 <h3 className="text-lg font-semibold mb-6">Settings</h3>
-                
+
                 {/* Device Selection */}
                 <div className="mb-6">
                   <h4 className="text-sm font-medium mb-3 opacity-70">Device Type</h4>
