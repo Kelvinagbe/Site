@@ -82,170 +82,242 @@ export default function HomePage() {
 
   return (
     <div className={`min-h-screen ${currentTheme.bg} ${currentTheme.text} transition-colors duration-300`}>
-      <div className="max-w-md mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 pt-8">
-          <div>
-            <h1 className="text-2xl font-bold">WallCraft</h1>
-            <p className="text-sm opacity-70">AI Wallpaper Generator</p>
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowSettings(true)}
-              className={`p-2 ${currentTheme.button} rounded-xl transition-colors`}
-            >
-              <Settings size={20} />
-            </button>
-          </div>
-        </div>
-
-        {/* Tab Navigation */}
-        <div className="px-4 mb-6">
-          <div className={`flex ${currentTheme.card} rounded-2xl p-1`}>
-            <button
-              onClick={() => setActiveTab('generate')}
-              className={`flex-1 py-3 rounded-xl text-sm font-medium transition-colors ${
-                activeTab === 'generate'
-                  ? 'bg-blue-500 text-white'
-                  : 'text-gray-500'
-              }`}
-            >
-              Generate
-            </button>
-            <button
-              onClick={() => setActiveTab('gallery')}
-              className={`flex-1 py-3 rounded-xl text-sm font-medium transition-colors ${
-                activeTab === 'gallery'
-                  ? 'bg-blue-500 text-white'
-                  : 'text-gray-500'
-              }`}
-            >
-              Gallery ({savedImages.length})
-            </button>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="px-4 pb-8">
-          {activeTab === 'generate' ? (
-            <Generator
-              theme={theme}
-              width={currentDevice.width}
-              height={currentDevice.height}
-              onImageGenerated={handleImageGenerated}
-            />
-          ) : (
-            <WallpaperGallery
-              theme={theme}
-              savedImages={savedImages}
-            />
-          )}
-        </div>
-
-        {/* Settings Modal */}
-        {showSettings && (
-          <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50 p-4">
-            <div className={`${currentTheme.modal} rounded-t-3xl w-full max-w-md transform transition-transform duration-300`}>
-              <div className="p-6">
-                <div className="w-12 h-1 bg-gray-400 rounded-full mx-auto mb-4"></div>
-                <h3 className="text-lg font-semibold mb-6">Settings</h3>
-
-                {/* Device Selection */}
-                <div className="mb-6">
-                  <h4 className="text-sm font-medium mb-3 opacity-70">Device Type</h4>
-                  <div className="grid grid-cols-3 gap-2 mb-3">
-                    {devicePresets.map((device, index) => (
-                      <button
-                        key={device.name}
-                        onClick={() => {
-                          setSelectedDevice(index);
-                          setUseCustomSize(false);
-                        }}
-                        className={`p-3 rounded-xl border transition-colors ${
-                          selectedDevice === index && !useCustomSize
-                            ? 'border-blue-500 bg-blue-500/10'
-                            : `${currentTheme.border} ${currentTheme.button}`
-                        }`}
-                      >
-                        <div className="flex flex-col items-center gap-2">
-                          {device.icon}
-                          <span className="text-xs font-medium">{device.name}</span>
-                          <span className="text-xs opacity-50">
-                            {device.width}×{device.height}
-                          </span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                  
-                  <button
-                    onClick={() => setUseCustomSize(true)}
-                    className={`w-full p-3 rounded-xl border transition-colors ${
-                      useCustomSize
-                        ? 'border-blue-500 bg-blue-500/10'
-                        : `${currentTheme.border} ${currentTheme.button}`
-                    }`}
-                  >
-                    <div className="flex items-center justify-center gap-2">
-                      <Settings size={16} />
-                      <span className="text-sm font-medium">Custom Size</span>
-                    </div>
-                  </button>
-                  
-                  {useCustomSize && (
-                    <div className="mt-3 space-y-3">
-                      <div>
-                        <label className="block text-xs font-medium mb-1 opacity-70">Width</label>
-                        <input
-                          type="number"
-                          value={customWidth}
-                          onChange={(e) => setCustomWidth(Math.max(1, parseInt(e.target.value) || 1920))}
-                          className={`w-full p-2 rounded-lg ${currentTheme.input} text-sm border`}
-                          min="1"
-                          max="4096"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium mb-1 opacity-70">Height</label>
-                        <input
-                          type="number"
-                          value={customHeight}
-                          onChange={(e) => setCustomHeight(Math.max(1, parseInt(e.target.value) || 1080))}
-                          className={`w-full p-2 rounded-lg ${currentTheme.input} text-sm border`}
-                          min="1"
-                          max="4096"
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* App Info */}
-                <div className={`p-4 rounded-xl ${currentTheme.card} mb-6`}>
-                  <h4 className="text-sm font-medium mb-2">About WallCraft</h4>
-                  <p className="text-xs opacity-70 leading-relaxed">
-                    Generate beautiful AI wallpapers for your devices. Free daily limits apply.
-                  </p>
-                  <div className="mt-3 text-xs opacity-50">
-                    <div>• 2 free generations per day</div>
-                    <div>• High-quality AI artwork</div>
-                    <div>• Multiple device formats</div>
-                    <div>• Custom size support</div>
-                  </div>
-                </div>
-
-                {/* Close Button */}
-                <button
-                  onClick={() => setShowSettings(false)}
-                  className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-sm font-medium transition-colors"
-                >
-                  Done
-                </button>
-              </div>
+      {/* Mobile/Tablet Layout */}
+      <div className="lg:hidden">
+        <div className="max-w-md mx-auto">
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 pt-8">
+            <div>
+              <h1 className="text-2xl font-bold">WallCraft</h1>
+              <p className="text-sm opacity-70">AI Wallpaper Generator</p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={toggleTheme}
+                className={`p-2 ${currentTheme.button} rounded-xl transition-colors`}
+              >
+                {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+              </button>
+              <button
+                onClick={() => setShowSettings(true)}
+                className={`p-2 ${currentTheme.button} rounded-xl transition-colors`}
+              >
+                <Settings size={20} />
+              </button>
             </div>
           </div>
-        )}
+
+          {/* Tab Navigation */}
+          <div className="px-4 mb-6">
+            <div className={`flex ${currentTheme.card} rounded-2xl p-1`}>
+              <button
+                onClick={() => setActiveTab('generate')}
+                className={`flex-1 py-3 rounded-xl text-sm font-medium transition-colors ${
+                  activeTab === 'generate'
+                    ? 'bg-blue-500 text-white'
+                    : 'text-gray-500'
+                }`}
+              >
+                Generate
+              </button>
+              <button
+                onClick={() => setActiveTab('gallery')}
+                className={`flex-1 py-3 rounded-xl text-sm font-medium transition-colors ${
+                  activeTab === 'gallery'
+                    ? 'bg-blue-500 text-white'
+                    : 'text-gray-500'
+                }`}
+              >
+                Gallery ({savedImages.length})
+              </button>
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="px-4 pb-8">
+            {activeTab === 'generate' ? (
+              <Generator
+                theme={theme}
+                width={currentDevice.width}
+                height={currentDevice.height}
+                onImageGenerated={handleImageGenerated}
+              />
+            ) : (
+              <WallpaperGallery
+                theme={theme}
+                savedImages={savedImages}
+              />
+            )}
+          </div>
+        </div>
       </div>
+
+      {/* Desktop Layout */}
+      <div className="hidden lg:block">
+        <div className="container mx-auto px-6 py-8 max-w-7xl">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h1 className="text-4xl font-bold">WallCraft</h1>
+              <p className="text-lg opacity-70 mt-1">AI Wallpaper Generator</p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={toggleTheme}
+                className={`p-3 ${currentTheme.button} rounded-xl transition-colors`}
+              >
+                {theme === 'dark' ? <Sun size={24} /> : <Moon size={24} />}
+              </button>
+              <button
+                onClick={() => setShowSettings(true)}
+                className={`p-3 ${currentTheme.button} rounded-xl transition-colors`}
+              >
+                <Settings size={24} />
+              </button>
+            </div>
+          </div>
+
+          {/* Desktop Content - Side by Side */}
+          <div className="grid lg:grid-cols-2 gap-8">
+            {/* Generator Section */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-2 h-8 bg-blue-500 rounded-full"></div>
+                <h2 className="text-2xl font-semibold">Generate</h2>
+              </div>
+              <Generator
+                theme={theme}
+                width={currentDevice.width}
+                height={currentDevice.height}
+                onImageGenerated={handleImageGenerated}
+              />
+            </div>
+
+            {/* Gallery Section */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-2 h-8 bg-purple-500 rounded-full"></div>
+                <h2 className="text-2xl font-semibold">Gallery ({savedImages.length})</h2>
+              </div>
+              <WallpaperGallery
+                theme={theme}
+                savedImages={savedImages}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className={`${currentTheme.modal} rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-transform duration-300`}>
+            <div className="p-6 lg:p-8">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl lg:text-2xl font-semibold">Settings</h3>
+                <button
+                  onClick={() => setShowSettings(false)}
+                  className={`p-2 ${currentTheme.button} rounded-xl transition-colors`}
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* Device Selection */}
+              <div className="mb-8">
+                <h4 className="text-base lg:text-lg font-medium mb-4 opacity-70">Device Type</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                  {devicePresets.map((device, index) => (
+                    <button
+                      key={device.name}
+                      onClick={() => {
+                        setSelectedDevice(index);
+                        setUseCustomSize(false);
+                      }}
+                      className={`p-4 lg:p-6 rounded-xl border transition-colors ${
+                        selectedDevice === index && !useCustomSize
+                          ? 'border-blue-500 bg-blue-500/10'
+                          : `${currentTheme.border} ${currentTheme.button}`
+                      }`}
+                    >
+                      <div className="flex flex-col items-center gap-3">
+                        {device.icon}
+                        <span className="text-sm lg:text-base font-medium">{device.name}</span>
+                        <span className="text-xs lg:text-sm opacity-50">
+                          {device.width}×{device.height}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => setUseCustomSize(true)}
+                  className={`w-full p-4 rounded-xl border transition-colors ${
+                    useCustomSize
+                      ? 'border-blue-500 bg-blue-500/10'
+                      : `${currentTheme.border} ${currentTheme.button}`
+                  }`}
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <Settings size={18} />
+                    <span className="text-sm lg:text-base font-medium">Custom Size</span>
+                  </div>
+                </button>
+
+                {useCustomSize && (
+                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2 opacity-70">Width</label>
+                      <input
+                        type="number"
+                        value={customWidth}
+                        onChange={(e) => setCustomWidth(Math.max(1, parseInt(e.target.value) || 1920))}
+                        className={`w-full p-3 rounded-lg ${currentTheme.input} text-sm border`}
+                        min="1"
+                        max="4096"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2 opacity-70">Height</label>
+                      <input
+                        type="number"
+                        value={customHeight}
+                        onChange={(e) => setCustomHeight(Math.max(1, parseInt(e.target.value) || 1080))}
+                        className={`w-full p-3 rounded-lg ${currentTheme.input} text-sm border`}
+                        min="1"
+                        max="4096"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* App Info */}
+              <div className={`p-6 rounded-xl ${currentTheme.card} mb-6`}>
+                <h4 className="text-base lg:text-lg font-medium mb-3">About WallCraft</h4>
+                <p className="text-sm opacity-70 leading-relaxed mb-4">
+                  Generate beautiful AI wallpapers for your devices. Free daily limits apply.
+                </p>
+                <div className="text-sm opacity-50 space-y-1">
+                  <div>• 2 free generations per day</div>
+                  <div>• High-quality AI artwork</div>
+                  <div>• Multiple device formats</div>
+                  <div>• Custom size support</div>
+                </div>
+              </div>
+
+              {/* Close Button */}
+              <button
+                onClick={() => setShowSettings(false)}
+                className="w-full py-4 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-base font-medium transition-colors"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
