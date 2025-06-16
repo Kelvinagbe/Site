@@ -308,30 +308,6 @@ const Generator: React.FC<WallpaperGeneratorProps> = ({
                 </div>
               </div>
 
-              {/* Prompt Input */}
-              <div className="space-y-4">
-                <label className="block text-sm font-medium opacity-75">
-                  Describe your wallpaper
-                </label>
-                <textarea
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="e.g., Minimalist sunset over mountains with purple and orange gradient, serene landscape, high quality digital art..."
-                  className={`w-full p-4 rounded-b-2xl rounded-t-lg ${currentTheme.input} resize-none text-sm border focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all`}
-                  rows={4}
-                />
-              </div>
-
-              {/* Generate Button */}
-              <button
-                onClick={handleGenerate}
-                disabled={!usage.canGenerate || isGenerating || !prompt.trim()}
-                className="w-full mt-4 py-4 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-xl transition-all text-lg"
-              >
-                <Sparkles className="inline mr-2" size={20} />
-                {isGenerating ? 'Generating...' : usage.canGenerate ? 'Generate Wallpaper' : 'Limit Reached'}
-              </button>
-
               {/* Error Display */}
               {error && (
                 <div className="mt-4 p-4 bg-red-500/20 border border-red-500/30 rounded-xl text-red-400 text-sm">
@@ -348,131 +324,108 @@ const Generator: React.FC<WallpaperGeneratorProps> = ({
             </div>
           </div>
 
-          {/* Right Column - Preview Area */}
+          {/* Right Column - Generate Button */}
           <div className="space-y-6">
             <div className={`rounded-2xl ${currentTheme.card} p-6 min-h-[400px] flex items-center justify-center`}>
-              {isGenerating ? (
-                <div className="text-center">
-                  <div className="relative mb-6">
-                    <div className="w-20 h-20 rounded-full border-4 border-purple-500/30 border-t-purple-500 animate-spin mx-auto"></div>
-                    <Sparkles className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-purple-400 animate-pulse" size={32} />
-                  </div>
-                  <h3 className="text-xl font-semibold mb-2">Creating Magic ✨</h3>
-                  <p className="text-purple-400 text-sm mb-2">AI is generating your wallpaper...</p>
-                  <div className="w-full bg-gray-700 rounded-full h-2 mb-2">
-                    <div 
-                      className="bg-purple-500 h-2 rounded-full transition-all duration-500"
-                      style={{ width: `${generationProgress}%` }}
-                    ></div>
-                  </div>
-                  <p className="text-xs opacity-60">{Math.round(generationProgress)}% complete</p>
-                </div>
-              ) : generatedImage ? (
-                <div className="w-full">
-                  <img
-                    src={generatedImage}
-                    alt="Generated wallpaper"
-                    className="w-full rounded-xl shadow-lg"
-                    style={{ maxHeight: '400px', objectFit: 'contain' }}
-                  />
-                  <div className="flex gap-3 mt-4">
-                    <button
-                      onClick={() => handleDownload(generatedImage, prompt, width, height)}
-                      className="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl text-sm font-medium transition-colors"
-                    >
-                      <Download size={16} className="inline mr-2" />
-                      Download
-                    </button>
-                    <button
-                      onClick={() => setGeneratedImage(null)}
-                      className="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white rounded-xl text-sm transition-colors"
-                    >
-                      Clear
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center opacity-50">
-                  <Sparkles size={48} className="mx-auto mb-4" />
-                  <p>Your generated wallpaper will appear here</p>
-                </div>
-              )}
+              <button
+                onClick={() => setShowPromptModal(true)}
+                disabled={!usage.canGenerate}
+                className="w-full py-6 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-xl transition-all text-xl"
+              >
+                <Sparkles className="inline mr-3" size={24} />
+                {usage.canGenerate ? 'Generate Wallpaper' : 'Limit Reached'}
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Mobile Prompt Modal (for smaller screens) */}
+        {/* Prompt Modal - Appears when Generate button is clicked */}
         {showPromptModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50 p-4 md:hidden">
-            <div className={`${currentTheme.modal} rounded-t-3xl w-full max-w-md transform transition-transform duration-300`}>
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className={`${currentTheme.modal} rounded-3xl w-full max-w-md transform transition-all duration-300 scale-100`}>
               <div className="p-6">
-                <div className="w-12 h-1 bg-gray-400 rounded-full mx-auto mb-4"></div>
-                <h3 className="text-lg font-semibold mb-4">Describe your wallpaper</h3>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold">Describe your wallpaper</h3>
+                  <button
+                    onClick={() => setShowPromptModal(false)}
+                    className="w-8 h-8 rounded-full bg-gray-500/20 hover:bg-gray-500/30 flex items-center justify-center"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
 
                 <textarea
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   placeholder="e.g., Minimalist sunset over mountains with purple and orange gradient..."
-                  className={`w-full p-4 rounded-b-2xl rounded-t-lg ${currentTheme.input} resize-none text-sm border`}
+                  className={`w-full p-4 rounded-b-2xl rounded-t-lg ${currentTheme.input} resize-none text-sm border focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all`}
                   rows={4}
                   autoFocus
                 />
 
-                <div className="flex gap-3 mt-4">
-                  <button
-                    onClick={() => setShowPromptModal(false)}
-                    className={`flex-1 py-3 ${currentTheme.button} rounded-xl text-sm`}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleGenerate}
-                    disabled={!prompt.trim() || !usage.canGenerate}
-                    className="flex-1 py-3 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white rounded-xl text-sm font-medium"
-                  >
-                    Generate
-                  </button>
-                </div>
+                <button
+                  onClick={handleGenerate}
+                  disabled={!prompt.trim() || !usage.canGenerate || isGenerating}
+                  className="w-full mt-4 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl text-sm font-medium"
+                >
+                  {isGenerating ? 'Generating...' : 'Generate Wallpaper'}
+                </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* Full Screen Preview Modal */}
-        {showPreview && generatedImage && (
-          <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
-            <div className="max-w-4xl w-full relative">
-              <button
-                onClick={() => { setShowPreview(false); }}
-                className="absolute -top-12 right-0 w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-colors"
-              >
-                <X size={20} />
-              </button>
-
-              <div className="bg-white rounded-3xl p-4 shadow-2xl">
-                <img
-                  src={generatedImage}
-                  alt="Generated wallpaper preview"
-                  className="w-full rounded-2xl"
-                  style={{ maxHeight: '70vh', objectFit: 'contain' }}
-                />
-
-                <div className="flex gap-3 mt-4">
+        {/* Image Preview Modal - Shows generated image */}
+        {generatedImage && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className={`${currentTheme.modal} rounded-3xl w-full max-w-md transform transition-all duration-300 scale-100`}>
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold">Your Wallpaper</h3>
                   <button
-                    onClick={() => handleDownload(generatedImage, prompt, width, height)}
-                    className="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white rounded-2xl text-sm font-medium"
+                    onClick={() => setGeneratedImage(null)}
+                    className="w-8 h-8 rounded-full bg-gray-500/20 hover:bg-gray-500/30 flex items-center justify-center"
                   >
-                    <Download size={16} className="inline mr-2" />
-                    Download HD
-                  </button>
-                  <button
-                    onClick={() => setShowPreview(false)}
-                    className="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white rounded-2xl text-sm"
-                  >
-                    Close
+                    <X size={16} />
                   </button>
                 </div>
+
+                <img
+                  src={generatedImage}
+                  alt="Generated wallpaper"
+                  className="w-full rounded-2xl shadow-lg mb-4"
+                  style={{ maxHeight: '300px', objectFit: 'cover' }}
+                />
+
+                <button
+                  onClick={() => handleDownload(generatedImage, prompt, width, height)}
+                  className="w-full py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl text-sm font-medium transition-colors"
+                >
+                  <Download size={16} className="inline mr-2" />
+                  Download Wallpaper
+                </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Loading Modal - Shows during generation */}
+        {isGenerating && (
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+            <div className="text-center text-white">
+              <div className="relative mb-6">
+                <div className="w-20 h-20 rounded-full border-4 border-purple-500/30 border-t-purple-500 animate-spin mx-auto"></div>
+                <Sparkles className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-purple-400 animate-pulse" size={32} />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Creating Magic ✨</h3>
+              <p className="text-purple-400 text-sm mb-2">AI is generating your wallpaper...</p>
+              <div className="w-64 bg-gray-700 rounded-full h-2 mb-2 mx-auto">
+                <div 
+                  className="bg-purple-500 h-2 rounded-full transition-all duration-500"
+                  style={{ width: `${generationProgress}%` }}
+                ></div>
+              </div>
+              <p className="text-xs opacity-60">{Math.round(generationProgress)}% complete</p>
             </div>
           </div>
         )}
