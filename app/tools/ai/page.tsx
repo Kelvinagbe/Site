@@ -22,7 +22,7 @@ interface DevicePreset {
 }
 
 const devicePresets: DevicePreset[] = [
-  { name: 'Phone', width: 1080, height: 1920, icon: <Smartphone size={16} /> },
+  { name: 'Phone', width: 719, height: 1611, icon: <Smartphone size={16} /> },
   { name: 'Desktop', width: 1920, height: 1080, icon: <Monitor size={16} /> },
   { name: 'Tablet', width: 1536, height: 2048, icon: <Tablet size={16} /> },
 ];
@@ -33,6 +33,9 @@ export default function HomePage() {
   const [savedImages, setSavedImages] = useState<SavedImage[]>([]);
   const [showSettings, setShowSettings] = useState(false);
   const [activeTab, setActiveTab] = useState<'generate' | 'gallery'>('generate');
+  const [customWidth, setCustomWidth] = useState(1920);
+  const [customHeight, setCustomHeight] = useState(1080);
+  const [useCustomSize, setUseCustomSize] = useState(false);
 
   // Initialize data on mount (using in-memory storage)
   useEffect(() => {
@@ -50,7 +53,9 @@ export default function HomePage() {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');
   };
 
-  const currentDevice = devicePresets[selectedDevice];
+  const currentDevice = useCustomSize 
+    ? { name: 'Custom', width: customWidth, height: customHeight, icon: <Settings size={16} /> }
+    : devicePresets[selectedDevice];
 
   const themeClasses = {
     dark: {
@@ -85,12 +90,6 @@ export default function HomePage() {
             <p className="text-sm opacity-70">AI Wallpaper Generator</p>
           </div>
           <div className="flex gap-2">
-            <button
-              onClick={toggleTheme}
-              className={`p-2 ${currentTheme.button} rounded-xl transition-colors`}
-            >
-              {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
             <button
               onClick={() => setShowSettings(true)}
               className={`p-2 ${currentTheme.button} rounded-xl transition-colors`}
@@ -154,13 +153,16 @@ export default function HomePage() {
                 {/* Device Selection */}
                 <div className="mb-6">
                   <h4 className="text-sm font-medium mb-3 opacity-70">Device Type</h4>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-3 gap-2 mb-3">
                     {devicePresets.map((device, index) => (
                       <button
                         key={device.name}
-                        onClick={() => setSelectedDevice(index)}
+                        onClick={() => {
+                          setSelectedDevice(index);
+                          setUseCustomSize(false);
+                        }}
                         className={`p-3 rounded-xl border transition-colors ${
-                          selectedDevice === index
+                          selectedDevice === index && !useCustomSize
                             ? 'border-blue-500 bg-blue-500/10'
                             : `${currentTheme.border} ${currentTheme.button}`
                         }`}
@@ -175,39 +177,47 @@ export default function HomePage() {
                       </button>
                     ))}
                   </div>
-                </div>
-
-                {/* Theme Selection */}
-                <div className="mb-6">
-                  <h4 className="text-sm font-medium mb-3 opacity-70">Theme</h4>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setTheme('dark')}
-                      className={`flex-1 p-3 rounded-xl border transition-colors ${
-                        theme === 'dark'
-                          ? 'border-blue-500 bg-blue-500/10'
-                          : `${currentTheme.border} ${currentTheme.button}`
-                      }`}
-                    >
-                      <div className="flex items-center justify-center gap-2">
-                        <Moon size={16} />
-                        <span className="text-sm">Dark</span>
+                  
+                  <button
+                    onClick={() => setUseCustomSize(true)}
+                    className={`w-full p-3 rounded-xl border transition-colors ${
+                      useCustomSize
+                        ? 'border-blue-500 bg-blue-500/10'
+                        : `${currentTheme.border} ${currentTheme.button}`
+                    }`}
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <Settings size={16} />
+                      <span className="text-sm font-medium">Custom Size</span>
+                    </div>
+                  </button>
+                  
+                  {useCustomSize && (
+                    <div className="mt-3 space-y-3">
+                      <div>
+                        <label className="block text-xs font-medium mb-1 opacity-70">Width</label>
+                        <input
+                          type="number"
+                          value={customWidth}
+                          onChange={(e) => setCustomWidth(Math.max(1, parseInt(e.target.value) || 1920))}
+                          className={`w-full p-2 rounded-lg ${currentTheme.input} text-sm border`}
+                          min="1"
+                          max="4096"
+                        />
                       </div>
-                    </button>
-                    <button
-                      onClick={() => setTheme('light')}
-                      className={`flex-1 p-3 rounded-xl border transition-colors ${
-                        theme === 'light'
-                          ? 'border-blue-500 bg-blue-500/10'
-                          : `${currentTheme.border} ${currentTheme.button}`
-                      }`}
-                    >
-                      <div className="flex items-center justify-center gap-2">
-                        <Sun size={16} />
-                        <span className="text-sm">Light</span>
+                      <div>
+                        <label className="block text-xs font-medium mb-1 opacity-70">Height</label>
+                        <input
+                          type="number"
+                          value={customHeight}
+                          onChange={(e) => setCustomHeight(Math.max(1, parseInt(e.target.value) || 1080))}
+                          className={`w-full p-2 rounded-lg ${currentTheme.input} text-sm border`}
+                          min="1"
+                          max="4096"
+                        />
                       </div>
-                    </button>
-                  </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* App Info */}
@@ -220,6 +230,7 @@ export default function HomePage() {
                     <div>• 2 free generations per day</div>
                     <div>• High-quality AI artwork</div>
                     <div>• Multiple device formats</div>
+                    <div>• Custom size support</div>
                   </div>
                 </div>
 
