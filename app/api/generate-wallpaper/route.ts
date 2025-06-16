@@ -1,185 +1,242 @@
-// app/api/generate-wallpaper/route.ts
+// app/api/generate-image/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-
-const HF_API_TOKEN = process.env.HF_API_TOKEN;
-const HF_MODEL_URL = 'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0';
-
-interface GenerateRequest {
-  prompt: string;
-  width: number;
-  height: number;
-}
 
 export async function POST(request: NextRequest) {
   try {
-    if (!HF_API_TOKEN) {
-      console.error('HF_API_TOKEN environment variable is not set');
+    const { prompt } = await request.json();
+
+    // Validate input
+    if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
       return NextResponse.json(
-        { error: 'API configuration error' },
+        { success: false, error: 'Please provide a valid prompt' },
+        { status: 400 }
+      );
+    }
+
+    // Check if prompt is too long
+    if (prompt.length > 500) {
+      return NextResponse.json(
+        { success: false, error: 'Prompt is too long. Please keep it under 500 characters.' },
+        { status: 400 }
+      );
+    }
+
+    const HF_TOKEN = process.env.HF_API_TOKEN;
+
+    if (!HF_TOKEN) {
+      console.error('HF_API_TOKEN environment variable not found');
+      return NextResponse.json(
+        { success: false, error: 'Server configuration error' },
         { status: 500 }
       );
     }
 
-    const body: GenerateRequest = await request.json();
-    const { prompt, width, height } = body;
+    console.log('Generating image for prompt:', prompt);
 
-    if (!prompt || !width || !height) {
-      return NextResponse.json(
-        { error: 'Missing required parameters: prompt, width, and height are required' },
-        { status: 400 }
-      );
-    }
+    // Enhanced prompt specifically for wallpaper generation
+    const enhancedPrompt = `${prompt.trim()}, wallpaper, desktop background, high resolution, ultra detailed, professional photography, masterpiece, 8k, stunning composition, perfect lighting`;
 
-    // Validate dimensions
-    if (width < 64 || height < 64 || width > 2048 || height > 2048) {
-      return NextResponse.json(
-        { error: 'Invalid dimensions. Width and height must be between 64 and 2048 pixels' },
-        { status: 400 }
-      );
-    }
-
-    const enhancedPrompt = `${prompt}, wallpaper, high resolution, detailed, professional photography, masterpiece, best quality, ultra-detailed`;
-
-    // Calculate model dimensions
-    const maxDimension = 1024;
-    let modelWidth = Math.min(width, maxDimension);
-    let modelHeight = Math.min(height, maxDimension);
-
-    // Maintain aspect ratio if scaling down
-    if (width > maxDimension || height > maxDimension) {
-      const scale = maxDimension / Math.max(width, height);
-      modelWidth = Math.round(width * scale);
-      modelHeight = Math.round(height * scale);
-    }
-
-    // Ensure dimensions are divisible by 8
-    modelWidth = Math.round(modelWidth / 8) * 8;
-    modelHeight = Math.round(modelHeight / 8) * 8;
-
-    // Ensure minimum dimensions
-    modelWidth = Math.max(modelWidth, 512);
-    modelHeight = Math.max(modelHeight, 512);
-
-    const requestBody = {
+    const requestPayload = {
       inputs: enhancedPrompt,
       parameters: {
-        width: modelWidth,
-        height: modelHeight,
-        num_inference_steps: 20, // Reduced for faster generation
+        negative_prompt: 'blurry, bad quality, distorted, low resolution, text, watermark, deformed, ugly, duplicate, morbid, mutilated, signature, cropped, out of frame, worst quality, low quality, jpeg artifacts, poorly lit, overexposed, underexposed',
+        num_inference_steps: 30,
         guidance_scale: 7.5,
-        negative_prompt: "blurry, low quality, distorted, deformed, ugly, bad anatomy, extra limbs, watermark, text, signature"
-      }
+        width: 1920,  // Standard wallpaper width
+        height: 1080, // Standard wallpaper height (16:9 aspect ratio)
+      },
     };
 
-    console.log('Making request to Hugging Face API:', {
-      prompt: enhancedPrompt,
-      dimensions: `${modelWidth}x${modelHeight}`,
-      originalDimensions: `${width}x${height}`
-    });
+    console.log('Request payload:', JSON.stringify(requestPayload, null, 2));
 
-    const response = await fetch(HF_MODEL_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${HF_API_TOKEN}`,
-        'Content-Type': 'application/json',
-        'User-Agent': 'wallpaper-generator/1.0'
-      },
-      body: JSON.stringify(requestBody),
-    });
+    // Call Hugging Face API with better error handling
+    const response = await fetch(
+      'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0',
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${HF_TOKEN}`,
+          'Content-Type': 'application/json',
+          'User-Agent': 'image-generator/1.0',
+        },
+        body: JSON.stringify(requestPayload),
+      }
+    );
 
     console.log('Hugging Face API response status:', response.status);
+    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Hugging Face API error:', {
+      console.error('Hugging Face API error details:', {
         status: response.status,
         statusText: response.statusText,
-        error: errorText
+        headers: Object.fromEntries(response.headers.entries()),
+        body: errorText
       });
 
-      // Handle specific error cases
+      // Handle specific error cases with more detail
       if (response.status === 503) {
         return NextResponse.json(
           { 
-            error: 'Model is currently loading. Please try again in 30-60 seconds.',
-            retryAfter: 60
+            success: false, 
+            error: 'The AI model is currently loading. Please wait about 1-2 minutes and try again.',
+            retryAfter: 120
           },
           { status: 503 }
         );
-      } else if (response.status === 401) {
+      }
+
+      if (response.status === 429) {
         return NextResponse.json(
-          { error: 'Invalid or missing API token' },
-          { status: 401 }
-        );
-      } else if (response.status === 400) {
-        return NextResponse.json(
-          { error: `Bad request: ${errorText}` },
-          { status: 400 }
-        );
-      } else if (response.status === 429) {
-        return NextResponse.json(
-          { error: 'Rate limit exceeded. Please try again later.' },
+          { 
+            success: false, 
+            error: 'Too many requests. Please wait a moment and try again.',
+            retryAfter: 60
+          },
           { status: 429 }
         );
-      } else {
+      }
+
+      if (response.status === 401) {
         return NextResponse.json(
-          { error: `Failed to generate image: ${response.status} ${response.statusText}` },
-          { status: response.status }
+          { 
+            success: false, 
+            error: 'API authentication failed. Please check your API key configuration.'
+          },
+          { status: 401 }
         );
       }
+
+      if (response.status === 400) {
+        // Parse error details for bad request
+        let errorDetail = 'Invalid request parameters';
+        try {
+          const errorData = JSON.parse(errorText);
+          errorDetail = errorData.error || errorData.message || errorDetail;
+        } catch {
+          errorDetail = errorText || errorDetail;
+        }
+        
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: `Bad request: ${errorDetail}`
+          },
+          { status: 400 }
+        );
+      }
+
+      if (response.status === 422) {
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: 'The prompt contains invalid content or parameters. Please try a different prompt.'
+          },
+          { status: 422 }
+        );
+      }
+
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: `Failed to generate image: ${response.status} - ${errorText || response.statusText}`
+        },
+        { status: response.status }
+      );
     }
 
-    // Check if response is actually an image
+    // Check content type to ensure we received an image
     const contentType = response.headers.get('content-type');
+    console.log('Response content type:', contentType);
+
     if (!contentType || !contentType.startsWith('image/')) {
       const responseText = await response.text();
-      console.error('Unexpected response type:', contentType, responseText);
+      console.error('Unexpected response content type:', {
+        contentType,
+        responseBody: responseText.substring(0, 500) // Log first 500 chars
+      });
+
+      // Sometimes the API returns JSON error in 200 response
+      try {
+        const errorData = JSON.parse(responseText);
+        if (errorData.error) {
+          return NextResponse.json(
+            { success: false, error: errorData.error },
+            { status: 500 }
+          );
+        }
+      } catch {
+        // Not JSON, continue with generic error
+      }
+
       return NextResponse.json(
-        { error: 'Received invalid response from image generation service' },
+        { success: false, error: 'Received invalid response format from image generation service' },
         { status: 500 }
       );
     }
 
+    // Convert response to image
     const imageBuffer = await response.arrayBuffer();
 
     if (imageBuffer.byteLength === 0) {
+      console.error('Received empty image buffer');
       return NextResponse.json(
-        { error: 'Received empty image data' },
+        { success: false, error: 'Received empty image data' },
         { status: 500 }
       );
     }
 
-    console.log('Successfully generated image:', {
-      size: `${imageBuffer.byteLength} bytes`,
-      contentType
-    });
+    console.log('Image buffer size:', imageBuffer.byteLength, 'bytes');
 
-    return new NextResponse(imageBuffer, {
-      status: 200,
-      headers: {
-        'Content-Type': contentType || 'image/jpeg',
-        'Cache-Control': 'no-cache',
-        'Content-Length': imageBuffer.byteLength.toString(),
-      },
+    const base64Image = Buffer.from(imageBuffer).toString('base64');
+    const imageUrl = `data:image/png;base64,${base64Image}`;
+
+    console.log('Wallpaper generated successfully, base64 length:', base64Image.length);
+
+    return NextResponse.json({
+      success: true,
+      imageUrl,
+      prompt: enhancedPrompt,
+      originalPrompt: prompt,
+      timestamp: Date.now(),
+      size: imageBuffer.byteLength,
+      dimensions: '1920x1080',
+      type: 'wallpaper',
     });
 
   } catch (error) {
-    console.error('Error generating wallpaper:', error);
-    
+    console.error('Unexpected error generating image:', {
+      error: error instanceof Error ? error.message : error,
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+
+    // Handle specific error types
     if (error instanceof SyntaxError) {
       return NextResponse.json(
-        { error: 'Invalid JSON in request body' },
+        { success: false, error: 'Invalid JSON in request body' },
         { status: 400 }
+      );
+    }
+
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      return NextResponse.json(
+        { success: false, error: 'Network error: Unable to connect to image generation service' },
+        { status: 503 }
       );
     }
 
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        success: false, 
+        error: 'An unexpected error occurred. Please try again.'
+      },
       { status: 500 }
     );
   }
 }
 
+// Handle OPTIONS request for CORS
 export async function OPTIONS() {
   return new NextResponse(null, {
     status: 200,
