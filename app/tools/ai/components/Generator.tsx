@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -93,7 +92,10 @@ const Generator: React.FC<WallpaperGeneratorProps> = ({
   const addWatermark = (canvas: HTMLCanvasElement, imageUrl: string): Promise<string> => {
     return new Promise((resolve) => {
       const ctx = canvas.getContext('2d');
-      if (!ctx) return;
+      if (!ctx) {
+        resolve(imageUrl);
+        return;
+      }
 
       const img = new Image();
       img.crossOrigin = 'anonymous';
@@ -129,6 +131,8 @@ const Generator: React.FC<WallpaperGeneratorProps> = ({
         canvas.toBlob((blob) => {
           if (blob) {
             resolve(URL.createObjectURL(blob));
+          } else {
+            resolve(imageUrl);
           }
         }, 'image/jpeg', 0.95);
       };
@@ -286,11 +290,13 @@ const Generator: React.FC<WallpaperGeneratorProps> = ({
     handleGenerate();
   };
 
-  const handleDownload = (imageUrl: string, prompt: string, width: number, height: number) => {
+  const handleDownload = (imageUrl: string, promptText: string, imgWidth: number, imgHeight: number) => {
     const link = document.createElement('a');
     link.href = imageUrl;
-    link.download = `${siteName}-wallpaper-${width}x${height}-${Date.now()}.jpg`;
+    link.download = `${siteName}-wallpaper-${imgWidth}x${imgHeight}-${Date.now()}.jpg`;
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
   };
 
   const formatTimeUntilReset = (ms: number) => {
@@ -425,14 +431,17 @@ const Generator: React.FC<WallpaperGeneratorProps> = ({
         )}
 
         {/* Image Preview Modal - Mobile Optimized */}
-        {generatedImage && (
+        {generatedImage && showPreview && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 md:p-4">
             <div className={`${currentTheme.modal} rounded-2xl md:rounded-3xl w-full max-w-sm md:max-w-md transform transition-all duration-300 scale-100`}>
               <div className="p-4 md:p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-base md:text-lg font-semibold">Your Wallpaper</h3>
                   <button
-                    onClick={() => setGeneratedImage(null)}
+                    onClick={() => {
+                      setGeneratedImage(null);
+                      setShowPreview(false);
+                    }}
                     className="w-8 h-8 rounded-full bg-gray-500/20 hover:bg-gray-500/30 flex items-center justify-center"
                   >
                     <X size={16} />
