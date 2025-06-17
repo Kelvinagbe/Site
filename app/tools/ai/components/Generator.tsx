@@ -10,7 +10,7 @@ interface GenerateRequest {
 
 // Hugging Face API configuration
 const HF_API_URL = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0";
-const HF_TOKEN = process.env.HUGGINGFACE_API_TOKEN; // Add this to your .env.local
+const HF_TOKEN = process.env.HF_API_TOKEN; // Add this to your .env.local
 
 // Rate limiting (optional - you can implement more sophisticated rate limiting)
 const rateLimitMap = new Map();
