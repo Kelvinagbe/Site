@@ -1,249 +1,258 @@
 // app/api/generate-image/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
+// Types
+interface GenerateRequest {
+  prompt: string;
+  width: number;
+  height: number;
+}
+
+interface HuggingFaceResponse {
+  error?: string;
+  [key: string]: any;
+}
+
+// Configuration
+const HF_API_URL = 'https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell';
+const HF_TOKEN = process.env.HF_API_TOKEN;
+
+// Rate limiting storage (in production, use Redis or similar)
+const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+
+// Helper function to get client IP
+function getClientIP(request: NextRequest): string {
+  const forwarded = request.headers.get('x-forwarded-for');
+  const realIP = request.headers.get('x-real-ip');
+  
+  if (forwarded) {
+    return forwarded.split(',')[0].trim();
+  }
+  if (realIP) {
+    return realIP;
+  }
+  return 'unknown';
+}
+
+// Rate limiting function
+function checkRateLimit(clientIP: string, limit: number = 10, windowMs: number = 60000): boolean {
+  const now = Date.now();
+  const clientData = rateLimitStore.get(clientIP);
+  
+  if (!clientData || now > clientData.resetTime) {
+    rateLimitStore.set(clientIP, { count: 1, resetTime: now + windowMs });
+    return true;
+  }
+  
+  if (clientData.count >= limit) {
+    return false;
+  }
+  
+  clientData.count++;
+  return true;
+}
+
+// Input validation
+function validateInput(data: any): { isValid: boolean; error?: string; validated?: GenerateRequest } {
+  if (!data.prompt || typeof data.prompt !== 'string') {
+    return { isValid: false, error: 'Prompt is required and must be a string' };
+  }
+  
+  if (data.prompt.trim().length < 3) {
+    return { isValid: false, error: 'Prompt must be at least 3 characters long' };
+  }
+  
+  if (data.prompt.length > 500) {
+    return { isValid: false, error: 'Prompt must be less than 500 characters' };
+  }
+  
+  const width = parseInt(data.width);
+  const height = parseInt(data.height);
+  
+  if (isNaN(width) || isNaN(height)) {
+    return { isValid: false, error: 'Width and height must be valid numbers' };
+  }
+  
+  if (width < 512 || width > 2048 || height < 512 || height > 2048) {
+    return { isValid: false, error: 'Width and height must be between 512 and 2048 pixels' };
+  }
+  
+  // Check for inappropriate content (basic filter)
+  const inappropriateTerms = [
+    'nude', 'nsfw', 'explicit', 'sexual', 'porn', 'naked', 'violence', 'gore', 'hate'
+  ];
+  
+  const promptLower = data.prompt.toLowerCase();
+  for (const term of inappropriateTerms) {
+    if (promptLower.includes(term)) {
+      return { isValid: false, error: 'Prompt contains inappropriate content' };
+    }
+  }
+  
+  return {
+    isValid: true,
+    validated: {
+      prompt: data.prompt.trim(),
+      width,
+      height
+    }
+  };
+}
+
+// Enhanced prompt for better wallpaper generation
+function enhancePrompt(originalPrompt: string, width: number, height: number): string {
+  const aspectRatio = width > height ? 'landscape' : width < height ? 'portrait' : 'square';
+  const resolution = width >= 1920 ? 'high resolution, 4k quality' : 'high quality';
+  
+  return `${originalPrompt}, ${aspectRatio} wallpaper, ${resolution}, detailed, beautiful, professional photography, perfect composition, vibrant colors, masterpiece`;
+}
+
+// Generate image using Hugging Face API
+async function generateImage(prompt: string, width: number, height: number): Promise<ArrayBuffer> {
+  if (!HF_TOKEN) {
+    throw new Error('Hugging Face API token not configured');
+  }
+  
+  const enhancedPrompt = enhancePrompt(prompt, width, height);
+  
+  const payload = {
+    inputs: enhancedPrompt,
+    parameters: {
+      width,
+      height,
+      num_inference_steps: 4, // FLUX.1-schnell is optimized for 1-4 steps
+      guidance_scale: 0, // FLUX.1-schnell doesn't use guidance
+    }
+  };
+  
+  const response = await fetch(HF_API_URL, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${HF_TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+  
+  if (!response.ok) {
+    const errorText = await response.text();
+    let errorMessage = `HTTP ${response.status}`;
+    
+    try {
+      const errorJson = JSON.parse(errorText) as HuggingFaceResponse;
+      if (errorJson.error) {
+        errorMessage = errorJson.error;
+      }
+    } catch {
+      errorMessage = errorText || errorMessage;
+    }
+    
+    // Handle specific Hugging Face errors
+    if (response.status === 503) {
+      throw new Error('AI model is loading. Please wait 30 seconds and try again.');
+    } else if (response.status === 429) {
+      throw new Error('Too many requests. Please wait a moment and try again.');
+    } else if (errorMessage.includes('loading')) {
+      throw new Error('AI model is starting up. Please try again in 30 seconds.');
+    }
+    
+    throw new Error(errorMessage);
+  }
+  
+  const contentType = response.headers.get('content-type');
+  if (!contentType?.includes('image')) {
+    const text = await response.text();
+    throw new Error(`Expected image, got: ${contentType}. Response: ${text}`);
+  }
+  
+  return await response.arrayBuffer();
+}
+
+// Main API handler
 export async function POST(request: NextRequest) {
   try {
-    const { prompt } = await request.json();
-
-    // Validate input
-    if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
+    const clientIP = getClientIP(request);
+    
+    // Rate limiting
+    if (!checkRateLimit(clientIP, 5, 60000)) { // 5 requests per minute
       return NextResponse.json(
-        { success: false, error: 'Please provide a valid prompt' },
+        { error: 'Too many requests. Please wait a moment and try again.' },
+        { status: 429 }
+      );
+    }
+    
+    // Parse and validate request
+    const body = await request.json();
+    const validation = validateInput(body);
+    
+    if (!validation.isValid) {
+      return NextResponse.json(
+        { error: validation.error },
         { status: 400 }
       );
     }
-
-    // Check if prompt is too long
-    if (prompt.length > 500) {
-      return NextResponse.json(
-        { success: false, error: 'Prompt is too long. Please keep it under 500 characters.' },
-        { status: 400 }
-      );
-    }
-
-    const HF_TOKEN = process.env.HF_API_TOKEN;
-
-    if (!HF_TOKEN) {
-      console.error('HF_API_TOKEN environment variable not found');
-      return NextResponse.json(
-        { success: false, error: 'Server configuration error' },
-        { status: 500 }
-      );
-    }
-
-    console.log('Generating image for prompt:', prompt);
-
-    // Enhanced prompt specifically for wallpaper generation
-    const enhancedPrompt = `${prompt.trim()}, wallpaper, desktop background, high resolution, ultra detailed, professional photography, masterpiece, 8k, stunning composition, perfect lighting`;
-
-    const requestPayload = {
-      inputs: enhancedPrompt,
-      parameters: {
-        negative_prompt: 'blurry, bad quality, distorted, low resolution, text, watermark, deformed, ugly, duplicate, morbid, mutilated, signature, cropped, out of frame, worst quality, low quality, jpeg artifacts, poorly lit, overexposed, underexposed',
-        num_inference_steps: 30,
-        guidance_scale: 7.5,
-        width: 1920,  // Standard wallpaper width
-        height: 1080, // Standard wallpaper height (16:9 aspect ratio)
+    
+    const { prompt, width, height } = validation.validated!;
+    
+    // Generate image
+    const imageBuffer = await generateImage(prompt, width, height);
+    
+    // Return image
+    return new NextResponse(imageBuffer, {
+      status: 200,
+      headers: {
+        'Content-Type': 'image/jpeg',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
       },
-    };
-
-    console.log('Request payload:', JSON.stringify(requestPayload, null, 2));
-
-    // Call Hugging Face API with better error handling
-    const response = await fetch(
-      'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0',
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${HF_TOKEN}`,
-          'Content-Type': 'application/json',
-          'User-Agent': 'image-generator/1.0',
-        },
-        body: JSON.stringify(requestPayload),
-      }
-    );
-
-    console.log('Hugging Face API response status:', response.status);
-    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Hugging Face API error details:', {
-        status: response.status,
-        statusText: response.statusText,
-        headers: Object.fromEntries(response.headers.entries()),
-        body: errorText
-      });
-
-      // Handle specific error cases with more detail
-      if (response.status === 503) {
-        return NextResponse.json(
-          { 
-            success: false, 
-            error: 'The AI model is currently loading. Please wait about 1-2 minutes and try again.',
-            retryAfter: 120
-          },
-          { status: 503 }
-        );
-      }
-
-      if (response.status === 429) {
-        return NextResponse.json(
-          { 
-            success: false, 
-            error: 'Too many requests. Please wait a moment and try again.',
-            retryAfter: 60
-          },
-          { status: 429 }
-        );
-      }
-
-      if (response.status === 401) {
-        return NextResponse.json(
-          { 
-            success: false, 
-            error: 'API authentication failed. Please check your API key configuration.'
-          },
-          { status: 401 }
-        );
-      }
-
-      if (response.status === 400) {
-        // Parse error details for bad request
-        let errorDetail = 'Invalid request parameters';
-        try {
-          const errorData = JSON.parse(errorText);
-          errorDetail = errorData.error || errorData.message || errorDetail;
-        } catch {
-          errorDetail = errorText || errorDetail;
-        }
-        
-        return NextResponse.json(
-          { 
-            success: false, 
-            error: `Bad request: ${errorDetail}`
-          },
-          { status: 400 }
-        );
-      }
-
-      if (response.status === 422) {
-        return NextResponse.json(
-          { 
-            success: false, 
-            error: 'The prompt contains invalid content or parameters. Please try a different prompt.'
-          },
-          { status: 422 }
-        );
-      }
-
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: `Failed to generate image: ${response.status} - ${errorText || response.statusText}`
-        },
-        { status: response.status }
-      );
-    }
-
-    // Check content type to ensure we received an image
-    const contentType = response.headers.get('content-type');
-    console.log('Response content type:', contentType);
-
-    if (!contentType || !contentType.startsWith('image/')) {
-      const responseText = await response.text();
-      console.error('Unexpected response content type:', {
-        contentType,
-        responseBody: responseText.substring(0, 500) // Log first 500 chars
-      });
-
-      // Sometimes the API returns JSON error in 200 response
-      try {
-        const errorData = JSON.parse(responseText);
-        if (errorData.error) {
-          return NextResponse.json(
-            { success: false, error: errorData.error },
-            { status: 500 }
-          );
-        }
-      } catch {
-        // Not JSON, continue with generic error
-      }
-
-      return NextResponse.json(
-        { success: false, error: 'Received invalid response format from image generation service' },
-        { status: 500 }
-      );
-    }
-
-    // Convert response to image
-    const imageBuffer = await response.arrayBuffer();
-
-    if (imageBuffer.byteLength === 0) {
-      console.error('Received empty image buffer');
-      return NextResponse.json(
-        { success: false, error: 'Received empty image data' },
-        { status: 500 }
-      );
-    }
-
-    console.log('Image buffer size:', imageBuffer.byteLength, 'bytes');
-
-    const base64Image = Buffer.from(imageBuffer).toString('base64');
-    const imageUrl = `data:image/png;base64,${base64Image}`;
-
-    console.log('Wallpaper generated successfully, base64 length:', base64Image.length);
-
-    return NextResponse.json({
-      success: true,
-      imageUrl,
-      prompt: enhancedPrompt,
-      originalPrompt: prompt,
-      timestamp: Date.now(),
-      size: imageBuffer.byteLength,
-      dimensions: '1920x1080',
-      type: 'wallpaper',
     });
-
+    
   } catch (error) {
-    console.error('Unexpected error generating image:', {
-      error: error instanceof Error ? error.message : error,
-      stack: error instanceof Error ? error.stack : undefined,
-    });
-
-    // Handle specific error types
-    if (error instanceof SyntaxError) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid JSON in request body' },
-        { status: 400 }
-      );
+    console.error('API Error:', error);
+    
+    let errorMessage = 'An unexpected error occurred';
+    let statusCode = 500;
+    
+    if (error instanceof Error) {
+      errorMessage = error.message;
+      
+      // Set appropriate status codes for different error types
+      if (errorMessage.includes('loading') || errorMessage.includes('503')) {
+        statusCode = 503;
+      } else if (errorMessage.includes('Too many requests')) {
+        statusCode = 429;
+      } else if (errorMessage.includes('token not configured')) {
+        statusCode = 500;
+        errorMessage = 'Service configuration error';
+      }
     }
-
-    if (error instanceof TypeError && error.message.includes('fetch')) {
-      return NextResponse.json(
-        { success: false, error: 'Network error: Unable to connect to image generation service' },
-        { status: 503 }
-      );
-    }
-
+    
     return NextResponse.json(
-      { 
-        success: false, 
-        error: 'An unexpected error occurred. Please try again.'
-      },
-      { status: 500 }
+      { error: errorMessage },
+      { status: statusCode }
     );
   }
 }
 
-// Handle OPTIONS request for CORS
-export async function OPTIONS() {
-  return new NextResponse(null, {
-    status: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    },
-  });
+// Handle unsupported methods
+export async function GET() {
+  return NextResponse.json(
+    { error: 'Method not allowed' },
+    { status: 405 }
+  );
+}
+
+export async function PUT() {
+  return NextResponse.json(
+    { error: 'Method not allowed' },
+    { status: 405 }
+  );
+}
+
+export async function DELETE() {
+  return NextResponse.json(
+    { error: 'Method not allowed' },
+    { status: 405 }
+  );
 }
