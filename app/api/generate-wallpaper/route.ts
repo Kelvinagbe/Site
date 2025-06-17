@@ -9,7 +9,12 @@ interface GenerateRequest {
 }
 
 // Hugging Face API configuration
-const HF_API_URL = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0";
+const HF_API_URL = "https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5";
+// Alternative models to try:
+// "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0" (may need parameters)
+// "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2-1"
+// "https://api-inference.huggingface.co/models/prompthero/openjourney"
+
 const HF_TOKEN = process.env.HF_API_TOKEN; // Add this to your .env.local
 
 // Rate limiting (optional - you can implement more sophisticated rate limiting)
@@ -26,7 +31,7 @@ const rateLimit = (ip: string): boolean => {
   }
 
   const userLimit = rateLimitMap.get(ip);
-
+  
   if (now > userLimit.resetTime) {
     userLimit.count = 1;
     userLimit.resetTime = now + windowMs;
@@ -45,7 +50,7 @@ const enhancePrompt = (prompt: string, width: number, height: number): string =>
   // Enhance the prompt for better wallpaper generation
   const basePrompt = prompt.trim();
   const aspectRatio = width > height ? "landscape" : width < height ? "portrait" : "square";
-
+  
   return `${basePrompt}, ${aspectRatio} wallpaper, 4k resolution, high quality, detailed, vibrant colors, professional photography style, cinematic lighting, masterpiece`;
 };
 
@@ -55,16 +60,10 @@ const generateImageWithHuggingFace = async (prompt: string, width: number, heigh
   }
 
   const enhancedPrompt = enhancePrompt(prompt, width, height);
-
+  
+  // Simplified payload - HF Inference API expects just the prompt
   const payload = {
     inputs: enhancedPrompt,
-    parameters: {
-      width: Math.min(width, 1024), // SDXL max recommended width
-      height: Math.min(height, 1024), // SDXL max recommended height
-      num_inference_steps: 20,
-      guidance_scale: 7.5,
-      negative_prompt: "blurry, low quality, distorted, deformed, ugly, bad anatomy, extra limbs, text, watermark, signature, username, low resolution, pixelated, grainy, artifacts, jpeg artifacts, compression artifacts, poorly drawn, amateur, sketch, draft, unfinished, error, glitch, noise, oversaturated"
-    },
     options: {
       wait_for_model: true,
       use_cache: false
@@ -78,51 +77,72 @@ const generateImageWithHuggingFace = async (prompt: string, width: number, heigh
     headers: {
       'Authorization': `Bearer ${HF_TOKEN}`,
       'Content-Type': 'application/json',
+      'User-Agent': 'WallCraft/1.0'
     },
     body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
-    const errorText = await response.text();
+    let errorText = '';
+    let errorData = null;
+    
+    try {
+      errorText = await response.text();
+      errorData = JSON.parse(errorText);
+    } catch {
+      // If parsing fails, use the raw text
+    }
+
     console.error('Hugging Face API error:', {
       status: response.status,
       statusText: response.statusText,
-      body: errorText
+      body: errorText,
+      headers: Object.fromEntries(response.headers.entries())
     });
 
     // Handle specific errors
-    if (response.status === 503) {
-      throw new Error('AI model is currently loading. Please wait 30 seconds and try again.');
+    if (response.status === 400) {
+      if (errorText.includes('token')) {
+        throw new Error('Invalid API token. Please check your Hugging Face token configuration.');
+      } else if (errorText.includes('model')) {
+        throw new Error('Model configuration error. Please try again.');
+      } else {
+        throw new Error(`Invalid request: ${errorData?.error || errorText || 'Bad request format'}`);
+      }
     } else if (response.status === 401) {
-      throw new Error('Invalid API token. Please check your Hugging Face configuration.');
+      throw new Error('Unauthorized: Please check your Hugging Face API token.');
+    } else if (response.status === 403) {
+      throw new Error('Access denied: Your token may not have the required permissions.');
+    } else if (response.status === 503) {
+      throw new Error('AI model is currently loading. Please wait 30 seconds and try again.');
     } else if (response.status === 429) {
       throw new Error('Rate limit exceeded. Please wait a moment and try again.');
     } else if (errorText.includes('estimated_time')) {
       throw new Error('Model is loading. Please try again in a few moments.');
     }
 
-    throw new Error(`Failed to generate image: ${response.status} ${response.statusText}`);
+    throw new Error(`API Error ${response.status}: ${errorData?.error || errorText || response.statusText}`);
   }
 
   const contentType = response.headers.get('content-type');
-
+  
   if (contentType && contentType.includes('application/json')) {
     // Sometimes HF returns JSON with error or estimated time
     const jsonResponse = await response.json();
     console.log('HF JSON Response:', jsonResponse);
-
+    
     if (jsonResponse.error) {
       throw new Error(jsonResponse.error);
     } else if (jsonResponse.estimated_time) {
       throw new Error(`Model is loading. Estimated time: ${jsonResponse.estimated_time} seconds. Please try again.`);
     }
-
+    
     throw new Error('Unexpected JSON response from API');
   }
 
   // Should be image data
   const arrayBuffer = await response.arrayBuffer();
-
+  
   if (arrayBuffer.byteLength === 0) {
     throw new Error('Received empty response from API');
   }
@@ -162,9 +182,9 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('API Error:', error);
-
+    
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-
+    
     return NextResponse.json({ 
       error: errorMessage,
       timestamp: new Date().toISOString()
