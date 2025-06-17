@@ -1,4 +1,3 @@
-// app/api/generate-wallpaper/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
 // Types
@@ -133,6 +132,14 @@ async function generateImage(prompt: string, width: number, height: number): Pro
     const errorText = await response.text();
     let errorMessage = `HTTP ${response.status}`;
     
+    // Log the full error for debugging
+    console.error('Hugging Face API Error:', {
+      status: response.status,
+      statusText: response.statusText,
+      headers: Object.fromEntries(response.headers.entries()),
+      body: errorText
+    });
+    
     try {
       const errorJson = JSON.parse(errorText) as HuggingFaceResponse;
       if (errorJson.error) {
@@ -144,16 +151,17 @@ async function generateImage(prompt: string, width: number, height: number): Pro
     
     // Handle specific Hugging Face errors
     if (response.status === 503 || errorMessage.includes('loading')) {
-      throw new Error('AI model is loading. Please wait 30-60 seconds and try again.');
+      throw new Error(`AI model is loading. Please wait 30-60 seconds and try again. (Status: ${response.status}, Details: ${errorMessage})`);
     } else if (response.status === 429) {
       throw new Error('Too many requests. Please wait a moment and try again.');
     } else if (errorMessage.includes('endpoint is in error')) {
-      throw new Error('AI service temporarily unavailable. Please try again in a few minutes.');
+      throw new Error(`AI service temporarily unavailable. Full error: ${errorMessage}`);
     } else if (errorMessage.includes('Model') && errorMessage.includes('not found')) {
       throw new Error('AI model not available. Please try again later.');
     }
     
-    throw new Error(errorMessage);
+    // Include the full error message for debugging
+    throw new Error(`Hugging Face API Error: ${errorMessage} (Status: ${response.status})`);
   }
   
   const contentType = response.headers.get('content-type');
