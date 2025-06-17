@@ -1,4 +1,4 @@
-// app/api/generate-image/route.ts
+// app/api/generate-wallpaper/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
 // Types
@@ -13,8 +13,8 @@ interface HuggingFaceResponse {
   [key: string]: any;
 }
 
-// Configuration
-const HF_API_URL = 'https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell';
+// Configuration - Try a more reliable model first
+const HF_API_URL = 'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0';
 const HF_TOKEN = process.env.HF_API_TOKEN;
 
 // Rate limiting storage (in production, use Redis or similar)
@@ -115,14 +115,9 @@ async function generateImage(prompt: string, width: number, height: number): Pro
   
   const enhancedPrompt = enhancePrompt(prompt, width, height);
   
+  // Simplified payload that works with most models
   const payload = {
     inputs: enhancedPrompt,
-    parameters: {
-      width,
-      height,
-      num_inference_steps: 4, // FLUX.1-schnell is optimized for 1-4 steps
-      guidance_scale: 0, // FLUX.1-schnell doesn't use guidance
-    }
   };
   
   const response = await fetch(HF_API_URL, {
@@ -148,12 +143,14 @@ async function generateImage(prompt: string, width: number, height: number): Pro
     }
     
     // Handle specific Hugging Face errors
-    if (response.status === 503) {
-      throw new Error('AI model is loading. Please wait 30 seconds and try again.');
+    if (response.status === 503 || errorMessage.includes('loading')) {
+      throw new Error('AI model is loading. Please wait 30-60 seconds and try again.');
     } else if (response.status === 429) {
       throw new Error('Too many requests. Please wait a moment and try again.');
-    } else if (errorMessage.includes('loading')) {
-      throw new Error('AI model is starting up. Please try again in 30 seconds.');
+    } else if (errorMessage.includes('endpoint is in error')) {
+      throw new Error('AI service temporarily unavailable. Please try again in a few minutes.');
+    } else if (errorMessage.includes('Model') && errorMessage.includes('not found')) {
+      throw new Error('AI model not available. Please try again later.');
     }
     
     throw new Error(errorMessage);
