@@ -119,6 +119,11 @@ async function generateImage(prompt: string, width: number, height: number): Pro
     throw new Error('Hugging Face API token not configured');
   }
   
+  // Validate token format
+  if (!HF_TOKEN.startsWith('hf_')) {
+    throw new Error('Invalid Hugging Face API token format. Token should start with "hf_"');
+  }
+  
   const enhancedPrompt = enhancePrompt(prompt, width, height);
   
   // Try different models until one works
@@ -141,35 +146,48 @@ async function generateImage(prompt: string, width: number, height: number): Pro
         body: JSON.stringify(payload),
       });
       
+      // Detailed logging for debugging
+      console.log(`Response status: ${response.status}`);
+      console.log(`Response headers:`, Object.fromEntries(response.headers.entries()));
+      
       if (response.ok) {
         const contentType = response.headers.get('content-type');
         if (contentType?.includes('image')) {
+          console.log('✅ Success! Got image from:', modelUrl);
           // Success! Update the current model index for next time
           currentModelIndex = (currentModelIndex + attempt) % MODELS.length;
           return await response.arrayBuffer();
+        } else {
+          console.log('❌ Expected image but got:', contentType);
         }
       }
       
-      // Log error but try next model
+      // Log error details
       const errorText = await response.text();
-      console.log(`Model ${modelUrl} failed:`, response.status, errorText);
+      console.log(`❌ Model ${modelUrl} failed:`, {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorText
+      });
       
       // If this is a rate limit or auth issue, don't try other models
-      if (response.status === 429 || response.status === 401) {
-        throw new Error(response.status === 429 ? 'Too many requests. Please wait a moment and try again.' : 'Invalid API token');
+      if (response.status === 429) {
+        throw new Error('Too many requests. Please wait a moment and try again.');
+      } else if (response.status === 401 || response.status === 403) {
+        throw new Error('Invalid or unauthorized API token. Please check your Hugging Face API token.');
       }
       
     } catch (error) {
-      console.log(`Model ${modelUrl} error:`, error);
+      console.log(`❌ Model ${modelUrl} error:`, error);
       // Continue to next model unless it's a critical error
-      if (error instanceof Error && (error.message.includes('token') || error.message.includes('429'))) {
+      if (error instanceof Error && (error.message.includes('token') || error.message.includes('429') || error.message.includes('401') || error.message.includes('403'))) {
         throw error;
       }
     }
   }
   
   // If all models failed, throw a comprehensive error
-  throw new Error(`All AI models are currently unavailable. This usually means Hugging Face is experiencing high load. Please try again in 5-10 minutes.`);
+  throw new Error(`All AI models are currently unavailable. This could be due to: 1) Invalid API token 2) Hugging Face service issues 3) Network problems. Check your server console for detailed error logs.`);
 }
 
 // Main API handler
