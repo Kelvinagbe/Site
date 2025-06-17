@@ -12,8 +12,15 @@ interface HuggingFaceResponse {
   [key: string]: any;
 }
 
-// Configuration - Try a more reliable model first
-const HF_API_URL = 'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0';
+// Configuration - Multiple model options for reliability
+const MODELS = [
+  'https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5',
+  'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2-1',
+  'https://api-inference.huggingface.co/models/prompthero/openjourney',
+  'https://api-inference.huggingface.co/models/nitrosocke/Arcane-Diffusion'
+];
+
+let currentModelIndex = 0;
 const HF_TOKEN = process.env.HF_API_TOKEN;
 
 // Rate limiting storage (in production, use Redis or similar)
@@ -106,7 +113,7 @@ function enhancePrompt(originalPrompt: string, width: number, height: number): s
   return `${originalPrompt}, ${aspectRatio} wallpaper, ${resolution}, detailed, beautiful, professional photography, perfect composition, vibrant colors, masterpiece`;
 }
 
-// Generate image using Hugging Face API
+// Generate image using Hugging Face API with fallback models
 async function generateImage(prompt: string, width: number, height: number): Promise<ArrayBuffer> {
   if (!HF_TOKEN) {
     throw new Error('Hugging Face API token not configured');
@@ -114,63 +121,55 @@ async function generateImage(prompt: string, width: number, height: number): Pro
   
   const enhancedPrompt = enhancePrompt(prompt, width, height);
   
-  // Simplified payload that works with most models
-  const payload = {
-    inputs: enhancedPrompt,
-  };
-  
-  const response = await fetch(HF_API_URL, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${HF_TOKEN}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload),
-  });
-  
-  if (!response.ok) {
-    const errorText = await response.text();
-    let errorMessage = `HTTP ${response.status}`;
-    
-    // Log the full error for debugging
-    console.error('Hugging Face API Error:', {
-      status: response.status,
-      statusText: response.statusText,
-      headers: Object.fromEntries(response.headers.entries()),
-      body: errorText
-    });
+  // Try different models until one works
+  for (let attempt = 0; attempt < MODELS.length; attempt++) {
+    const modelUrl = MODELS[(currentModelIndex + attempt) % MODELS.length];
     
     try {
-      const errorJson = JSON.parse(errorText) as HuggingFaceResponse;
-      if (errorJson.error) {
-        errorMessage = errorJson.error;
+      console.log(`Trying model: ${modelUrl}`);
+      
+      const payload = {
+        inputs: enhancedPrompt,
+      };
+      
+      const response = await fetch(modelUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${HF_TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+      
+      if (response.ok) {
+        const contentType = response.headers.get('content-type');
+        if (contentType?.includes('image')) {
+          // Success! Update the current model index for next time
+          currentModelIndex = (currentModelIndex + attempt) % MODELS.length;
+          return await response.arrayBuffer();
+        }
       }
-    } catch {
-      errorMessage = errorText || errorMessage;
+      
+      // Log error but try next model
+      const errorText = await response.text();
+      console.log(`Model ${modelUrl} failed:`, response.status, errorText);
+      
+      // If this is a rate limit or auth issue, don't try other models
+      if (response.status === 429 || response.status === 401) {
+        throw new Error(response.status === 429 ? 'Too many requests. Please wait a moment and try again.' : 'Invalid API token');
+      }
+      
+    } catch (error) {
+      console.log(`Model ${modelUrl} error:`, error);
+      // Continue to next model unless it's a critical error
+      if (error instanceof Error && (error.message.includes('token') || error.message.includes('429'))) {
+        throw error;
+      }
     }
-    
-    // Handle specific Hugging Face errors
-    if (response.status === 503 || errorMessage.includes('loading')) {
-      throw new Error(`AI model is loading. Please wait 30-60 seconds and try again. (Status: ${response.status}, Details: ${errorMessage})`);
-    } else if (response.status === 429) {
-      throw new Error('Too many requests. Please wait a moment and try again.');
-    } else if (errorMessage.includes('endpoint is in error')) {
-      throw new Error(`AI service temporarily unavailable. Full error: ${errorMessage}`);
-    } else if (errorMessage.includes('Model') && errorMessage.includes('not found')) {
-      throw new Error('AI model not available. Please try again later.');
-    }
-    
-    // Include the full error message for debugging
-    throw new Error(`Hugging Face API Error: ${errorMessage} (Status: ${response.status})`);
   }
   
-  const contentType = response.headers.get('content-type');
-  if (!contentType?.includes('image')) {
-    const text = await response.text();
-    throw new Error(`Expected image, got: ${contentType}. Response: ${text}`);
-  }
-  
-  return await response.arrayBuffer();
+  // If all models failed, throw a comprehensive error
+  throw new Error(`All AI models are currently unavailable. This usually means Hugging Face is experiencing high load. Please try again in 5-10 minutes.`);
 }
 
 // Main API handler
