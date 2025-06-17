@@ -9,7 +9,7 @@ interface GenerateRequest {
 }
 
 // Hugging Face API configuration
-const HF_API_URL = "https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5";
+const HF_API_URL = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2-1";
 // Alternative models to try:
 // "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0" (may need parameters)
 // "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2-1"
