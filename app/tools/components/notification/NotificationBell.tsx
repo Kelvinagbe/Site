@@ -55,19 +55,19 @@ const NotificationBell: React.FC = () => {
         )}
       </button>
 
-      {/* Full Screen Overlay */}
+      {/* Full Width Overlay */}
       {isOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[60]">
           {/* Backdrop */}
           <div 
             className="absolute inset-0 bg-black/50 backdrop-blur-sm" 
             onClick={() => setIsOpen(false)}
           />
           
-          {/* Centered Panel */}
-          <div className="relative w-full max-w-md mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+          {/* Full Width Panel starting from header */}
+          <div className="relative w-full h-full pt-16 bg-white dark:bg-gray-800 shadow-2xl border-l border-gray-200 dark:border-gray-700 overflow-hidden">
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
                   <BellIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
@@ -93,7 +93,7 @@ const NotificationBell: React.FC = () => {
 
             {/* Actions Bar */}
             {unreadCount > 0 && (
-              <div className="px-6 py-3 bg-blue-50 dark:bg-blue-900/20 border-b border-gray-200 dark:border-gray-700">
+              <div className="px-4 sm:px-6 py-3 bg-blue-50 dark:bg-blue-900/20 border-b border-gray-200 dark:border-gray-700">
                 <button
                   onClick={() => {
                     markAllAsRead();
@@ -107,9 +107,9 @@ const NotificationBell: React.FC = () => {
             )}
 
             {/* Notifications List */}
-            <div className="max-h-96 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto">
               {notifications.length === 0 ? (
-                <div className="p-12 text-center">
+                <div className="p-8 sm:p-12 text-center">
                   <div className="mx-auto w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
                     <BellIcon className="w-8 h-8 text-gray-400 dark:text-gray-500" />
                   </div>
@@ -125,7 +125,7 @@ const NotificationBell: React.FC = () => {
                   {notifications.map((notification) => (
                     <div
                       key={notification.id}
-                      className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors ${
+                      className={`p-4 sm:p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors ${
                         !notification.read ? 'bg-blue-50 dark:bg-blue-900/10' : ''
                       }`}
                       onClick={() => {
@@ -170,13 +170,13 @@ const NotificationBell: React.FC = () => {
 
             {/* Footer (if needed for actions) */}
             {notifications.length > 0 && (
-              <div className="p-4 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-200 dark:border-gray-700">
+              <div className="p-4 sm:p-6 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-200 dark:border-gray-700">
                 <button
                   onClick={() => {
                     // Add any additional actions here
                     setIsOpen(false);
                   }}
-                  className="w-full py-2 px-4 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors text-sm font-medium text-gray-700 dark:text-gray-300"
+                  className="w-full py-3 px-4 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
                   Close
                 </button>
