@@ -22,6 +22,18 @@ const NotificationBell: React.FC = () => {
   const panelRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
+  // Debug logging
+  console.log('NotificationBell Debug:', {
+    totalNotifications: notifications.length,
+    unreadCount,
+    notifications: notifications.map(n => ({
+      id: n.id,
+      title: n.title,
+      read: n.read,
+      type: n.type
+    }))
+  });
+
   // Close panel when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -49,10 +61,10 @@ const NotificationBell: React.FC = () => {
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'success': return 'text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-900/20';
-      case 'warning': return 'text-yellow-600 bg-yellow-100 dark:text-yellow-400 dark:bg-yellow-900/20';
-      case 'error': return 'text-red-600 bg-red-100 dark:text-red-400 dark:bg-red-900/20';
-      default: return 'text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-900/20';
+      case 'success': return 'text-green-700 bg-green-200 dark:text-green-300 dark:bg-green-800';
+      case 'warning': return 'text-orange-700 bg-orange-200 dark:text-orange-300 dark:bg-orange-800';
+      case 'error': return 'text-red-700 bg-red-200 dark:text-red-300 dark:bg-red-800';
+      default: return 'text-blue-700 bg-blue-200 dark:text-blue-300 dark:bg-blue-800';
     }
   };
 
@@ -316,8 +328,10 @@ const NotificationsList: React.FC<{
       {notifications.map((notification) => (
         <div
           key={notification.id}
-          className={`${padding} hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors ${
-            !notification.read ? 'bg-blue-50 dark:bg-blue-900/10' : ''
+          className={`${padding} hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors border-l-4 ${
+            !notification.read 
+              ? 'bg-blue-50 dark:bg-blue-900/30 border-l-blue-500' 
+              : 'bg-white dark:bg-gray-800 border-l-gray-200 dark:border-l-gray-700'
           }`}
           onClick={() => {
             if (!notification.read) {
@@ -326,24 +340,34 @@ const NotificationsList: React.FC<{
           }}
         >
           <div className="flex items-start space-x-3">
-            {/* Read Status Indicator */}
-            <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
-              notification.read ? 'bg-gray-300 dark:bg-gray-600' : 'bg-blue-500'
+            {/* Read Status Indicator - More visible */}
+            <div className={`w-3 h-3 rounded-full mt-2 flex-shrink-0 border-2 ${
+              notification.read 
+                ? 'bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600' 
+                : 'bg-blue-500 border-blue-600 shadow-lg'
             }`} />
             
             <div className="flex-1 min-w-0">
               {/* Header with Title and Type Badge */}
               <div className="flex items-start justify-between mb-2">
-                <h5 className="text-sm font-semibold text-gray-900 dark:text-white">
+                <h5 className={`text-sm font-semibold ${
+                  notification.read 
+                    ? 'text-gray-700 dark:text-gray-300' 
+                    : 'text-gray-900 dark:text-white font-bold'
+                }`}>
                   {notification.title}
                 </h5>
-                <span className={`ml-2 text-xs px-2 py-1 rounded-full font-medium flex-shrink-0 ${getTypeColor(notification.type)}`}>
+                <span className={`ml-2 text-xs px-3 py-1 rounded-full font-semibold flex-shrink-0 shadow-sm ${getTypeColor(notification.type)}`}>
                   {notification.type}
                 </span>
               </div>
               
               {/* Message */}
-              <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+              <p className={`text-sm mb-2 ${
+                notification.read 
+                  ? 'text-gray-600 dark:text-gray-400' 
+                  : 'text-gray-700 dark:text-gray-200 font-medium'
+              }`}>
                 {notification.message}
               </p>
               
