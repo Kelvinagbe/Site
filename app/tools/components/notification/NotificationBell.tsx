@@ -203,25 +203,6 @@ const MobilePanelContent: React.FC<{
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
               Notifications
             </h3>
-            {unreadCount > 0 ? (
-              <div className="space-y-1">
-                <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">
-                  {unreadCount} unread message{unreadCount !== 1 ? 's' : ''}
-                </p>
-                {(() => {
-                  const latestUnread = notifications.find(n => !n.read);
-                  return latestUnread ? (
-                    <p className="text-xs text-gray-600 dark:text-gray-300 truncate">
-                      Latest: {latestUnread.title} - {latestUnread.message.substring(0, 40)}...
-                    </p>
-                  ) : null;
-                })()}
-              </div>
-            ) : (
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                All caught up!
-              </p>
-            )}
           </div>
         </div>
         <button
@@ -289,11 +270,6 @@ const DesktopPanelContent: React.FC<{
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
             Notifications
           </h3>
-          {unreadCount > 0 && (
-            <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">
-              {unreadCount} unread message{unreadCount !== 1 ? 's' : ''}
-            </p>
-          )}
         </div>
       </div>
       <button
