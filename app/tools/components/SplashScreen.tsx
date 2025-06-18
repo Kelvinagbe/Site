@@ -51,11 +51,24 @@ export default function CleanSplash() {
     logoShadow: isDark ? 'shadow-lg shadow-gray-900/50' : 'shadow-lg'
   };
 
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const target = e.target as HTMLImageElement;
+    const fallback = target.nextSibling as HTMLElement;
+    
+    // Hide the failed image
+    target.style.display = 'none';
+    
+    // Show the fallback element
+    if (fallback) {
+      fallback.style.display = 'flex';
+    }
+  };
+
   return (
     <div className={`fixed inset-0 ${themeClasses.bg} flex items-center justify-center z-50 transition-colors duration-300`}>
-      
+
       <div className={`text-center transition-all duration-1000 ${fadeIn ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-        
+
         {/* Logo using favicon */}
         <div className="mb-12">
           <div className={`w-24 h-24 mx-auto rounded-2xl flex items-center justify-center ${themeClasses.logoShadow} mb-6 overflow-hidden`}>
@@ -63,11 +76,7 @@ export default function CleanSplash() {
               src="/favicon.ico" 
               alt="Logo" 
               className="w-16 h-16 object-contain"
-              onError={(e) => {
-                // Fallback if favicon doesn't load
-                e.target.style.display = 'none';
-                e.target.nextSibling.style.display = 'flex';
-              }}
+              onError={handleImageError}
             />
             <div className={`w-16 h-16 ${themeClasses.progressBar} rounded-xl hidden items-center justify-center`}>
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -75,7 +84,7 @@ export default function CleanSplash() {
               </svg>
             </div>
           </div>
-          
+
           <h1 className={`text-4xl font-bold ${themeClasses.text} mb-2 transition-colors duration-300`}>
             Tools Hub
           </h1>
@@ -92,11 +101,11 @@ export default function CleanSplash() {
               style={{ width: `${Math.min(progress, 100)}%` }}
             />
           </div>
-          
+
           <p className={`${themeClasses.textSecondary} text-sm mb-6 transition-colors duration-300`}>
             {loadingText}
           </p>
-          
+
           {/* Simple loading dots */}
           <div className="flex justify-center space-x-2">
             {[...Array(3)].map((_, i) => (
