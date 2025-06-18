@@ -87,10 +87,15 @@ const NotificationBell: React.FC = () => {
             onClick={() => setIsOpen(false)}
           />
           
-          {/* Notification Panel */}
+          {/* Notification Panel - Mobile: Centered, Desktop: Top-right */}
           <div 
             ref={panelRef}
-            className="absolute top-16 right-0 w-full sm:w-96 h-[calc(100vh-4rem)] bg-white dark:bg-gray-800 shadow-2xl border-l border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col"
+            className="absolute 
+              /* Mobile: Centered modal */
+              top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-md h-[80vh] max-h-[600px] rounded-2xl
+              /* Desktop: Top-right dropdown */
+              sm:top-16 sm:right-4 sm:left-auto sm:transform-none sm:translate-x-0 sm:translate-y-0 sm:w-96 sm:h-auto sm:max-h-[80vh] sm:rounded-xl
+              bg-white dark:bg-gray-800 shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col"
           >
             {/* Panel Header */}
             <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex-shrink-0">
