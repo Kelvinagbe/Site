@@ -16,6 +16,11 @@ const CloseIcon = ({ className = "" }: { className?: string }) => (
   </svg>
 );
 
+// Notification Dot Icon for unread indicator
+const NotificationDot = ({ className = "" }: { className?: string }) => (
+  <div className={`rounded-full ${className}`} />
+);
+
 const NotificationBell: React.FC = () => {
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const [isOpen, setIsOpen] = useState(false);
@@ -47,12 +52,18 @@ const NotificationBell: React.FC = () => {
     };
   }, [isOpen]);
 
+  // Enhanced type color system with better contrast
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'success': return 'text-green-700 bg-green-200 dark:text-green-300 dark:bg-green-800';
-      case 'warning': return 'text-orange-700 bg-orange-200 dark:text-orange-300 dark:bg-orange-800';
-      case 'error': return 'text-red-700 bg-red-200 dark:text-red-300 dark:bg-red-800';
-      default: return 'text-blue-700 bg-blue-200 dark:text-blue-300 dark:bg-blue-800';
+      case 'success': 
+        return 'text-green-800 bg-green-100 dark:text-green-200 dark:bg-green-900/50 border-green-200 dark:border-green-800';
+      case 'warning': 
+        return 'text-yellow-800 bg-yellow-100 dark:text-yellow-200 dark:bg-yellow-900/50 border-yellow-200 dark:border-yellow-800';
+      case 'error': 
+        return 'text-red-800 bg-red-100 dark:text-red-200 dark:bg-red-900/50 border-red-200 dark:border-red-800';
+      case 'info':
+      default: 
+        return 'text-blue-800 bg-blue-100 dark:text-blue-200 dark:bg-blue-900/50 border-blue-200 dark:border-blue-800';
     }
   };
 
@@ -67,31 +78,44 @@ const NotificationBell: React.FC = () => {
     return `${Math.floor(minutes / 1440)}d ago`;
   };
 
+  // Enhanced bell button with better unread indication
   return (
     <>
-      {/* Bell Button */}
+      {/* Bell Button with Enhanced Unread States */}
       <button
         ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+        className={`relative p-2.5 rounded-lg transition-all duration-200 ${
+          unreadCount > 0 
+            ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50' 
+            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+        }`}
       >
-        <BellIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+        <BellIcon className={`w-5 h-5 transition-transform duration-200 ${
+          unreadCount > 0 ? 'animate-pulse' : ''
+        }`} />
+        
+        {/* Enhanced Unread Count Badge */}
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
-            {unreadCount > 9 ? '9+' : unreadCount}
-          </span>
+          <>
+            {/* Pulsing ring effect */}
+            <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full animate-ping opacity-75" />
+            {/* Actual badge */}
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold shadow-lg border-2 border-white dark:border-gray-900">
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
+          </>
         )}
       </button>
 
-      {/* Notification Panel - Using Portal Pattern */}
+      {/* Notification Panel */}
       {isOpen && (
         <>
           {/* Mobile Full Screen Overlay */}
           <div className="fixed inset-0 z-[9999] sm:hidden">
-            {/* Mobile Panel - Full screen */}
             <div 
               ref={panelRef}
-              className="absolute inset-0 bg-white dark:bg-gray-800 flex flex-col"
+              className="absolute inset-0 bg-white dark:bg-gray-900 flex flex-col"
               style={{ 
                 paddingTop: 'var(--header-height, 64px)',
                 zIndex: 10000 
@@ -114,7 +138,7 @@ const NotificationBell: React.FC = () => {
             <div className="fixed inset-0 z-[9999]" onClick={() => setIsOpen(false)} />
             <div 
               ref={panelRef}
-              className="absolute right-0 top-full mt-2 w-96 max-h-[70vh] bg-white dark:bg-gray-800 shadow-2xl border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden flex flex-col z-[10000]"
+              className="absolute right-0 top-full mt-2 w-96 max-h-[80vh] bg-white dark:bg-gray-900 shadow-2xl border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden flex flex-col z-[10000]"
             >
               <DesktopPanelContent 
                 notifications={notifications}
@@ -143,19 +167,12 @@ const MobilePanelContent: React.FC<{
   formatTime: (date: Date) => string;
   onClose: () => void;
 }> = ({ notifications, unreadCount, markAsRead, markAllAsRead, getTypeColor, formatTime, onClose }) => {
-  // Debug logging for mobile
-  console.log('Mobile Panel Debug:', {
-    notifications: notifications.length,
-    unreadCount,
-    isRendering: true
-  });
-
   return (
     <>
-      {/* Mobile Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex-shrink-0 min-h-[64px]">
+      {/* Mobile Header with solid background */}
+      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex-shrink-0 min-h-[64px]">
         <div className="flex items-center space-x-3">
-          <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+          <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
             <BellIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
           </div>
           <div>
@@ -163,34 +180,34 @@ const MobilePanelContent: React.FC<{
               Notifications
             </h3>
             {unreadCount > 0 && (
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                {unreadCount} unread
+              <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">
+                {unreadCount} unread message{unreadCount !== 1 ? 's' : ''}
               </p>
             )}
           </div>
         </div>
         <button
           onClick={onClose}
-          className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
         >
           <CloseIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
         </button>
       </div>
 
-      {/* Mobile Actions Bar */}
+      {/* Mobile Actions Bar with solid background */}
       {unreadCount > 0 && (
-        <div className="px-4 py-3 bg-blue-50 dark:bg-blue-900/20 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+        <div className="px-4 py-3 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
           <button
             onClick={markAllAsRead}
-            className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+            className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 rounded-md"
           >
-            Mark all as read ({unreadCount})
+            Mark all {unreadCount} as read
           </button>
         </div>
       )}
 
-      {/* Mobile Notifications List - Ensure it takes available space */}
-      <div className="flex-1 overflow-y-auto min-h-0">
+      {/* Mobile Notifications List */}
+      <div className="flex-1 overflow-y-auto min-h-0 bg-white dark:bg-gray-900">
         <NotificationsList 
           notifications={notifications}
           markAsRead={markAsRead}
@@ -200,11 +217,11 @@ const MobilePanelContent: React.FC<{
         />
       </div>
 
-      {/* Mobile Footer */}
-      <div className="p-4 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-200 dark:border-gray-700 flex-shrink-0 safe-area-inset-bottom">
+      {/* Mobile Footer with solid background */}
+      <div className="p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
         <button
           onClick={onClose}
-          className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors text-sm font-medium text-white"
+          className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 rounded-lg transition-colors text-sm font-medium text-white"
         >
           Close
         </button>
@@ -224,10 +241,10 @@ const DesktopPanelContent: React.FC<{
   onClose: () => void;
 }> = ({ notifications, unreadCount, markAsRead, markAllAsRead, getTypeColor, formatTime, onClose }) => (
   <>
-    {/* Desktop Header */}
-    <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex-shrink-0">
+    {/* Desktop Header with solid background */}
+    <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex-shrink-0">
       <div className="flex items-center space-x-3">
-        <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+        <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
           <BellIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
         </div>
         <div>
@@ -235,26 +252,26 @@ const DesktopPanelContent: React.FC<{
             Notifications
           </h3>
           {unreadCount > 0 && (
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              {unreadCount} unread
+            <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">
+              {unreadCount} unread message{unreadCount !== 1 ? 's' : ''}
             </p>
           )}
         </div>
       </div>
       <button
         onClick={onClose}
-        className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
       >
         <CloseIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
       </button>
     </div>
 
-    {/* Desktop Actions Bar */}
+    {/* Desktop Actions Bar with solid background */}
     {unreadCount > 0 && (
-      <div className="px-6 py-3 bg-blue-50 dark:bg-blue-900/20 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+      <div className="px-6 py-3 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
         <button
           onClick={markAllAsRead}
-          className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+          className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 rounded-md"
         >
           Mark all as read
         </button>
@@ -262,7 +279,7 @@ const DesktopPanelContent: React.FC<{
     )}
 
     {/* Desktop Notifications List */}
-    <div className="flex-1 overflow-y-auto">
+    <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-900">
       <NotificationsList 
         notifications={notifications}
         markAsRead={markAsRead}
@@ -272,12 +289,12 @@ const DesktopPanelContent: React.FC<{
       />
     </div>
 
-    {/* Desktop Footer */}
+    {/* Desktop Footer with solid background */}
     {notifications.length > 0 && (
-      <div className="p-6 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
+      <div className="p-6 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
         <button
           onClick={onClose}
-          className="w-full py-3 px-4 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors text-sm font-medium text-gray-700 dark:text-gray-300"
+          className="w-full py-3 px-4 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors text-sm font-medium text-gray-700 dark:text-gray-300"
         >
           Close
         </button>
@@ -286,7 +303,7 @@ const DesktopPanelContent: React.FC<{
   </>
 );
 
-// Shared Notifications List Component
+// Enhanced Notifications List Component
 const NotificationsList: React.FC<{
   notifications: any[];
   markAsRead: (id: string) => void;
@@ -298,7 +315,7 @@ const NotificationsList: React.FC<{
 
   if (notifications.length === 0) {
     return (
-      <div className={`${padding} py-12 text-center`}>
+      <div className={`${padding} py-12 text-center bg-white dark:bg-gray-900`}>
         <div className="mx-auto w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
           <BellIcon className="w-8 h-8 text-gray-400 dark:text-gray-500" />
         </div>
@@ -313,14 +330,14 @@ const NotificationsList: React.FC<{
   }
 
   return (
-    <div className="divide-y divide-gray-100 dark:divide-gray-700">
+    <div className="divide-y divide-gray-100 dark:divide-gray-800 bg-white dark:bg-gray-900">
       {notifications.map((notification) => (
         <div
           key={notification.id}
-          className={`${padding} hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors border-l-4 ${
+          className={`${padding} hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-all duration-200 border-l-4 ${
             !notification.read 
-              ? 'bg-blue-50 dark:bg-blue-900/30 border-l-blue-500' 
-              : 'bg-white dark:bg-gray-800 border-l-gray-200 dark:border-l-gray-700'
+              ? 'bg-blue-50 dark:bg-blue-950/50 border-l-blue-500 shadow-sm' 
+              : 'bg-white dark:bg-gray-900 border-l-transparent hover:border-l-gray-200 dark:hover:border-l-gray-700'
           }`}
           onClick={() => {
             if (!notification.read) {
@@ -329,29 +346,44 @@ const NotificationsList: React.FC<{
           }}
         >
           <div className="flex items-start space-x-3">
-            {/* Read Status Indicator */}
-            <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
-              notification.read ? 'bg-gray-300 dark:bg-gray-600' : 'bg-blue-500'
+            {/* Enhanced Read Status Indicator */}
+            <div className={`w-3 h-3 rounded-full mt-1.5 flex-shrink-0 transition-all duration-200 ${
+              notification.read 
+                ? 'bg-gray-300 dark:bg-gray-600' 
+                : 'bg-blue-500 shadow-lg ring-2 ring-blue-200 dark:ring-blue-800'
             }`} />
             
             <div className="flex-1 min-w-0">
               {/* Header with Title and Type Badge */}
               <div className="flex items-start justify-between mb-2">
-                <h5 className="text-sm font-semibold text-gray-900 dark:text-white">
+                <h5 className={`text-sm font-semibold ${
+                  !notification.read 
+                    ? 'text-gray-900 dark:text-white' 
+                    : 'text-gray-700 dark:text-gray-300'
+                }`}>
                   {notification.title}
+                  {!notification.read && (
+                    <span className="ml-2 text-blue-600 dark:text-blue-400 text-xs font-normal">
+                      • New
+                    </span>
+                  )}
                 </h5>
-                <span className={`ml-2 text-xs px-2 py-1 rounded-full font-medium flex-shrink-0 ${getTypeColor(notification.type)}`}>
+                <span className={`ml-2 text-xs px-2 py-1 rounded-full font-medium flex-shrink-0 border ${getTypeColor(notification.type)}`}>
                   {notification.type}
                 </span>
               </div>
               
-              {/* Message */}
-              <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+              {/* Message with enhanced styling */}
+              <p className={`text-sm mb-2 leading-relaxed ${
+                !notification.read 
+                  ? 'text-gray-700 dark:text-gray-200' 
+                  : 'text-gray-600 dark:text-gray-400'
+              }`}>
                 {notification.message}
               </p>
               
-              {/* Timestamp */}
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              {/* Timestamp with enhanced styling */}
+              <p className="text-xs text-gray-500 dark:text-gray-500 font-medium">
                 {formatTime(notification.timestamp)}
               </p>
             </div>
