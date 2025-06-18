@@ -2,6 +2,38 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNotifications } from '../../../../hooks/useNotifications';
 
+// Add CSS for animations
+const styles = `
+  @keyframes slide-down {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .animate-slide-down {
+    animation: slide-down 0.3s ease-out;
+  }
+  
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+`;
+
+// Inject styles
+if (typeof document !== 'undefined') {
+  const styleSheet = document.createElement('style');
+  styleSheet.textContent = styles;
+  document.head.appendChild(styleSheet);
+}
+
 // Bell Icon
 const BellIcon = ({ className = "" }: { className?: string }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -81,28 +113,7 @@ const NotificationBell: React.FC = () => {
   // Enhanced bell button with better unread indication
   return (
     <>
-      {/* Bell Button with Enhanced Unread States */}
-      <button
-        ref={buttonRef}
-        onClick={() => setIsOpen(!isOpen)}
-        className={`relative p-2.5 rounded-lg transition-all duration-200 ${
-          unreadCount > 0 
-            ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50' 
-            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-        }`}
-      >
-        <BellIcon className={`w-5 h-5 transition-transform duration-200 ${
-          unreadCount > 0 ? 'animate-pulse' : ''
-        }`} />
-        
-        {/* Enhanced Unread Count Badge */}
-        {unreadCount > 0 && (
-          <>
-            {/* Pulsing ring effect */}
-            <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full animate-ping opacity-75" />
-            {/* Actual badge */}
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold shadow-lg border-2 border-white dark:border-gray-900">
-              {unreadCount > 99 ? '99+' : unreadCount}
+
             </span>
           </>
         )}
@@ -171,24 +182,38 @@ const MobilePanelContent: React.FC<{
     <>
       {/* Mobile Header with solid background */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex-shrink-0 min-h-[64px]">
-        <div className="flex items-center space-x-3">
-          <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
+        <div className="flex items-center space-x-3 flex-1 min-w-0">
+          <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex-shrink-0">
             <BellIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
           </div>
-          <div>
+          <div className="flex-1 min-w-0">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
               Notifications
             </h3>
-            {unreadCount > 0 && (
-              <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">
-                {unreadCount} unread message{unreadCount !== 1 ? 's' : ''}
+            {unreadCount > 0 ? (
+              <div className="space-y-1">
+                <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">
+                  {unreadCount} unread message{unreadCount !== 1 ? 's' : ''}
+                </p>
+                {(() => {
+                  const latestUnread = notifications.find(n => !n.read);
+                  return latestUnread ? (
+                    <p className="text-xs text-gray-600 dark:text-gray-300 truncate">
+                      Latest: {latestUnread.title} - {latestUnread.message.substring(0, 40)}...
+                    </p>
+                  ) : null;
+                })()}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                All caught up!
               </p>
             )}
           </div>
         </div>
         <button
           onClick={onClose}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors flex-shrink-0"
         >
           <CloseIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
         </button>
