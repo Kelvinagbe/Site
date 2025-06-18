@@ -112,9 +112,22 @@ const NotificationBell: React.FC = () => {
 
   // Enhanced bell button with better unread indication
   return (
-    <>
-
+    <div className="relative">
+      <button
+        ref={buttonRef}
+        onClick={() => setIsOpen(!isOpen)}
+        className="relative p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
+      >
+        <BellIcon className="w-6 h-6" />
+        
+        {/* Enhanced unread indicator */}
+        {unreadCount > 0 && (
+          <>
+            <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-lg ring-2 ring-white dark:ring-gray-900 animate-pulse">
+              {unreadCount > 99 ? '99+' : unreadCount}
             </span>
+            <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 rounded-full opacity-75 animate-ping"></span>
           </>
         )}
       </button>
@@ -164,7 +177,7 @@ const NotificationBell: React.FC = () => {
           </div>
         </>
       )}
-    </>
+    </div>
   );
 };
 
