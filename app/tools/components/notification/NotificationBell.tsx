@@ -117,7 +117,7 @@ const NotificationBell: React.FC = () => {
                     No notifications
                   </h4>
                   <p className="text-gray-500 dark:text-gray-400">
-                    You're all caught up! Check back later for updates.
+                    You&apos;re all caught up! Check back later for updates.
                   </p>
                 </div>
               ) : (
