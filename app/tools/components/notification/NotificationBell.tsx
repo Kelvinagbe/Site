@@ -1,6 +1,6 @@
 // components/NotificationBell.tsx
 import React, { useState } from 'react';
-import { useNotifications } from '../hooks/useNotifications';
+import { useNotifications } from '../../../hooks/useNotifications';
 
 // Bell Icon
 const BellIcon = ({ className = "" }: { className?: string }) => (
