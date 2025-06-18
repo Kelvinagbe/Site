@@ -20,19 +20,23 @@ const NotificationBell: React.FC = () => {
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const [isOpen, setIsOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   // Close panel when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
+      if (panelRef.current && !panelRef.current.contains(event.target as Node) &&
+          buttonRef.current && !buttonRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };
 
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
-      // Prevent body scroll when panel is open
-      document.body.style.overflow = 'hidden';
+      // Prevent body scroll when panel is open on mobile
+      if (window.innerWidth < 640) {
+        document.body.style.overflow = 'hidden';
+      }
     } else {
       document.body.style.overflow = 'unset';
     }
@@ -67,6 +71,7 @@ const NotificationBell: React.FC = () => {
     <>
       {/* Bell Button */}
       <button
+        ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
       >
@@ -78,141 +83,279 @@ const NotificationBell: React.FC = () => {
         )}
       </button>
 
-      {/* Portal-style Overlay - Highest possible z-index */}
+      {/* Notification Panel - Using Portal Pattern */}
       {isOpen && (
-        <div 
-          className="fixed inset-0 z-[99999]"
-          style={{ zIndex: 99999 }}
-        >
-          {/* Backdrop */}
-          <div 
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm" 
-            onClick={() => setIsOpen(false)}
-          />
-          
-          {/* Notification Panel */}
-          <div 
-            ref={panelRef}
-            className="absolute bg-white dark:bg-gray-800 shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col
-              /* Mobile: Full screen below header */
-              top-16 left-0 right-0 bottom-0 rounded-none
-              /* Desktop: Dropdown from top-right */
-              sm:top-16 sm:right-4 sm:left-auto sm:bottom-auto sm:w-96 sm:h-auto sm:max-h-[70vh] sm:rounded-xl"
-          >
-            {/* Panel Header */}
-            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex-shrink-0">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                  <BellIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    Notifications
-                  </h3>
-                  {unreadCount > 0 && (
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {unreadCount} unread
-                    </p>
-                  )}
-                </div>
-              </div>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
-              >
-                <CloseIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-              </button>
+        <>
+          {/* Mobile Full Screen Overlay */}
+          <div className="fixed inset-0 z-[9999] sm:hidden">
+            {/* Backdrop */}
+            <div 
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm" 
+              onClick={() => setIsOpen(false)}
+            />
+            
+            {/* Mobile Panel - Full screen below header */}
+            <div 
+              ref={panelRef}
+              className="absolute top-0 left-0 right-0 bottom-0 bg-white dark:bg-gray-800 flex flex-col"
+              style={{ 
+                top: 'var(--header-height, 64px)', // Adjust this to match your header height
+                zIndex: 10000 
+              }}
+            >
+              <MobilePanelContent 
+                notifications={notifications}
+                unreadCount={unreadCount}
+                markAsRead={markAsRead}
+                markAllAsRead={markAllAsRead}
+                getTypeColor={getTypeColor}
+                formatTime={formatTime}
+                onClose={() => setIsOpen(false)}
+              />
             </div>
-
-            {/* Actions Bar */}
-            {unreadCount > 0 && (
-              <div className="px-4 sm:px-6 py-3 bg-blue-50 dark:bg-blue-900/20 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-                <button
-                  onClick={markAllAsRead}
-                  className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
-                >
-                  Mark all as read
-                </button>
-              </div>
-            )}
-
-            {/* Notifications List */}
-            <div className="flex-1 overflow-y-auto">
-              {notifications.length === 0 ? (
-                <div className="p-8 sm:p-12 text-center">
-                  <div className="mx-auto w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
-                    <BellIcon className="w-8 h-8 text-gray-400 dark:text-gray-500" />
-                  </div>
-                  <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                    No notifications
-                  </h4>
-                  <p className="text-gray-500 dark:text-gray-400">
-                    You&apos;re all caught up! Check back later for updates.
-                  </p>
-                </div>
-              ) : (
-                <div className="divide-y divide-gray-100 dark:divide-gray-700">
-                  {notifications.map((notification) => (
-                    <div
-                      key={notification.id}
-                      className={`p-4 sm:p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors ${
-                        !notification.read ? 'bg-blue-50 dark:bg-blue-900/10' : ''
-                      }`}
-                      onClick={() => {
-                        if (!notification.read) {
-                          markAsRead(notification.id);
-                        }
-                      }}
-                    >
-                      <div className="flex items-start space-x-3">
-                        {/* Read Status Indicator */}
-                        <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
-                          notification.read ? 'bg-gray-300 dark:bg-gray-600' : 'bg-blue-500'
-                        }`} />
-                        
-                        <div className="flex-1 min-w-0">
-                          {/* Header with Title and Type Badge */}
-                          <div className="flex items-start justify-between mb-2">
-                            <h5 className="text-sm font-semibold text-gray-900 dark:text-white">
-                              {notification.title}
-                            </h5>
-                            <span className={`ml-2 text-xs px-2 py-1 rounded-full font-medium flex-shrink-0 ${getTypeColor(notification.type)}`}>
-                              {notification.type}
-                            </span>
-                          </div>
-                          
-                          {/* Message */}
-                          <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
-                            {notification.message}
-                          </p>
-                          
-                          {/* Timestamp */}
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {formatTime(notification.timestamp)}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Footer */}
-            {notifications.length > 0 && (
-              <div className="p-4 sm:p-6 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
-                <button
-                  onClick={() => setIsOpen(false)}
-                  className="w-full py-3 px-4 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
-                  Close
-                </button>
-              </div>
-            )}
           </div>
-        </div>
+
+          {/* Desktop Dropdown */}
+          <div className="hidden sm:block">
+            <div className="fixed inset-0 z-[9999]" onClick={() => setIsOpen(false)} />
+            <div 
+              ref={panelRef}
+              className="absolute right-0 top-full mt-2 w-96 max-h-[70vh] bg-white dark:bg-gray-800 shadow-2xl border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden flex flex-col z-[10000]"
+            >
+              <DesktopPanelContent 
+                notifications={notifications}
+                unreadCount={unreadCount}
+                markAsRead={markAsRead}
+                markAllAsRead={markAllAsRead}
+                getTypeColor={getTypeColor}
+                formatTime={formatTime}
+                onClose={() => setIsOpen(false)}
+              />
+            </div>
+          </div>
+        </>
       )}
     </>
+  );
+};
+
+// Mobile Panel Content Component
+const MobilePanelContent: React.FC<{
+  notifications: any[];
+  unreadCount: number;
+  markAsRead: (id: string) => void;
+  markAllAsRead: () => void;
+  getTypeColor: (type: string) => string;
+  formatTime: (date: Date) => string;
+  onClose: () => void;
+}> = ({ notifications, unreadCount, markAsRead, markAllAsRead, getTypeColor, formatTime, onClose }) => (
+  <>
+    {/* Mobile Header */}
+    <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex-shrink-0">
+      <div className="flex items-center space-x-3">
+        <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+          <BellIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Notifications
+          </h3>
+          {unreadCount > 0 && (
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {unreadCount} unread
+            </p>
+          )}
+        </div>
+      </div>
+      <button
+        onClick={onClose}
+        className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+      >
+        <CloseIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+      </button>
+    </div>
+
+    {/* Mobile Actions Bar */}
+    {unreadCount > 0 && (
+      <div className="px-4 py-3 bg-blue-50 dark:bg-blue-900/20 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+        <button
+          onClick={markAllAsRead}
+          className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+        >
+          Mark all as read
+        </button>
+      </div>
+    )}
+
+    {/* Mobile Notifications List */}
+    <div className="flex-1 overflow-y-auto">
+      <NotificationsList 
+        notifications={notifications}
+        markAsRead={markAsRead}
+        getTypeColor={getTypeColor}
+        formatTime={formatTime}
+        isMobile={true}
+      />
+    </div>
+
+    {/* Mobile Footer */}
+    {notifications.length > 0 && (
+      <div className="p-4 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
+        <button
+          onClick={onClose}
+          className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors text-sm font-medium text-white"
+        >
+          Close
+        </button>
+      </div>
+    )}
+  </>
+);
+
+// Desktop Panel Content Component
+const DesktopPanelContent: React.FC<{
+  notifications: any[];
+  unreadCount: number;
+  markAsRead: (id: string) => void;
+  markAllAsRead: () => void;
+  getTypeColor: (type: string) => string;
+  formatTime: (date: Date) => string;
+  onClose: () => void;
+}> = ({ notifications, unreadCount, markAsRead, markAllAsRead, getTypeColor, formatTime, onClose }) => (
+  <>
+    {/* Desktop Header */}
+    <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex-shrink-0">
+      <div className="flex items-center space-x-3">
+        <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+          <BellIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Notifications
+          </h3>
+          {unreadCount > 0 && (
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {unreadCount} unread
+            </p>
+          )}
+        </div>
+      </div>
+      <button
+        onClick={onClose}
+        className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+      >
+        <CloseIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+      </button>
+    </div>
+
+    {/* Desktop Actions Bar */}
+    {unreadCount > 0 && (
+      <div className="px-6 py-3 bg-blue-50 dark:bg-blue-900/20 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+        <button
+          onClick={markAllAsRead}
+          className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+        >
+          Mark all as read
+        </button>
+      </div>
+    )}
+
+    {/* Desktop Notifications List */}
+    <div className="flex-1 overflow-y-auto">
+      <NotificationsList 
+        notifications={notifications}
+        markAsRead={markAsRead}
+        getTypeColor={getTypeColor}
+        formatTime={formatTime}
+        isMobile={false}
+      />
+    </div>
+
+    {/* Desktop Footer */}
+    {notifications.length > 0 && (
+      <div className="p-6 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
+        <button
+          onClick={onClose}
+          className="w-full py-3 px-4 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Close
+        </button>
+      </div>
+    )}
+  </>
+);
+
+// Shared Notifications List Component
+const NotificationsList: React.FC<{
+  notifications: any[];
+  markAsRead: (id: string) => void;
+  getTypeColor: (type: string) => string;
+  formatTime: (date: Date) => string;
+  isMobile: boolean;
+}> = ({ notifications, markAsRead, getTypeColor, formatTime, isMobile }) => {
+  const padding = isMobile ? 'p-4' : 'p-6';
+
+  if (notifications.length === 0) {
+    return (
+      <div className={`${padding} py-12 text-center`}>
+        <div className="mx-auto w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
+          <BellIcon className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+        </div>
+        <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+          No notifications
+        </h4>
+        <p className="text-gray-500 dark:text-gray-400">
+          You&apos;re all caught up! Check back later for updates.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="divide-y divide-gray-100 dark:divide-gray-700">
+      {notifications.map((notification) => (
+        <div
+          key={notification.id}
+          className={`${padding} hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors ${
+            !notification.read ? 'bg-blue-50 dark:bg-blue-900/10' : ''
+          }`}
+          onClick={() => {
+            if (!notification.read) {
+              markAsRead(notification.id);
+            }
+          }}
+        >
+          <div className="flex items-start space-x-3">
+            {/* Read Status Indicator */}
+            <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
+              notification.read ? 'bg-gray-300 dark:bg-gray-600' : 'bg-blue-500'
+            }`} />
+            
+            <div className="flex-1 min-w-0">
+              {/* Header with Title and Type Badge */}
+              <div className="flex items-start justify-between mb-2">
+                <h5 className="text-sm font-semibold text-gray-900 dark:text-white">
+                  {notification.title}
+                </h5>
+                <span className={`ml-2 text-xs px-2 py-1 rounded-full font-medium flex-shrink-0 ${getTypeColor(notification.type)}`}>
+                  {notification.type}
+                </span>
+              </div>
+              
+              {/* Message */}
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+                {notification.message}
+              </p>
+              
+              {/* Timestamp */}
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {formatTime(notification.timestamp)}
+              </p>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 };
 
