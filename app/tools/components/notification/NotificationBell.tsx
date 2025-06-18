@@ -78,26 +78,26 @@ const NotificationBell: React.FC = () => {
         )}
       </button>
 
-      {/* Full Screen Overlay - Mobile: starts after header, Desktop: full screen */}
+      {/* Portal-style Overlay - Highest possible z-index */}
       {isOpen && (
-        <div className="fixed top-16 left-0 right-0 bottom-0 sm:inset-0 sm:top-0 z-[9999]">
+        <div 
+          className="fixed inset-0 z-[99999]"
+          style={{ zIndex: 99999 }}
+        >
           {/* Backdrop */}
           <div 
             className="absolute inset-0 bg-black/50 backdrop-blur-sm" 
             onClick={() => setIsOpen(false)}
           />
           
-          {/* Notification Panel - Mobile: Full screen below header, Desktop: Top-right dropdown */}
+          {/* Notification Panel */}
           <div 
             ref={panelRef}
-            className="absolute 
-              /* Mobile: Full width below header */
-              top-0 left-0 right-0 bottom-0 w-full h-full
-              /* Desktop: Top-right dropdown */
-              sm:top-16 sm:right-4 sm:left-auto sm:bottom-auto sm:w-96 sm:h-auto sm:max-h-[80vh] sm:rounded-xl
-              bg-white dark:bg-gray-800 shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col
-              /* Mobile: No border radius, Desktop: rounded */
-              rounded-none sm:border"
+            className="absolute bg-white dark:bg-gray-800 shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col
+              /* Mobile: Full screen below header */
+              top-16 left-0 right-0 bottom-0 rounded-none
+              /* Desktop: Dropdown from top-right */
+              sm:top-16 sm:right-4 sm:left-auto sm:bottom-auto sm:w-96 sm:h-auto sm:max-h-[70vh] sm:rounded-xl"
           >
             {/* Panel Header */}
             <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex-shrink-0">
@@ -173,7 +173,7 @@ const NotificationBell: React.FC = () => {
                         <div className="flex-1 min-w-0">
                           {/* Header with Title and Type Badge */}
                           <div className="flex items-start justify-between mb-2">
-                            <h5 className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-2">
+                            <h5 className="text-sm font-semibold text-gray-900 dark:text-white">
                               {notification.title}
                             </h5>
                             <span className={`ml-2 text-xs px-2 py-1 rounded-full font-medium flex-shrink-0 ${getTypeColor(notification.type)}`}>
