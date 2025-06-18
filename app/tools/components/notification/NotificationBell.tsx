@@ -78,24 +78,26 @@ const NotificationBell: React.FC = () => {
         )}
       </button>
 
-      {/* Full Screen Overlay */}
+      {/* Full Screen Overlay - Mobile: starts after header, Desktop: full screen */}
       {isOpen && (
-        <div className="fixed inset-0 z-[9999]">
+        <div className="fixed top-16 left-0 right-0 bottom-0 sm:inset-0 sm:top-0 z-[9999]">
           {/* Backdrop */}
           <div 
             className="absolute inset-0 bg-black/50 backdrop-blur-sm" 
             onClick={() => setIsOpen(false)}
           />
           
-          {/* Notification Panel - Mobile: Centered, Desktop: Top-right */}
+          {/* Notification Panel - Mobile: Full screen below header, Desktop: Top-right dropdown */}
           <div 
             ref={panelRef}
             className="absolute 
-              /* Mobile: Centered modal */
-              top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-md h-[80vh] max-h-[600px] rounded-2xl
+              /* Mobile: Full width below header */
+              top-0 left-0 right-0 bottom-0 w-full h-full
               /* Desktop: Top-right dropdown */
-              sm:top-16 sm:right-4 sm:left-auto sm:transform-none sm:translate-x-0 sm:translate-y-0 sm:w-96 sm:h-auto sm:max-h-[80vh] sm:rounded-xl
-              bg-white dark:bg-gray-800 shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col"
+              sm:top-16 sm:right-4 sm:left-auto sm:bottom-auto sm:w-96 sm:h-auto sm:max-h-[80vh] sm:rounded-xl
+              bg-white dark:bg-gray-800 shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col
+              /* Mobile: No border radius, Desktop: rounded */
+              rounded-none sm:border"
           >
             {/* Panel Header */}
             <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex-shrink-0">
