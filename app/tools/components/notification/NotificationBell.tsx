@@ -121,7 +121,7 @@ const NotificationBell = () => {
               <BellIcon className="w-12 h-12 text-gray-400" />
             </div>
             <h3 className="text-xl font-semibold text-gray-800 mb-2">No notifications yet</h3>
-            <p className="text-gray-600">When you get notifications, they'll appear here</p>
+            <p className="text-gray-600">When you get notifications, they&apos;ll appear here</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-200">
