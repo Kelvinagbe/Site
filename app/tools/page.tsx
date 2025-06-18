@@ -16,7 +16,7 @@ import PDFConverter from './components/PDFConverter';
 import Settings from './components/Settings';
 import { ImageGenerator } from './components/image';
 import { HomeIcon, BrainIcon, ImageIcon, DocumentIcon } from './components/icons';
-import NotificationBell from './components/NotificationBell';
+import NotificationBell from './components/notification/NotificationBell';
 
 // Simplified Icons
 const icons = {
