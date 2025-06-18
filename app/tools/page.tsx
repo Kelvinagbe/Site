@@ -16,6 +16,7 @@ import PDFConverter from './components/PDFConverter';
 import Settings from './components/Settings';
 import { ImageGenerator } from './components/image';
 import { HomeIcon, BrainIcon, ImageIcon, DocumentIcon } from './components/icons';
+import NotificationBell from './components/NotificationBell';
 
 // Simplified Icons
 const icons = {
@@ -235,6 +236,7 @@ export default function ToolsPage() {
           </h1>
         </div>
         <div className="flex items-center space-x-3">
+          <NotificationBell />
           <button
             onClick={() => setMenuOpen(true)}
             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg sm:hidden"
