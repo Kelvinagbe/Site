@@ -55,19 +55,19 @@ const NotificationBell: React.FC = () => {
         )}
       </button>
 
-      {/* Full Width Overlay */}
+      {/* Overlay that starts after header */}
       {isOpen && (
-        <div className="fixed inset-0 z-[60]">
-          {/* Backdrop */}
+        <div className="fixed inset-x-0 top-16 bottom-0 z-[60]">
+          {/* Backdrop - only covers area below header */}
           <div 
             className="absolute inset-0 bg-black/50 backdrop-blur-sm" 
             onClick={() => setIsOpen(false)}
           />
           
-          {/* Full Width Panel starting from header */}
-          <div className="relative w-full h-full pt-16 bg-white dark:bg-gray-800 shadow-2xl border-l border-gray-200 dark:border-gray-700 overflow-hidden">
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+          {/* Full Width Panel starting after header */}
+          <div className="relative w-full h-full bg-white dark:bg-gray-800 shadow-2xl border-l border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col">
+            {/* Notification Panel Header */}
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex-shrink-0">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
                   <BellIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
@@ -93,7 +93,7 @@ const NotificationBell: React.FC = () => {
 
             {/* Actions Bar */}
             {unreadCount > 0 && (
-              <div className="px-4 sm:px-6 py-3 bg-blue-50 dark:bg-blue-900/20 border-b border-gray-200 dark:border-gray-700">
+              <div className="px-4 sm:px-6 py-3 bg-blue-50 dark:bg-blue-900/20 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
                 <button
                   onClick={() => {
                     markAllAsRead();
@@ -106,7 +106,7 @@ const NotificationBell: React.FC = () => {
               </div>
             )}
 
-            {/* Notifications List */}
+            {/* Notifications List - Scrollable */}
             <div className="flex-1 overflow-y-auto">
               {notifications.length === 0 ? (
                 <div className="p-8 sm:p-12 text-center">
@@ -168,12 +168,11 @@ const NotificationBell: React.FC = () => {
               )}
             </div>
 
-            {/* Footer (if needed for actions) */}
+            {/* Footer */}
             {notifications.length > 0 && (
-              <div className="p-4 sm:p-6 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-200 dark:border-gray-700">
+              <div className="p-4 sm:p-6 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
                 <button
                   onClick={() => {
-                    // Add any additional actions here
                     setIsOpen(false);
                   }}
                   className="w-full py-3 px-4 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors text-sm font-medium text-gray-700 dark:text-gray-300"
