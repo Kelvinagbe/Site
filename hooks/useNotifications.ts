@@ -15,36 +15,48 @@ export interface Notification {
 
 export const useNotifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isClient, setIsClient] = useState(false);
 
-  // Load notifications from localStorage on mount
+  // Ensure we're on the client side
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('notifications');
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          setNotifications(parsed.map((n: any) => ({
-            ...n,
-            timestamp: new Date(n.timestamp)
-          })));
-        } catch (error) {
-          console.error('Error parsing stored notifications:', error);
-        }
-      }
-    }
+    setIsClient(true);
   }, []);
 
-  // Save notifications to localStorage whenever they change
+  // Load notifications from localStorage on mount (only on client)
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('notifications', JSON.stringify(notifications));
+    if (!isClient) return;
+    
+    try {
+      const stored = localStorage.getItem('notifications');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        setNotifications(parsed.map((n: any) => ({
+          ...n,
+          timestamp: new Date(n.timestamp)
+        })));
+      }
+    } catch (error) {
+      console.error('Error parsing stored notifications:', error);
+      // Clear corrupted data
+      localStorage.removeItem('notifications');
     }
-  }, [notifications]);
+  }, [isClient]);
+
+  // Save notifications to localStorage whenever they change (only on client)
+  useEffect(() => {
+    if (!isClient || notifications.length === 0) return;
+    
+    try {
+      localStorage.setItem('notifications', JSON.stringify(notifications));
+    } catch (error) {
+      console.error('Error saving notifications:', error);
+    }
+  }, [notifications, isClient]);
 
   const addNotification = useCallback((notification: Omit<Notification, 'id' | 'timestamp'>) => {
     const newNotification: Notification = {
       ...notification,
-      id: Date.now().toString(),
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       timestamp: new Date(),
     };
     setNotifications(prev => [newNotification, ...prev]);
@@ -72,7 +84,14 @@ export const useNotifications = () => {
 
   const clearAllNotifications = useCallback(() => {
     setNotifications([]);
-  }, []);
+    if (isClient) {
+      try {
+        localStorage.removeItem('notifications');
+      } catch (error) {
+        console.error('Error clearing notifications from storage:', error);
+      }
+    }
+  }, [isClient]);
 
   // Calculate unread count
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -118,6 +137,9 @@ export const useNotifications = () => {
     
     // Demo/testing
     simulateNotification,
+    
+    // Client state
+    isClient,
   };
 };
 
