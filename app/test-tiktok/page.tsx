@@ -25,7 +25,12 @@ const NotificationTestComponent = () => {
 
   const { sendNotification, isLoading: isSending } = useSendNotification();
 
-  const [swStatus, setSwStatus] = useState(null);
+  const [swStatus, setSwStatus] = useState<{
+    isSupported: boolean;
+    registration: ServiceWorkerRegistration | null;
+    isActive: boolean;
+    isControlling: boolean;
+  } | null>(null);
   const [testForm, setTestForm] = useState({
     title: 'Test Notification',
     message: 'This is a test notification message',
