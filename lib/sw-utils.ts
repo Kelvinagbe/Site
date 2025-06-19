@@ -21,11 +21,11 @@ export const registerServiceWorker = async (): Promise<ServiceWorkerRegistration
       const newWorker = registration.installing;
       if (newWorker) {
         console.log('New service worker found, installing...');
-        
+
         newWorker.addEventListener('statechange', () => {
           if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
             console.log('New service worker installed, ready to activate');
-            
+
             // Optionally show a notification to the user that an update is available
             showUpdateAvailableNotification();
           }
@@ -98,7 +98,7 @@ export const getServiceWorkerStatus = async (): Promise<{
   isControlling: boolean;
 }> => {
   const isSupported = 'serviceWorker' in navigator;
-  
+
   if (!isSupported) {
     return {
       isSupported: false,
@@ -115,7 +115,7 @@ export const getServiceWorkerStatus = async (): Promise<{
 
     return {
       isSupported,
-      registration,
+      registration: registration || null, // Fix: Convert undefined to null
       isActive,
       isControlling,
     };
