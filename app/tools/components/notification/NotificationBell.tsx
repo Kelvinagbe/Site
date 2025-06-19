@@ -26,19 +26,30 @@ const styles = `
     overflow: hidden;
   }
 
-  /* Mobile overlay covers entire viewport */
+  /* Mobile overlay covers entire viewport and prevents scrolling */
   .mobile-notification-overlay {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
     right: 0 !important;
     bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
     z-index: 999999 !important;
     background-color: #ffffff;
+    overflow: hidden;
   }
   
   .dark .mobile-notification-overlay {
     background-color: #111827;
+  }
+  
+  /* Ensure the notification panel takes full viewport */
+  .mobile-notification-panel {
+    width: 100vw !important;
+    height: 100vh !important;
+    min-height: 100vh !important;
+    max-height: 100vh !important;
   }
 `;
 
@@ -83,17 +94,29 @@ const NotificationBell: React.FC = () => {
 
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
-      // Prevent body scroll when panel is open on mobile
+      // Prevent body scroll and fix viewport when panel is open on mobile
       if (window.innerWidth < 640) {
         document.body.style.overflow = 'hidden';
+        document.body.style.position = 'fixed';
+        document.body.style.width = '100%';
+        document.body.style.height = '100%';
+        document.documentElement.style.overflow = 'hidden';
       }
     } else {
       document.body.style.overflow = 'unset';
+      document.body.style.position = 'unset';
+      document.body.style.width = 'unset';
+      document.body.style.height = 'unset';
+      document.documentElement.style.overflow = 'unset';
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       document.body.style.overflow = 'unset';
+      document.body.style.position = 'unset';
+      document.body.style.width = 'unset';
+      document.body.style.height = 'unset';
+      document.documentElement.style.overflow = 'unset';
     };
   }, [isOpen]);
 
@@ -151,7 +174,7 @@ const NotificationBell: React.FC = () => {
           <div className="fixed inset-0 mobile-notification-overlay sm:hidden animate-slide-down">
             <div 
               ref={panelRef}
-              className="h-full w-full flex flex-col bg-white dark:bg-gray-900"
+              className="mobile-notification-panel flex flex-col bg-white dark:bg-gray-900"
             >
               <MobilePanelContent 
                 notifications={notifications}
@@ -240,7 +263,11 @@ const MobilePanelContent: React.FC<{
       )}
 
       {/* Mobile Notifications List */}
-      <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-900" style={{ WebkitOverflowScrolling: 'touch', minHeight: '200px' }}>
+      <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-900" style={{ 
+        WebkitOverflowScrolling: 'touch', 
+        minHeight: 'calc(100vh - 200px)',
+        maxHeight: 'calc(100vh - 200px)'
+      }}>
         <NotificationsList 
           notifications={notifications}
           markAsRead={markAsRead}
