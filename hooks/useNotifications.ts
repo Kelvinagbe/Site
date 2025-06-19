@@ -1,468 +1,233 @@
-// components/NotificationBell.tsx
-import React, { useState, useEffect, useRef } from 'react';
-import { useNotifications } from '../../../../hooks/useNotifications';
+// hooks/useNotifications.ts
+'use client';
 
-// Add CSS for animations
-const styles = `
-  @keyframes slide-down {
-    from {
-      opacity: 0;
-      transform: translateY(-10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  .animate-slide-down {
-    animation: slide-down 0.3s ease-out;
-  }
-  
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
+import { useEffect, useState } from 'react';
+import { getToken, onMessage } from 'firebase/messaging';
+import { messaging } from '@/lib/firebase';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth } from '@/lib/firebase';
 
-  /* Mobile overlay covers entire viewport and prevents scrolling */
-  .mobile-notification-overlay {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    z-index: 999999 !important;
-    background-color: #ffffff;
-    overflow: hidden;
-  }
-  
-  .dark .mobile-notification-overlay {
-    background-color: #111827;
-  }
-  
-  /* Ensure the notification panel takes full viewport */
-  .mobile-notification-panel {
-    width: 100vw !important;
-    height: 100vh !important;
-    min-height: 100vh !important;
-    max-height: 100vh !important;
-  }
-`;
-
-// Inject styles
-if (typeof document !== 'undefined') {
-  const styleSheet = document.createElement('style');
-  styleSheet.textContent = styles;
-  document.head.appendChild(styleSheet);
+interface NotificationPayload {
+  notification?: {
+    title?: string;
+    body?: string;
+    image?: string;
+  };
+  data?: { [key: string]: string };
 }
 
-// Bell Icon
-const BellIcon = ({ className = "" }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-  </svg>
-);
+export const useNotifications = () => {
+  const [user] = useAuthState(auth);
+  const [token, setToken] = useState<string | null>(null);
+  const [permission, setPermission] = useState<NotificationPermission>('default');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-// Close Icon
-const CloseIcon = ({ className = "" }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-  </svg>
-);
-
-const NotificationBell: React.FC = () => {
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
-  const [isOpen, setIsOpen] = useState(false);
-  const panelRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-
-  // Close panel when clicking outside (desktop only)
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      // Only handle click outside for desktop
-      if (window.innerWidth >= 640) {
-        if (panelRef.current && !panelRef.current.contains(event.target as Node) &&
-            buttonRef.current && !buttonRef.current.contains(event.target as Node)) {
-          setIsOpen(false);
+    if (!user) return;
+
+    const initializeNotifications = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        // Check if messaging is supported
+        if (!messaging) {
+          throw new Error('Firebase messaging is not supported in this browser');
         }
+
+        // Register service worker
+        if ('serviceWorker' in navigator) {
+          const registration = await navigator.serviceWorker.register('/api/firebase-sw');
+          console.log('Service Worker registered:', registration);
+        }
+
+        // Request notification permission
+        const permission = await Notification.requestPermission();
+        setPermission(permission);
+
+        if (permission === 'granted') {
+          // Get FCM token
+          const fcmToken = await getToken(messaging, {
+            vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
+          });
+
+          if (fcmToken) {
+            setToken(fcmToken);
+            console.log('FCM Token obtained:', fcmToken);
+
+            // Save token to backend
+            await saveTokenToBackend(user.uid, fcmToken);
+
+            // Listen for foreground messages
+            onMessage(messaging, (payload: NotificationPayload) => {
+              console.log('Foreground message received:', payload);
+              handleForegroundMessage(payload);
+            });
+          } else {
+            throw new Error('Failed to generate FCM token');
+          }
+        } else {
+          setError('Notification permission denied');
+        }
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to initialize notifications';
+        setError(errorMessage);
+        console.error('Notification initialization error:', err);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      // Prevent body scroll and fix viewport when panel is open on mobile
-      if (window.innerWidth < 640) {
-        document.body.style.overflow = 'hidden';
-        document.body.style.position = 'fixed';
-        document.body.style.width = '100%';
-        document.body.style.height = '100%';
-        document.documentElement.style.overflow = 'hidden';
+    initializeNotifications();
+  }, [user]);
+
+  const saveTokenToBackend = async (userId: string, fcmToken: string) => {
+    try {
+      const response = await fetch('/api/notifications/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId,
+          token: fcmToken,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save FCM token to backend');
       }
-    } else {
-      document.body.style.overflow = 'unset';
-      document.body.style.position = 'unset';
-      document.body.style.width = 'unset';
-      document.body.style.height = 'unset';
-      document.documentElement.style.overflow = 'unset';
-    }
 
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.body.style.overflow = 'unset';
-      document.body.style.position = 'unset';
-      document.body.style.width = 'unset';
-      document.body.style.height = 'unset';
-      document.documentElement.style.overflow = 'unset';
-    };
-  }, [isOpen]);
-
-  // Type color system with solid backgrounds
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'success': 
-        return 'text-green-800 bg-green-100 dark:text-green-200 dark:bg-green-800 border-green-200 dark:border-green-700';
-      case 'warning': 
-        return 'text-yellow-800 bg-yellow-100 dark:text-yellow-200 dark:bg-yellow-800 border-yellow-200 dark:border-yellow-700';
-      case 'error': 
-        return 'text-red-800 bg-red-100 dark:text-red-200 dark:bg-red-800 border-red-200 dark:border-red-700';
-      case 'info':
-      default: 
-        return 'text-blue-800 bg-blue-100 dark:text-blue-200 dark:bg-blue-800 border-blue-200 dark:border-blue-700';
+      console.log('FCM token saved successfully');
+    } catch (error) {
+      console.error('Error saving FCM token:', error);
+      throw error;
     }
   };
 
-  const formatTime = (date: Date) => {
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const minutes = Math.floor(diff / 60000);
+  const handleForegroundMessage = (payload: NotificationPayload) => {
+    if (payload.notification && Notification.permission === 'granted') {
+      const notification = new Notification(
+        payload.notification.title || 'New Notification',
+        {
+          body: payload.notification.body || 'You have a new message',
+          icon: payload.notification.image || '/icon-192x192.png',
+          badge: '/badge-72x72.png',
+          tag: 'foreground-notification',
+          requireInteraction: true,
+          data: payload.data,
+        }
+      );
 
-    if (minutes < 1) return 'Just now';
-    if (minutes < 60) return `${minutes}m ago`;
-    if (minutes < 1440) return `${Math.floor(minutes / 60)}h ago`;
-    return `${Math.floor(minutes / 1440)}d ago`;
+      // Handle notification click
+      notification.onclick = () => {
+        window.focus();
+        const clickAction = payload.data?.clickAction || '/';
+        window.location.href = clickAction;
+        notification.close();
+      };
+
+      // Auto close after 5 seconds
+      setTimeout(() => {
+        notification.close();
+      }, 5000);
+    }
   };
 
-  return (
-    <div className="relative">
-      <button
-        ref={buttonRef}
-        onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
-      >
-        <BellIcon className="w-6 h-6" />
+  const requestPermission = async () => {
+    try {
+      const permission = await Notification.requestPermission();
+      setPermission(permission);
+      return permission;
+    } catch (error) {
+      console.error('Error requesting notification permission:', error);
+      setError('Failed to request notification permission');
+      return 'denied';
+    }
+  };
 
-        {/* Unread indicator */}
-        {unreadCount > 0 && (
-          <>
-            <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-lg ring-2 ring-white dark:ring-gray-900 animate-pulse">
-              {unreadCount > 99 ? '99+' : unreadCount}
-            </span>
-            <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 rounded-full opacity-75 animate-ping"></span>
-          </>
-        )}
-      </button>
+  const refreshToken = async () => {
+    if (!user || !messaging) return null;
 
-      {/* Notification Panel */}
-      {isOpen && (
-        <>
-          {/* Mobile Full Screen Overlay */}
-          <div className="fixed inset-0 mobile-notification-overlay sm:hidden animate-slide-down">
-            <div 
-              ref={panelRef}
-              className="mobile-notification-panel flex flex-col bg-white dark:bg-gray-900"
-            >
-              <MobilePanelContent 
-                notifications={notifications}
-                unreadCount={unreadCount}
-                markAsRead={markAsRead}
-                markAllAsRead={markAllAsRead}
-                getTypeColor={getTypeColor}
-                formatTime={formatTime}
-                onClose={() => setIsOpen(false)}
-              />
-            </div>
-          </div>
+    try {
+      setIsLoading(true);
+      const fcmToken = await getToken(messaging, {
+        vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
+      });
 
-          {/* Desktop Dropdown */}
-          <div className="hidden sm:block">
-            <div className="fixed inset-0 z-[9999] bg-black bg-opacity-20 dark:bg-opacity-40" onClick={() => setIsOpen(false)} />
-            <div 
-              ref={panelRef}
-              className="absolute right-0 top-full mt-2 w-96 max-h-[80vh] bg-white dark:bg-gray-900 shadow-2xl border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden flex flex-col z-[10000] animate-slide-down"
-            >
-              <DesktopPanelContent 
-                notifications={notifications}
-                unreadCount={unreadCount}
-                markAsRead={markAsRead}
-                markAllAsRead={markAllAsRead}
-                getTypeColor={getTypeColor}
-                formatTime={formatTime}
-                onClose={() => setIsOpen(false)}
-              />
-            </div>
-          </div>
-        </>
-      )}
-    </div>
-  );
+      if (fcmToken) {
+        setToken(fcmToken);
+        await saveTokenToBackend(user.uid, fcmToken);
+        return fcmToken;
+      }
+    } catch (error) {
+      console.error('Error refreshing FCM token:', error);
+      setError('Failed to refresh FCM token');
+    } finally {
+      setIsLoading(false);
+    }
+
+    return null;
+  };
+
+  return {
+    token,
+    permission,
+    isLoading,
+    error,
+    requestPermission,
+    refreshToken,
+    isSupported: !!messaging,
+    isGranted: permission === 'granted',
+  };
 };
 
-// Mobile Panel Content Component
-const MobilePanelContent: React.FC<{
-  notifications: any[];
-  unreadCount: number;
-  markAsRead: (id: string) => void;
-  markAllAsRead: () => void;
-  getTypeColor: (type: string) => string;
-  formatTime: (date: Date) => string;
-  onClose: () => void;
-}> = ({ notifications, unreadCount, markAsRead, markAllAsRead, getTypeColor, formatTime, onClose }) => {
-  return (
-    <>
-      {/* Mobile Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex-shrink-0 min-h-[64px] shadow-sm">
-        <div className="flex items-center space-x-3 flex-1 min-w-0">
-          <div className="p-2 bg-blue-100 dark:bg-blue-800 rounded-lg flex-shrink-0">
-            <BellIcon className="w-5 h-5 text-blue-600 dark:text-blue-200" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Notifications ({notifications.length})
-            </h3>
-            {unreadCount > 0 && (
-              <p className="text-sm text-blue-600 dark:text-blue-400">
-                {unreadCount} unread
-              </p>
-            )}
-          </div>
-        </div>
-        <button
-          onClick={onClose}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors flex-shrink-0"
-          aria-label="Close notifications"
-        >
-          <CloseIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-        </button>
-      </div>
+// Additional hook for sending notifications
+export const useSendNotification = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-      {/* Mobile Actions Bar */}
-      {unreadCount > 0 && (
-        <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-          <button
-            onClick={markAllAsRead}
-            className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors px-3 py-1.5 bg-blue-50 dark:bg-blue-900 rounded-md hover:bg-blue-100 dark:hover:bg-blue-800"
-          >
-            Mark all {unreadCount} as read
-          </button>
-        </div>
-      )}
+  const sendNotification = async (data: {
+    userId: string;
+    title: string;
+    body: string;
+    data?: { [key: string]: string };
+    clickAction?: string;
+  }) => {
+    setIsLoading(true);
+    setError(null);
 
-      {/* Mobile Notifications List */}
-      <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-900" style={{ 
-        WebkitOverflowScrolling: 'touch', 
-        minHeight: 'calc(100vh - 200px)',
-        maxHeight: 'calc(100vh - 200px)'
-      }}>
-        <NotificationsList 
-          notifications={notifications}
-          markAsRead={markAsRead}
-          getTypeColor={getTypeColor}
-          formatTime={formatTime}
-          isMobile={true}
-        />
-      </div>
+    try {
+      const response = await fetch('/api/notifications/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
 
-      {/* Mobile Footer */}
-      <div className="p-4 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex-shrink-0 shadow-lg">
-        <button
-          onClick={onClose}
-          className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 rounded-lg transition-colors text-sm font-medium text-white shadow-sm"
-        >
-          Close
-        </button>
-      </div>
-    </>
-  );
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to send notification');
+      }
+
+      const result = await response.json();
+      console.log('Notification sent successfully:', result);
+      return result;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to send notification';
+      setError(errorMessage);
+      console.error('Send notification error:', err);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return {
+    sendNotification,
+    isLoading,
+    error,
+  };
 };
-
-// Desktop Panel Content Component
-const DesktopPanelContent: React.FC<{
-  notifications: any[];
-  unreadCount: number;
-  markAsRead: (id: string) => void;
-  markAllAsRead: () => void;
-  getTypeColor: (type: string) => string;
-  formatTime: (date: Date) => string;
-  onClose: () => void;
-}> = ({ notifications, unreadCount, markAsRead, markAllAsRead, getTypeColor, formatTime, onClose }) => (
-  <>
-    {/* Desktop Header */}
-    <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex-shrink-0">
-      <div className="flex items-center space-x-3">
-        <div className="p-2 bg-blue-100 dark:bg-blue-800 rounded-lg">
-          <BellIcon className="w-5 h-5 text-blue-600 dark:text-blue-200" />
-        </div>
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Notifications
-          </h3>
-          {unreadCount > 0 && (
-            <p className="text-sm text-blue-600 dark:text-blue-400">
-              {unreadCount} unread
-            </p>
-          )}
-        </div>
-      </div>
-      <button
-        onClick={onClose}
-        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-        aria-label="Close notifications"
-      >
-        <CloseIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-      </button>
-    </div>
-
-    {/* Desktop Actions Bar */}
-    {unreadCount > 0 && (
-      <div className="px-6 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-        <button
-          onClick={markAllAsRead}
-          className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors px-3 py-1.5 bg-blue-50 dark:bg-blue-900 rounded-md hover:bg-blue-100 dark:hover:bg-blue-800"
-        >
-          Mark all as read
-        </button>
-      </div>
-    )}
-
-    {/* Desktop Notifications List */}
-    <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-900">
-      <NotificationsList 
-        notifications={notifications}
-        markAsRead={markAsRead}
-        getTypeColor={getTypeColor}
-        formatTime={formatTime}
-        isMobile={false}
-      />
-    </div>
-
-    {/* Desktop Footer */}
-    {notifications.length > 0 && (
-      <div className="p-6 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
-        <button
-          onClick={onClose}
-          className="w-full py-3 px-4 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors text-sm font-medium text-gray-700 dark:text-gray-300"
-        >
-          Close
-        </button>
-      </div>
-    )}
-  </>
-);
-
-// Notifications List Component
-const NotificationsList: React.FC<{
-  notifications: any[];
-  markAsRead: (id: string) => void;
-  getTypeColor: (type: string) => string;
-  formatTime: (date: Date) => string;
-  isMobile: boolean;
-}> = ({ notifications, markAsRead, getTypeColor, formatTime, isMobile }) => {
-  const padding = isMobile ? 'p-4' : 'p-6';
-
-  if (notifications.length === 0) {
-    return (
-      <div className={`${padding} py-12 text-center bg-white dark:bg-gray-900`}>
-        <div className="mx-auto w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
-          <BellIcon className="w-8 h-8 text-gray-400 dark:text-gray-500" />
-        </div>
-        <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-          No notifications
-        </h4>
-        <p className="text-gray-500 dark:text-gray-400">
-          You&apos;re all caught up! Check back later for updates.
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="w-full bg-white dark:bg-gray-900">
-      {notifications.map((notification, index) => (
-        <div
-          key={notification.id}
-          className={`${padding} hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-all duration-200 border-l-4 ${
-            !notification.read 
-              ? 'bg-blue-50 dark:bg-blue-950 border-l-blue-500 shadow-sm' 
-              : 'bg-white dark:bg-gray-900 border-l-gray-200 dark:border-l-gray-700'
-          } ${isMobile ? 'active:bg-gray-100 dark:active:bg-gray-700' : ''} ${
-            index < notifications.length - 1 ? 'border-b border-gray-100 dark:border-gray-800' : ''
-          }`}
-          onClick={() => {
-            if (!notification.read) {
-              markAsRead(notification.id);
-            }
-          }}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if ((e.key === 'Enter' || e.key === ' ') && !notification.read) {
-              e.preventDefault();
-              markAsRead(notification.id);
-            }
-          }}
-        >
-          <div className="flex items-start space-x-3">
-            {/* Read Status Indicator */}
-            <div className={`w-3 h-3 rounded-full mt-1.5 flex-shrink-0 transition-all duration-200 ${
-              notification.read 
-                ? 'bg-gray-300 dark:bg-gray-600' 
-                : 'bg-blue-500 shadow-lg ring-2 ring-blue-200 dark:ring-blue-800'
-            }`} />
-
-            <div className="flex-1 min-w-0">
-              {/* Header with Title and Type Badge */}
-              <div className="flex items-start justify-between mb-2">
-                <h5 className={`text-sm font-semibold ${
-                  !notification.read 
-                    ? 'text-gray-900 dark:text-white' 
-                    : 'text-gray-700 dark:text-gray-300'
-                }`}>
-                  {notification.title}
-                  {!notification.read && (
-                    <span className="ml-2 text-blue-600 dark:text-blue-400 text-xs font-normal">
-                      • New
-                    </span>
-                  )}
-                </h5>
-                <span className={`ml-2 text-xs px-2 py-1 rounded-full font-medium flex-shrink-0 border ${getTypeColor(notification.type)}`}>
-                  {notification.type}
-                </span>
-              </div>
-
-              {/* Message */}
-              <p className={`text-sm mb-2 leading-relaxed ${
-                !notification.read 
-                  ? 'text-gray-700 dark:text-gray-200' 
-                  : 'text-gray-600 dark:text-gray-400'
-              }`}>
-                {notification.message}
-              </p>
-
-              {/* Timestamp */}
-              <p className="text-xs text-gray-500 dark:text-gray-500 font-medium">
-                {formatTime(notification.timestamp)}
-              </p>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-export default NotificationBell;
