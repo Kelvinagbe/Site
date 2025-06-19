@@ -3,7 +3,7 @@ import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getDatabase } from 'firebase/database';
-import { getMessaging } from 'firebase/messaging';
+import { getMessaging, getToken } from 'firebase/messaging';
 
 // Export the config so API route can use it
 export const firebaseConfig = {
@@ -24,5 +24,40 @@ export const realtimeDb = getDatabase(app);
 // Add messaging for notifications (client-side only)
 export const messaging = typeof window !== 'undefined' ? getMessaging(app) : null;
 
-export default app;
+// Function to request notification permission and get FCM token
+export const requestNotificationPermission = async (): Promise<string | null> => {
+  if (typeof window === 'undefined' || !messaging) {
+    return null;
+  }
 
+  try {
+    // Request notification permission
+    const permission = await Notification.requestPermission();
+    
+    if (permission === 'granted') {
+      console.log('Notification permission granted');
+      
+      // Get FCM token (you'll need a VAPID key for this)
+      const token = await getToken(messaging, {
+        vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY
+      });
+      
+      if (token) {
+        console.log('FCM Token:', token);
+        // Send this token to your backend to store for sending notifications
+        return token;
+      } else {
+        console.log('No registration token available');
+        return null;
+      }
+    } else {
+      console.log('Notification permission denied');
+      return null;
+    }
+  } catch (error) {
+    console.error('Error requesting notification permission:', error);
+    return null;
+  }
+};
+
+export default app;
