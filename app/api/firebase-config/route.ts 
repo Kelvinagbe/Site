@@ -3,5 +3,9 @@ import { firebaseConfig } from '@/lib/firebase'; // Import your existing config
 import { NextResponse } from 'next/server';
 
 export async function GET() {
-  return NextResponse.json(firebaseConfig);
+  return NextResponse.json(firebaseConfig, {
+    headers: {
+      'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
+    },
+  });
 }
