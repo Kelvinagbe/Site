@@ -72,7 +72,7 @@ const NotificationTestComponent = () => {
     }
   };
 
-  const getStatusIcon = (status) => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
       case 'granted':
         return <CheckCircle className="w-4 h-4 text-green-500" />;
