@@ -1,19 +1,28 @@
-// public/firebase-messaging-sw.js (keep as .js file)
+// public/firebase-messaging-sw.js - MINIMAL VERSION FOR TESTING
+console.log('Service worker loaded');
+
+// Temporarily disable all Firebase code to test if SW itself works
+self.addEventListener('install', (event) => {
+  console.log('Service worker installed');
+});
+
+self.addEventListener('activate', (event) => {
+  console.log('Service worker activated');
+});
+
+// Comment out all Firebase code temporarily
+/*
 let app, messaging;
 
-// Fetch config from your existing lib via API
 fetch('/api/firebase-config')
   .then(response => response.json())
   .then(async (firebaseConfig) => {
-    // Use CDN imports for service worker
     const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
-    // FIXED: Changed from firebase-messaging-sw.js to firebase-messaging.js
     const { getMessaging, onBackgroundMessage } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js');
 
     app = initializeApp(firebaseConfig);
     messaging = getMessaging(app);
 
-    // Handle background messages
     onBackgroundMessage(messaging, (payload) => {
       console.log('Background message received:', payload);
 
@@ -49,7 +58,6 @@ fetch('/api/firebase-config')
     console.error('Failed to initialize Firebase in service worker:', error);
   });
 
-// Handle notification clicks
 self.addEventListener('notificationclick', (event) => {
   console.log('Notification click received:', event);
   event.notification.close();
@@ -75,7 +83,7 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-// Handle notification close
 self.addEventListener('notificationclose', (event) => {
   console.log('Notification closed:', event);
 });
+*/
