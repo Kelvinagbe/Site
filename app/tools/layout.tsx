@@ -1,5 +1,6 @@
 import React, { ReactNode } from "react";
 import type { Metadata } from 'next';
+import FirebaseProvider from '@/components/FirebaseProvider';
 
 interface ToolsLayoutProps {
   children: ReactNode;
@@ -12,8 +13,10 @@ export const metadata: Metadata = {
 
 export default function ToolsLayout({ children }: ToolsLayoutProps) {
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-      {children}
-    </div>
+    <FirebaseProvider>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+        {children}
+      </div>
+    </FirebaseProvider>
   );
 }
