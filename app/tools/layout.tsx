@@ -1,7 +1,7 @@
 // Updated layout with FirebaseProvider
 import React, { ReactNode } from "react";
 import type { Metadata } from 'next';
-import FirebaseProvider from '@/components/FirebaseProvider'; // ← Fixed: removed curly braces
+import FirebaseProvider from './components/FirebaseProvider'; // ← Fixed: correct relative path
 
 interface ToolsLayoutProps {
   children: ReactNode;
