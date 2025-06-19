@@ -1,11 +1,12 @@
 // hooks/useNotifications.ts
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { getToken, onMessage } from 'firebase/messaging';
 import { messaging } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '@/lib/firebase';
+import { registerServiceWorker } from '@/lib/sw-utils';
 
 interface NotificationPayload {
   notification?: {
@@ -16,12 +17,84 @@ interface NotificationPayload {
   data?: { [key: string]: string };
 }
 
+export interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  timestamp: Date;
+  read: boolean;
+  type: 'info' | 'success' | 'warning' | 'error';
+  data?: { [key: string]: string };
+}
+
 export const useNotifications = () => {
   const [user] = useAuthState(auth);
   const [token, setToken] = useState<string | null>(null);
   const [permission, setPermission] = useState<NotificationPermission>('default');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+
+  // Load notifications from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('notifications');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          setNotifications(parsed.map((n: any) => ({
+            ...n,
+            timestamp: new Date(n.timestamp)
+          })));
+        } catch (error) {
+          console.error('Error parsing stored notifications:', error);
+        }
+      }
+    }
+  }, []);
+
+  // Save notifications to localStorage whenever they change
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('notifications', JSON.stringify(notifications));
+    }
+  }, [notifications]);
+
+  const addNotification = useCallback((notification: Omit<Notification, 'id' | 'timestamp'>) => {
+    const newNotification: Notification = {
+      ...notification,
+      id: Date.now().toString(),
+      timestamp: new Date(),
+    };
+    setNotifications(prev => [newNotification, ...prev]);
+  }, []);
+
+  const markAsRead = useCallback((id: string) => {
+    setNotifications(prev => 
+      prev.map(notification => 
+        notification.id === id 
+          ? { ...notification, read: true }
+          : notification
+      )
+    );
+  }, []);
+
+  const markAllAsRead = useCallback(() => {
+    setNotifications(prev => 
+      prev.map(notification => ({ ...notification, read: true }))
+    );
+  }, []);
+
+  const removeNotification = useCallback((id: string) => {
+    setNotifications(prev => prev.filter(notification => notification.id !== id));
+  }, []);
+
+  const clearAllNotifications = useCallback(() => {
+    setNotifications([]);
+  }, []);
+
+  // Calculate unread count
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   useEffect(() => {
     if (!user) return;
@@ -37,9 +110,9 @@ export const useNotifications = () => {
         }
 
         // Register service worker
-        if ('serviceWorker' in navigator) {
-          const registration = await navigator.serviceWorker.register('/api/firebase-sw');
-          console.log('Service Worker registered:', registration);
+        const registration = await registerServiceWorker();
+        if (!registration) {
+          throw new Error('Failed to register service worker');
         }
 
         // Request notification permission
@@ -107,6 +180,18 @@ export const useNotifications = () => {
   };
 
   const handleForegroundMessage = (payload: NotificationPayload) => {
+    // Add to local notifications
+    if (payload.notification) {
+      addNotification({
+        title: payload.notification.title || 'New Notification',
+        message: payload.notification.body || 'You have a new message',
+        read: false,
+        type: 'info',
+        data: payload.data,
+      });
+    }
+
+    // Show browser notification
     if (payload.notification && Notification.permission === 'granted') {
       const notification = new Notification(
         payload.notification.title || 'New Notification',
@@ -172,6 +257,7 @@ export const useNotifications = () => {
   };
 
   return {
+    // FCM related
     token,
     permission,
     isLoading,
@@ -180,6 +266,15 @@ export const useNotifications = () => {
     refreshToken,
     isSupported: !!messaging,
     isGranted: permission === 'granted',
+    
+    // Notifications management
+    notifications,
+    unreadCount,
+    addNotification,
+    markAsRead,
+    markAllAsRead,
+    removeNotification,
+    clearAllNotifications,
   };
 };
 
