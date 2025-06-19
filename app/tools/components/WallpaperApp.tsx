@@ -178,7 +178,7 @@ const WallpaperApp = () => {
         throw new Error('Failed to update usage count');
       }
 
-      const response = await fetch('/api/generate-wallpaper', {
+      const response = await fetch('./api/generate-wallpaper', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
