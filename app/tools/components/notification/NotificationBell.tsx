@@ -205,6 +205,8 @@ const MobilePanelContent: React.FC<{
   formatTime: (date: Date) => string;
   onClose: () => void;
 }> = ({ notifications, unreadCount, markAsRead, markAllAsRead, getTypeColor, formatTime, onClose }) => {
+  console.log('MobilePanelContent rendered with:', { notifications, unreadCount, notificationCount: notifications.length });
+  
   return (
     <>
       {/* Mobile Header with enhanced visibility */}
@@ -215,7 +217,7 @@ const MobilePanelContent: React.FC<{
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Notifications
+              Notifications ({notifications.length})
             </h3>
             {unreadCount > 0 && (
               <p className="text-sm text-blue-600 dark:text-blue-400">
@@ -245,8 +247,13 @@ const MobilePanelContent: React.FC<{
         </div>
       )}
 
+      {/* Debug Information - Remove in production */}
+      <div className="px-4 py-2 bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-200 dark:border-yellow-800 text-xs">
+        <strong>Debug:</strong> Found {notifications.length} notifications, {unreadCount} unread
+      </div>
+
       {/* Mobile Notifications List - Enhanced scrolling */}
-      <div className="flex-1 overflow-y-auto min-h-0 bg-white dark:bg-gray-900" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-900" style={{ WebkitOverflowScrolling: 'touch', minHeight: '200px' }}>
         <NotificationsList 
           notifications={notifications}
           markAsRead={markAsRead}
@@ -353,6 +360,8 @@ const NotificationsList: React.FC<{
 }> = ({ notifications, markAsRead, getTypeColor, formatTime, isMobile }) => {
   const padding = isMobile ? 'p-4' : 'p-6';
 
+  console.log('NotificationsList rendered with:', { notifications, count: notifications.length });
+
   if (notifications.length === 0) {
     return (
       <div className={`${padding} py-12 text-center bg-white dark:bg-gray-900`}>
@@ -370,7 +379,7 @@ const NotificationsList: React.FC<{
   }
 
   return (
-    <div className="divide-y divide-gray-100 dark:divide-gray-800 bg-white dark:bg-gray-900">
+    <div className="w-full bg-white dark:bg-gray-900">
       {notifications.map((notification, index) => (
         <div
           key={notification.id}
@@ -378,8 +387,11 @@ const NotificationsList: React.FC<{
             !notification.read 
               ? 'bg-blue-50 dark:bg-blue-950/50 border-l-blue-500 shadow-sm' 
               : 'bg-white dark:bg-gray-900 border-l-transparent hover:border-l-gray-200 dark:hover:border-l-gray-700'
-          } ${isMobile ? 'active:bg-gray-100 dark:active:bg-gray-700' : ''}`}
+          } ${isMobile ? 'active:bg-gray-100 dark:active:bg-gray-700' : ''} ${
+            index < notifications.length - 1 ? 'border-b border-gray-100 dark:border-gray-800' : ''
+          }`}
           onClick={() => {
+            console.log('Notification clicked:', notification.id);
             if (!notification.read) {
               markAsRead(notification.id);
             }
