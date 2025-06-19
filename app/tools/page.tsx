@@ -27,6 +27,17 @@ const icons = {
   Sparkle: (props: any) => <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3l1.5 1.5L5 6l-1.5-1.5L5 3zM19 3l1.5 1.5L19 6l-1.5-1.5L19 3zM12 1l2 2-2 2-2-2 2-2zM12 19l2 2-2 2-2-2 2-2zM5 21l1.5-1.5L5 18l-1.5 1.5L5 21zM19 21l1.5-1.5L19 18l-1.5 1.5L19 21z" /></svg>
 };
 
+// Profile Image Component
+const ProfileImage = ({ className = "w-8 h-8" }: { className?: string }) => (
+  <Image 
+    src="/profile.png" 
+    alt="Profile" 
+    width={32} 
+    height={32} 
+    className={`${className} rounded-full object-cover`}
+  />
+);
+
 // App Configuration
 const apps = {
   main: [
@@ -92,7 +103,7 @@ const SidebarSection = ({ title, apps, activeApp, onAppSwitch, isExpanded, onTog
       <span>{title}</span>
       <icons.ChevronDown className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
     </button>
-    
+
     <div className={`transition-all duration-300 ${isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
       <div className="space-y-2 px-2">
         {apps.map(({ id, name, icon: IconComponent }: any) => (
@@ -245,11 +256,9 @@ export default function ToolsPage() {
           </button>
           <button
             onClick={() => handleAppSwitch('settings')}
-            className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center hover:scale-105 transition-transform"
+            className="hover:scale-105 transition-transform"
           >
-            <span className="text-sm font-medium text-white">
-              {user.displayName?.charAt(0) || user.email?.charAt(0)?.toUpperCase()}
-            </span>
+            <ProfileImage />
           </button>
         </div>
       </nav>
@@ -273,15 +282,11 @@ export default function ToolsPage() {
               </button>
             </div>
           </div>
-          
+
           {/* User Profile - Fixed at bottom */}
           <div className="absolute bottom-0 left-0 right-0 p-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700">
             <div className="flex items-center">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mr-3">
-                <span className="text-sm font-medium text-white">
-                  {user.displayName?.charAt(0) || user.email?.charAt(0)?.toUpperCase()}
-                </span>
-              </div>
+              <ProfileImage className="w-8 h-8 mr-3" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                   {user.displayName || 'User'}
