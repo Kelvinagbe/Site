@@ -1,7 +1,6 @@
-// Updated layout with FirebaseProvider
+// Updated layout without FirebaseProvider + Meta Tags
 import React, { ReactNode } from "react";
 import type { Metadata } from 'next';
-import FirebaseProvider from './components/FirebaseProvider'; // ← Fixed: correct relative path
 
 interface ToolsLayoutProps {
   children: ReactNode;
@@ -9,15 +8,115 @@ interface ToolsLayoutProps {
 
 export const metadata: Metadata = {
   title: 'Tools - Apexion',
-  description: 'Access powerful PDF and AI tools',
+  description: 'Access powerful PDF and AI tools with Apexion. Transform your documents with our suite of intelligent tools designed for productivity and efficiency.',
+  keywords: ['PDF tools', 'AI tools', 'document processing', 'productivity', 'Apexion', 'file converter', 'text analysis'],
+  authors: [{ name: 'Apexion Team' }],
+  creator: 'Apexion',
+  publisher: 'Apexion',
+  
+  // Robots and indexing
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  
+  // Canonical URL
+  alternates: {
+    canonical: 'https://apexion-2.vercel.app/tools',
+  },
+  
+  // Open Graph tags
+  openGraph: {
+    title: 'Tools - Apexion | Powerful PDF & AI Tools',
+    description: 'Access powerful PDF and AI tools with Apexion. Transform your documents with our suite of intelligent tools designed for productivity and efficiency.',
+    url: 'https://apexion-2.vercel.app/tools',
+    siteName: 'Apexion',
+    type: 'website',
+    locale: 'en_US',
+    images: [
+      {
+        url: '/og-image.png', // 1200x630px recommended
+        width: 1200,
+        height: 630,
+        alt: 'Apexion Tools - PDF & AI Tools Suite',
+        type: 'image/png',
+      },
+      {
+        url: '/favicon.ico',
+        width: 32,
+        height: 32,
+        alt: 'Apexion Logo',
+      },
+    ],
+  },
+  
+  // Twitter Card tags
+  twitter: {
+    card: 'summary_large_image',
+    site: '@apexion', // Replace with your Twitter handle
+    creator: '@apexion', // Replace with your Twitter handle
+    title: 'Tools - Apexion | Powerful PDF & AI Tools',
+    description: 'Access powerful PDF and AI tools with Apexion. Transform your documents with intelligent tools.',
+    images: ['/og-image.png'],
+  },
+  
+  // Favicon and icons
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: '32x32', type: 'image/x-icon' },
+      { url: '/icon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/icon-32x32.png', sizes: '32x32', type: 'image/png' },
+    ],
+    shortcut: '/favicon.ico',
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+    other: [
+      { rel: 'mask-icon', url: '/safari-pinned-tab.svg', color: '#000000' },
+    ],
+  },
+  
+  // Mobile and viewport
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+  },
+  
+  // Theme color
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#000000' },
+  ],
+  
+  // App-specific
+  applicationName: 'Apexion',
+  generator: 'Next.js',
+  referrer: 'origin-when-cross-origin',
+  
+  // Additional meta tags
+  other: {
+    'apple-mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-status-bar-style': 'default',
+    'apple-mobile-web-app-title': 'Apexion Tools',
+    'mobile-web-app-capable': 'yes',
+    'msapplication-TileColor': '#000000',
+    'msapplication-config': '/browserconfig.xml',
+  },
 };
 
 export default function ToolsLayout({ children }: ToolsLayoutProps) {
   return (
-    <FirebaseProvider>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-        {children}
-      </div>
-    </FirebaseProvider>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+      {children}
+    </div>
   );
 }
