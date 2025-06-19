@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from 'react';
 import { useNotifications, useSendNotification } from '@/hooks/useNotifications';
 import { getServiceWorkerStatus } from '@/lib/sw-utils';
@@ -22,7 +24,7 @@ const NotificationTestComponent = () => {
   } = useNotifications();
 
   const { sendNotification, isLoading: isSending } = useSendNotification();
-  
+
   const [swStatus, setSwStatus] = useState(null);
   const [testForm, setTestForm] = useState({
     title: 'Test Notification',
