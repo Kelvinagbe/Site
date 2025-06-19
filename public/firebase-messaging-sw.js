@@ -7,8 +7,9 @@ fetch('/api/firebase-config')
   .then(async (firebaseConfig) => {
     // Use CDN imports for service worker
     const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
-    const { getMessaging, onBackgroundMessage } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-sw.js');
-    
+    // FIXED: Changed from firebase-messaging-sw.js to firebase-messaging.js
+    const { getMessaging, onBackgroundMessage } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js');
+
     app = initializeApp(firebaseConfig);
     messaging = getMessaging(app);
 
