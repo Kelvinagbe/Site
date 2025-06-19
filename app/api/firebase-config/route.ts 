@@ -1,0 +1,7 @@
+// app/api/firebase-config/route.ts
+import { firebaseConfig } from '@/lib/firebase'; // Import your existing config
+import { NextResponse } from 'next/server';
+
+export async function GET() {
+  return NextResponse.json(firebaseConfig);
+}
