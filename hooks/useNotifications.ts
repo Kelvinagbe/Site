@@ -16,46 +16,11 @@ export interface Notification {
 export const useNotifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isClient, setIsClient] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
 
   // Ensure we're on the client side
   useEffect(() => {
     setIsClient(true);
   }, []);
-
-  // Load notifications from localStorage on mount (only on client)
-  useEffect(() => {
-    if (!isClient) return;
-    
-    try {
-      const stored = localStorage.getItem('notifications');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        const processedNotifications = parsed.map((n: any) => ({
-          ...n,
-          timestamp: new Date(n.timestamp)
-        }));
-        setNotifications(processedNotifications);
-      }
-    } catch (error) {
-      console.error('Error parsing stored notifications:', error);
-      // Clear corrupted data
-      localStorage.removeItem('notifications');
-    } finally {
-      setIsInitialized(true);
-    }
-  }, [isClient]);
-
-  // Save notifications to localStorage whenever they change (only on client and after initialization)
-  useEffect(() => {
-    if (!isClient || !isInitialized) return;
-    
-    try {
-      localStorage.setItem('notifications', JSON.stringify(notifications));
-    } catch (error) {
-      console.error('Error saving notifications:', error);
-    }
-  }, [notifications, isClient, isInitialized]);
 
   const addNotification = useCallback((notification: Omit<Notification, 'id' | 'timestamp'>) => {
     const newNotification: Notification = {
@@ -103,14 +68,7 @@ export const useNotifications = () => {
   const clearAllNotifications = useCallback(() => {
     console.log('Clearing all notifications');
     setNotifications([]);
-    if (isClient) {
-      try {
-        localStorage.removeItem('notifications');
-      } catch (error) {
-        console.error('Error clearing notifications from storage:', error);
-      }
-    }
-  }, [isClient]);
+  }, []);
 
   // Calculate unread count
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -160,7 +118,6 @@ export const useNotifications = () => {
     
     // Client state
     isClient,
-    isInitialized,
   };
 };
 
