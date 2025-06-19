@@ -2,7 +2,7 @@
 // Updated layout with FirebaseProvider
 import React, { ReactNode } from "react";
 import type { Metadata } from 'next';
-import FirebaseProvider from '@/components/FirebaseProvider';
+import { FirebaseProvider} from '@/components/FirebaseProvider';
 
 interface ToolsLayoutProps {
   children: ReactNode;
