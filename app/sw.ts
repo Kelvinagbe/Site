@@ -21,7 +21,9 @@ const serwist = new Serwist({
   navigationPreload: true,
   runtimeCaching: [
     {
-      urlPattern: /^https:\/\/.*\/tools.*/,
+      matcher: ({ request, url }) => {
+        return url.pathname.includes('/tools');
+      },
       handler: new CacheFirst({
         cacheName: 'tools-cache',
         plugins: [
@@ -36,11 +38,6 @@ const serwist = new Serwist({
             },
           },
         ],
-        networkTimeoutSeconds: 3,
-        cacheName: 'tools-cache',
-        matchOptions: {
-          ignoreSearch: false,
-        },
       }),
     },
     ...defaultCache,
