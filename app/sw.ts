@@ -1,6 +1,6 @@
 import { defaultCache } from '@serwist/next/worker';
 import type { PrecacheEntry, SerwistGlobalConfig } from 'serwist';
-import { Serwist } from 'serwist';
+import { Serwist, CacheFirst } from 'serwist';
 
 // This declares the value of `self.SW_VERSION` to TypeScript
 declare global {
@@ -22,9 +22,17 @@ const serwist = new Serwist({
   runtimeCaching: [
     {
       urlPattern: /^https:\/\/.*\/tools.*/,
-      handler: 'CacheFirst',
-      options: {
+      handler: new CacheFirst({
         cacheName: 'tools-cache',
+        plugins: [
+          {
+            cacheKeyWillBeUsed: async ({ request }) => {
+              return `${request.url}?${Date.now()}`;
+            },
+          },
+        ],
+      }),
+      options: {
         expiration: {
           maxEntries: 10,
           maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
