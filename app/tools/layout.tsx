@@ -1,7 +1,8 @@
-// Updated layout with PWA functionality + Meta Tags
+// app/tools/layout.tsx (Enhanced - Optional)
 import React, { ReactNode } from "react";
 import type { Metadata } from 'next';
 import PWARegistration from './components/PWARegistration';
+import NotificationProvider from './components/NotificationProvider'; // Optional new component
 
 interface ToolsLayoutProps {
   children: ReactNode;
@@ -43,7 +44,7 @@ export const metadata: Metadata = {
     locale: 'en_US',
     images: [
       {
-        url: '/og-image.png', // 1200x630px recommended
+        url: '/og-image.png',
         width: 1200,
         height: 630,
         alt: 'Apexion Tools - PDF & AI Tools Suite',
@@ -61,8 +62,8 @@ export const metadata: Metadata = {
   // Twitter Card tags
   twitter: {
     card: 'summary_large_image',
-    site: '@apexion', // Replace with your Twitter handle
-    creator: '@apexion', // Replace with your Twitter handle
+    site: '@apexion',
+    creator: '@apexion',
     title: 'Tools - Apexion | Powerful PDF & AI Tools',
     description: 'Access powerful PDF and AI tools with Apexion. Transform your documents with intelligent tools.',
     images: ['/og-image.png'],
@@ -121,7 +122,10 @@ export default function ToolsLayout({ children }: ToolsLayoutProps) {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
       <PWARegistration />
-      {children}
+      {/* Optional: Wrap with notification provider for app-wide notifications */}
+      <NotificationProvider>
+        {children}
+      </NotificationProvider>
     </div>
   );
 }
