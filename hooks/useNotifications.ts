@@ -3,7 +3,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { getMessaging, getToken, onMessage, MessagePayload, isSupported } from 'firebase/messaging';
-import app from '@/lib/firebase'; // Your existing Firebase app
+import app from '@/lib/firebase';
 
 export interface Notification {
   id: string;
@@ -13,7 +13,7 @@ export interface Notification {
   read: boolean;
   type: 'info' | 'success' | 'warning' | 'error';
   data?: { [key: string]: string };
-  source?: 'local' | 'firebase'; // Track notification source
+  source?: 'local' | 'firebase';
 }
 
 export const useNotifications = () => {
@@ -49,10 +49,26 @@ export const useNotifications = () => {
         // Set initial permission status
         setPushPermission(Notification.permission);
 
-        // Register service worker for our secure API route
+        // Register service worker - try both paths for compatibility
         if ('serviceWorker' in navigator) {
-          const registration = await navigator.serviceWorker.register('/api/firebase-messaging-sw');
-          console.log('Service Worker registered:', registration);
+          try {
+            // First try the API route (your current setup)
+            const registration = await navigator.serviceWorker.register('/api/firebase-messaging-sw', {
+              scope: '/'
+            });
+            console.log('Service Worker registered via API route:', registration);
+          } catch (error) {
+            console.log('API route registration failed, trying static file:', error);
+            // Fallback to static file if API route fails
+            try {
+              const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+                scope: '/'
+              });
+              console.log('Service Worker registered via static file:', registration);
+            } catch (staticError) {
+              console.error('Both service worker registration methods failed:', staticError);
+            }
+          }
         }
 
         // Get messaging instance
@@ -145,12 +161,16 @@ export const useNotifications = () => {
           setFcmToken(currentToken);
           console.log('FCM Token obtained:', currentToken);
           
-          // TODO: Send token to your backend
-          // await fetch('/api/notifications/register', {
-          //   method: 'POST',
-          //   body: JSON.stringify({ token: currentToken }),
-          //   headers: { 'Content-Type': 'application/json' }
-          // });
+          // Optional: Send token to your backend for storage
+          try {
+            await fetch('/api/notifications/register', {
+              method: 'POST',
+              body: JSON.stringify({ token: currentToken }),
+              headers: { 'Content-Type': 'application/json' }
+            });
+          } catch (error) {
+            console.log('Token registration failed (this is optional):', error);
+          }
           
           return true;
         }
@@ -264,8 +284,8 @@ export const useSendNotification = () => {
     body: string;
     type?: 'info' | 'success' | 'warning' | 'error';
     data?: { [key: string]: string };
-    sendPush?: boolean; // New option to send via Firebase
-    token?: string; // FCM token for push notifications
+    sendPush?: boolean;
+    token?: string;
   }) => {
     setIsLoading(true);
     setError(null);
@@ -285,7 +305,8 @@ export const useSendNotification = () => {
         });
 
         if (!response.ok) {
-          throw new Error('Failed to send push notification');
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to send push notification');
         }
 
         console.log('Push notification sent successfully');
