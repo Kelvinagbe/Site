@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 
@@ -47,9 +47,9 @@ export function Dashboard() {
     if (currentUser) {
       fetchUserData();
     }
-  }, [currentUser]);
+  }, [currentUser, fetchUserData]);
 
-  const fetchUserData = async () => {
+  const fetchUserData = useCallback(async () => {
     if (!currentUser) return;
 
     setLoading(true);
@@ -75,7 +75,7 @@ export function Dashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentUser]);
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString('en-US', {
@@ -87,7 +87,7 @@ export function Dashboard() {
   };
 
   const getStatusColor = (status: string) => {
-    const colors = {
+    const colors: { [key: string]: string } = {
       'completed': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
       'pending': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
       'failed': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
@@ -96,7 +96,7 @@ export function Dashboard() {
   };
 
   const getStatusIcon = (status: string) => {
-    const icons = { 'completed': '✅', 'pending': '⏳', 'failed': '❌' };
+    const icons: { [key: string]: string } = { 'completed': '✅', 'pending': '⏳', 'failed': '❌' };
     return icons[status] || '❓';
   };
 
