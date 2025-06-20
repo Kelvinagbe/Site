@@ -2,14 +2,12 @@ const withSerwist = require('@serwist/next').default({
   swSrc: 'app/sw.ts',
   swDest: 'public/sw.js',
   scope: '/tools',
-  start_url: '/tools',
+  // Removed start_url - this should be defined in your manifest.json instead
 });
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    appDir: true,
-  },
+  // Removed experimental.appDir - it's deprecated in Next.js 15
 
   // Add app-specific settings
   env: {
