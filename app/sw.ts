@@ -6,10 +6,13 @@ import { Serwist } from 'serwist';
 declare global {
   interface WorkerGlobalScope extends SerwistGlobalConfig {
     SW_VERSION: string;
+    __SW_MANIFEST: (string | PrecacheEntry)[];
   }
 }
 
-declare const self: ServiceWorkerGlobalScope;
+declare const self: ServiceWorkerGlobalScope & {
+  __SW_MANIFEST: (string | PrecacheEntry)[];
+};
 
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
