@@ -30,14 +30,18 @@ const serwist = new Serwist({
               return `${request.url}?${Date.now()}`;
             },
           },
+          {
+            cacheWillUpdate: async ({ response }) => {
+              return response.status === 200 ? response : null;
+            },
+          },
         ],
-      }),
-      options: {
-        expiration: {
-          maxEntries: 10,
-          maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
+        networkTimeoutSeconds: 3,
+        cacheName: 'tools-cache',
+        matchOptions: {
+          ignoreSearch: false,
         },
-      },
+      }),
     },
     ...defaultCache,
   ],
