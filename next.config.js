@@ -1,5 +1,11 @@
+const withSerwist = require('@serwist/next').default({
+  swSrc: 'app/sw.ts',
+  swDest: 'public/sw.js',
+  scope: '/tools',
+  start_url: '/tools',
+});
 
- /** @type {import('next').NextConfig} */
+/** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
     appDir: true,
@@ -26,3 +32,5 @@ const nextConfig = {
     ]
   },
 }
+
+module.exports = withSerwist(nextConfig);
