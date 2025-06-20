@@ -2,8 +2,8 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { getToken, onMessage, MessagePayload } from 'firebase/messaging';
-import { messaging } from '@/lib/firebase';
+import { getMessaging, getToken, onMessage, MessagePayload, isSupported } from 'firebase/messaging';
+import app from '@/lib/firebase'; // Your existing Firebase app
 
 export interface Notification {
   id: string;
@@ -39,6 +39,13 @@ export const useNotifications = () => {
           return;
         }
 
+        // Check if messaging is supported
+        const messagingSupported = await isSupported();
+        if (!messagingSupported) {
+          console.log('Firebase messaging is not supported');
+          return;
+        }
+
         // Set initial permission status
         setPushPermission(Notification.permission);
 
@@ -49,11 +56,7 @@ export const useNotifications = () => {
         }
 
         // Get messaging instance
-        const messagingInstance = await messaging();
-        if (!messagingInstance) {
-          console.log('Messaging not supported');
-          return;
-        }
+        const messagingInstance = getMessaging(app);
 
         // Get token if permission already granted
         if (Notification.permission === 'granted') {
@@ -119,13 +122,19 @@ export const useNotifications = () => {
         return false;
       }
 
+      // Check if messaging is supported
+      const messagingSupported = await isSupported();
+      if (!messagingSupported) {
+        console.log('Firebase messaging is not supported');
+        return false;
+      }
+
       // Request permission
       const permission = await Notification.requestPermission();
       setPushPermission(permission);
 
       if (permission === 'granted') {
-        const messagingInstance = await messaging();
-        if (!messagingInstance) return false;
+        const messagingInstance = getMessaging(app);
 
         // Get FCM token
         const currentToken = await getToken(messagingInstance, {
