@@ -31,7 +31,7 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     // Apply to all API routes
-    '/api/:path*',
+   // '/api/:path*',
     // Or apply to specific routes
     // '/protected/:path*',
     // Apply to all routes except static files
