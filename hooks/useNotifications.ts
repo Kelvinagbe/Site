@@ -2,6 +2,8 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { getToken, onMessage, MessagePayload } from 'firebase/messaging';
+import { messaging } from '@/lib/firebase';
 
 export interface Notification {
   id: string;
@@ -11,31 +13,148 @@ export interface Notification {
   read: boolean;
   type: 'info' | 'success' | 'warning' | 'error';
   data?: { [key: string]: string };
+  source?: 'local' | 'firebase'; // Track notification source
 }
 
 export const useNotifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isClient, setIsClient] = useState(false);
+  
+  // Firebase push notification states
+  const [fcmToken, setFcmToken] = useState<string | null>(null);
+  const [pushPermission, setPushPermission] = useState<NotificationPermission>('default');
+  const [isLoadingPermission, setIsLoadingPermission] = useState(false);
 
   // Ensure we're on the client side
   useEffect(() => {
     setIsClient(true);
   }, []);
 
+  // Setup Firebase notifications
+  useEffect(() => {
+    const setupFirebaseNotifications = async () => {
+      try {
+        if (typeof window === 'undefined' || !('Notification' in window)) {
+          console.log('This browser does not support notifications');
+          return;
+        }
+
+        // Set initial permission status
+        setPushPermission(Notification.permission);
+
+        // Register service worker for our secure API route
+        if ('serviceWorker' in navigator) {
+          const registration = await navigator.serviceWorker.register('/api/firebase-messaging-sw');
+          console.log('Service Worker registered:', registration);
+        }
+
+        // Get messaging instance
+        const messagingInstance = await messaging();
+        if (!messagingInstance) {
+          console.log('Messaging not supported');
+          return;
+        }
+
+        // Get token if permission already granted
+        if (Notification.permission === 'granted') {
+          const currentToken = await getToken(messagingInstance, {
+            vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
+          });
+          
+          if (currentToken) {
+            setFcmToken(currentToken);
+            console.log('FCM Token:', currentToken);
+          }
+        }
+
+        // Listen for foreground Firebase messages
+        const unsubscribe = onMessage(messagingInstance, (payload: MessagePayload) => {
+          console.log('Firebase foreground message received:', payload);
+          
+          // Add Firebase notification to our in-app system
+          if (payload.notification) {
+            addNotification({
+              title: payload.notification.title || 'New Message',
+              message: payload.notification.body || 'You have a new notification',
+              type: 'info',
+              read: false,
+              source: 'firebase',
+              data: payload.data as { [key: string]: string },
+            });
+          }
+        });
+
+        return unsubscribe;
+      } catch (error) {
+        console.error('Error setting up Firebase notifications:', error);
+      }
+    };
+
+    if (isClient) {
+      setupFirebaseNotifications();
+    }
+  }, [isClient]);
+
   const addNotification = useCallback((notification: Omit<Notification, 'id' | 'timestamp'>) => {
     const newNotification: Notification = {
       ...notification,
       id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       timestamp: new Date(),
+      source: notification.source || 'local',
     };
-    
+
     setNotifications(prev => {
       const updated = [newNotification, ...prev];
       console.log('Adding notification:', newNotification);
-      console.log('Updated notifications:', updated);
       return updated;
     });
   }, []);
+
+  const requestPushPermission = async (): Promise<boolean> => {
+    try {
+      setIsLoadingPermission(true);
+
+      if (typeof window === 'undefined' || !('Notification' in window)) {
+        console.log('This browser does not support notifications');
+        return false;
+      }
+
+      // Request permission
+      const permission = await Notification.requestPermission();
+      setPushPermission(permission);
+
+      if (permission === 'granted') {
+        const messagingInstance = await messaging();
+        if (!messagingInstance) return false;
+
+        // Get FCM token
+        const currentToken = await getToken(messagingInstance, {
+          vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
+        });
+
+        if (currentToken) {
+          setFcmToken(currentToken);
+          console.log('FCM Token obtained:', currentToken);
+          
+          // TODO: Send token to your backend
+          // await fetch('/api/notifications/register', {
+          //   method: 'POST',
+          //   body: JSON.stringify({ token: currentToken }),
+          //   headers: { 'Content-Type': 'application/json' }
+          // });
+          
+          return true;
+        }
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Error requesting push permission:', error);
+      return false;
+    } finally {
+      setIsLoadingPermission(false);
+    }
+  };
 
   const markAsRead = useCallback((id: string) => {
     setNotifications(prev => {
@@ -73,7 +192,7 @@ export const useNotifications = () => {
   // Calculate unread count
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  // Simulate receiving notifications for demo purposes
+  // Simulate local notifications for demo purposes
   const simulateNotification = useCallback((type: Notification['type'] = 'info') => {
     const mockNotifications = {
       info: {
@@ -95,16 +214,17 @@ export const useNotifications = () => {
     };
 
     const notification = mockNotifications[type];
-    console.log('Simulating notification:', { ...notification, type });
+    console.log('Simulating local notification:', { ...notification, type });
     addNotification({
       ...notification,
       type,
       read: false,
+      source: 'local',
     });
   }, [addNotification]);
 
   return {
-    // Notifications management
+    // Original in-app notifications
     notifications,
     unreadCount,
     addNotification,
@@ -112,48 +232,69 @@ export const useNotifications = () => {
     markAllAsRead,
     removeNotification,
     clearAllNotifications,
-    
-    // Demo/testing
     simulateNotification,
-    
-    // Client state
     isClient,
+
+    // Firebase push notifications
+    fcmToken,
+    pushPermission,
+    isLoadingPermission,
+    requestPushPermission,
   };
 };
 
-// Simplified hook for sending simulated notifications
+// Enhanced send notification hook with Firebase support
 export const useSendNotification = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { addNotification } = useNotifications();
 
   const sendNotification = async (data: {
-    userId: string;
+    userId?: string;
     title: string;
     body: string;
     type?: 'info' | 'success' | 'warning' | 'error';
     data?: { [key: string]: string };
+    sendPush?: boolean; // New option to send via Firebase
+    token?: string; // FCM token for push notifications
   }) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Send push notification via Firebase if requested
+      if (data.sendPush && data.token) {
+        const response = await fetch('/api/notifications/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            token: data.token,
+            title: data.title,
+            body: data.body,
+            data: data.data,
+          }),
+        });
 
-      // Add notification locally (simulating real-time notification)
+        if (!response.ok) {
+          throw new Error('Failed to send push notification');
+        }
+
+        console.log('Push notification sent successfully');
+      }
+
+      // Always add to local notifications for immediate UI update
       const notificationData = {
         title: data.title,
         message: data.body,
         type: data.type || 'info',
         read: false,
         data: data.data,
-      };
+        source: data.sendPush ? 'firebase' : 'local',
+      } as const;
 
-      console.log('Sending notification via useSendNotification:', notificationData);
+      console.log('Adding notification locally:', notificationData);
       addNotification(notificationData);
 
-      console.log('Simulated notification sent successfully:', data);
       return { success: true, message: 'Notification sent successfully' };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to send notification';
