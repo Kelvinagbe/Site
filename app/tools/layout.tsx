@@ -1,6 +1,7 @@
-// Updated layout without FirebaseProvider + Meta Tags
+// Updated layout with PWA functionality + Meta Tags
 import React, { ReactNode } from "react";
 import type { Metadata } from 'next';
+import PWARegistration from './PWARegistration';
 
 interface ToolsLayoutProps {
   children: ReactNode;
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
   authors: [{ name: 'Apexion Team' }],
   creator: 'Apexion',
   publisher: 'Apexion',
-  
+
   // Robots and indexing
   robots: {
     index: true,
@@ -26,12 +27,12 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
-  
+
   // Canonical URL
   alternates: {
     canonical: 'https://apexion-2.vercel.app/tools',
   },
-  
+
   // Open Graph tags
   openGraph: {
     title: 'Tools - Apexion | Powerful PDF & AI Tools',
@@ -56,7 +57,7 @@ export const metadata: Metadata = {
       },
     ],
   },
-  
+
   // Twitter Card tags
   twitter: {
     card: 'summary_large_image',
@@ -66,7 +67,7 @@ export const metadata: Metadata = {
     description: 'Access powerful PDF and AI tools with Apexion. Transform your documents with intelligent tools.',
     images: ['/og-image.png'],
   },
-  
+
   // Favicon and icons
   icons: {
     icon: [
@@ -82,7 +83,7 @@ export const metadata: Metadata = {
       { rel: 'mask-icon', url: '/safari-pinned-tab.svg', color: '#000000' },
     ],
   },
-  
+
   // Mobile and viewport
   viewport: {
     width: 'device-width',
@@ -90,19 +91,19 @@ export const metadata: Metadata = {
     maximumScale: 1,
     userScalable: false,
   },
-  
+
   // Theme color
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#ffffff' },
     { media: '(prefers-color-scheme: dark)', color: '#000000' },
   ],
-  
+
   // App-specific
   applicationName: 'Apexion',
   generator: 'Next.js',
   referrer: 'origin-when-cross-origin',
-  
-  // Additional meta tags
+
+  // Additional meta tags with PWA manifest
   other: {
     'apple-mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-status-bar-style': 'default',
@@ -111,11 +112,15 @@ export const metadata: Metadata = {
     'msapplication-TileColor': '#000000',
     'msapplication-config': '/browserconfig.xml',
   },
+
+  // Add manifest
+  manifest: '/manifest.json',
 };
 
 export default function ToolsLayout({ children }: ToolsLayoutProps) {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+      <PWARegistration />
       {children}
     </div>
   );
