@@ -42,13 +42,7 @@ export function Dashboard() {
     return () => unsubscribe();
   }, []);
 
-  // Fetch user data when authenticated
-  useEffect(() => {
-    if (currentUser) {
-      fetchUserData();
-    }
-  }, [currentUser, fetchUserData]);
-
+  // Move fetchUserData declaration BEFORE the useEffect that uses it
   const fetchUserData = useCallback(async () => {
     if (!currentUser) return;
 
@@ -76,6 +70,13 @@ export function Dashboard() {
       setLoading(false);
     }
   }, [currentUser]);
+
+  // Fetch user data when authenticated
+  useEffect(() => {
+    if (currentUser) {
+      fetchUserData();
+    }
+  }, [currentUser, fetchUserData]);
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString('en-US', {
