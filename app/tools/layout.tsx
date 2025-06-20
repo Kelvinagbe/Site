@@ -1,7 +1,7 @@
 // Updated layout with PWA functionality + Meta Tags
 import React, { ReactNode } from "react";
 import type { Metadata } from 'next';
-import PWARegistration from './PWARegistration';
+import PWARegistration from './components/PWARegistration';
 
 interface ToolsLayoutProps {
   children: ReactNode;
