@@ -10,7 +10,7 @@ interface ToolsLayoutProps {
 }
 
 export const metadata: Metadata = {
-  title: 'Tools - Apexion',
+  title: 'Tools - Ovrica',
   description: 'Access powerful PDF and AI tools with Apexion. Transform your documents with our suite of intelligent tools designed for productivity and efficiency.',
   keywords: ['PDF tools', 'AI tools', 'document processing', 'productivity', 'Apexion', 'file converter', 'text analysis'],
   authors: [{ name: 'Apexion Team' }],
