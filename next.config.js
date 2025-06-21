@@ -11,7 +11,7 @@ const nextConfig = {
 
   // Add app-specific settings
   env: {
-    APP_NAME: 'Apexion',
+    APP_NAME: 'Ovrica',
     APP_DESCRIPTION: 'Transform PDFs with AI technology',
   },
 
