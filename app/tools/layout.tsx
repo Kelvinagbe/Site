@@ -113,9 +113,13 @@ export const metadata: Metadata = {
 export default function ToolsLayout({ children }: ToolsLayoutProps) {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-      {/* Enhanced global loader with content preloading */}
+      {/* Smart global loader - only shows when needed */}
       <Suspense fallback={<GlobalLoader />}>
-        <GlobalLoader minLoadTime={2000} preloadDelay={1000}>
+        <GlobalLoader 
+          minLoadTime={600} 
+          preloadDelay={200}
+          showOnRefresh={false}
+        >
           <main className="relative">
             {children}
           </main>
