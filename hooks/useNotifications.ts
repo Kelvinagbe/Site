@@ -1,7 +1,7 @@
 // hooks/useNotifications.ts
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { getMessaging, getToken, onMessage, MessagePayload, isSupported } from 'firebase/messaging';
 import app from '@/lib/firebase';
 
@@ -19,20 +19,29 @@ export interface Notification {
 export const useNotifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isClient, setIsClient] = useState(false);
-  
+
   // Firebase push notification states
   const [fcmToken, setFcmToken] = useState<string | null>(null);
   const [pushPermission, setPushPermission] = useState<NotificationPermission>('default');
   const [isLoadingPermission, setIsLoadingPermission] = useState(false);
+  
+  // Refs to prevent duplicate initialization
+  const isInitialized = useRef(false);
+  const hasRegisteredToken = useRef(false);
 
   // Ensure we're on the client side
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // Setup Firebase notifications
+  // Setup Firebase notifications - ONLY ONCE
   useEffect(() => {
     const setupFirebaseNotifications = async () => {
+      // Prevent multiple initializations
+      if (isInitialized.current) {
+        return;
+      }
+      
       try {
         if (typeof window === 'undefined' || !('Notification' in window)) {
           console.log('This browser does not support notifications');
@@ -46,29 +55,17 @@ export const useNotifications = () => {
           return;
         }
 
+        // Mark as initialized to prevent duplicate runs
+        isInitialized.current = true;
+
         // Set initial permission status
         setPushPermission(Notification.permission);
 
-        // Register service worker - try both paths for compatibility
+        // REMOVED: Service worker registration (handled by PWARegistration component)
+        // Wait for service worker to be ready instead
         if ('serviceWorker' in navigator) {
-          try {
-            // First try the API route (your current setup)
-            const registration = await navigator.serviceWorker.register('/api/firebase-messaging-sw', {
-              scope: '/'
-            });
-            console.log('Service Worker registered via API route:', registration);
-          } catch (error) {
-            console.log('API route registration failed, trying static file:', error);
-            // Fallback to static file if API route fails
-            try {
-              const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
-                scope: '/'
-              });
-              console.log('Service Worker registered via static file:', registration);
-            } catch (staticError) {
-              console.error('Both service worker registration methods failed:', staticError);
-            }
-          }
+          await navigator.serviceWorker.ready;
+          console.log('Service worker is ready for Firebase messaging');
         }
 
         // Get messaging instance
@@ -79,17 +76,27 @@ export const useNotifications = () => {
           const currentToken = await getToken(messagingInstance, {
             vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
           });
-          
-          if (currentToken) {
+
+          if (currentToken && currentToken !== fcmToken) {
             setFcmToken(currentToken);
-            console.log('FCM Token:', currentToken);
+            console.log('FCM Token retrieved:', currentToken);
+            
+            // Register token only once
+            if (!hasRegisteredToken.current) {
+              try {
+                await registerTokenOnServer(currentToken);
+                hasRegisteredToken.current = true;
+              } catch (error) {
+                console.log('Token registration failed (this is optional):', error);
+              }
+            }
           }
         }
 
         // Listen for foreground Firebase messages
         const unsubscribe = onMessage(messagingInstance, (payload: MessagePayload) => {
           console.log('Firebase foreground message received:', payload);
-          
+
           // Add Firebase notification to our in-app system
           if (payload.notification) {
             addNotification({
@@ -106,13 +113,28 @@ export const useNotifications = () => {
         return unsubscribe;
       } catch (error) {
         console.error('Error setting up Firebase notifications:', error);
+        // Reset initialization flag on error to allow retry
+        isInitialized.current = false;
       }
     };
 
-    if (isClient) {
+    if (isClient && !isInitialized.current) {
       setupFirebaseNotifications();
     }
-  }, [isClient]);
+  }, [isClient]); // Only depend on isClient
+
+  // Helper function to register token on server
+  const registerTokenOnServer = async (token: string) => {
+    const response = await fetch('/api/notifications/register', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to register token');
+    }
+  };
 
   const addNotification = useCallback((notification: Omit<Notification, 'id' | 'timestamp'>) => {
     const newNotification: Notification = {
@@ -160,18 +182,17 @@ export const useNotifications = () => {
         if (currentToken) {
           setFcmToken(currentToken);
           console.log('FCM Token obtained:', currentToken);
-          
-          // Optional: Send token to your backend for storage
-          try {
-            await fetch('/api/notifications/register', {
-              method: 'POST',
-              body: JSON.stringify({ token: currentToken }),
-              headers: { 'Content-Type': 'application/json' }
-            });
-          } catch (error) {
-            console.log('Token registration failed (this is optional):', error);
+
+          // Register token only if not already registered
+          if (!hasRegisteredToken.current) {
+            try {
+              await registerTokenOnServer(currentToken);
+              hasRegisteredToken.current = true;
+            } catch (error) {
+              console.log('Token registration failed (this is optional):', error);
+            }
           }
-          
+
           return true;
         }
       }
