@@ -12,7 +12,7 @@ export default function PWAHandler() {
       if ('serviceWorker' in navigator) {
         try {
           const reg = await navigator.serviceWorker.register('/sw.js', {
-            scope: '/',
+            scope: '/tools',
             updateViaCache: 'none'
           });
 
