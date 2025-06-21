@@ -2,7 +2,13 @@
 import { NextResponse } from 'next/server';
 
 export async function GET() {
+  // Add timestamp to ensure content changes on each request
+  const timestamp = new Date().getTime();
+  
   const swContent = `
+// Service Worker - Generated at: ${new Date().toISOString()}
+// Cache-busting timestamp: ${timestamp}
+
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
 
@@ -59,7 +65,14 @@ self.addEventListener('notificationclick', (event) => {
     headers: {
       'Content-Type': 'application/javascript',
       'Service-Worker-Allowed': '/',
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      // Multiple cache-busting headers
+      'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+      // Add ETag based on timestamp to force revalidation
+      'ETag': `"${timestamp}"`,
+      // Add Vary header
+      'Vary': 'Accept-Encoding',
     },
   });
 }
