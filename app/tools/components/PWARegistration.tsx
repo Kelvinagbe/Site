@@ -26,13 +26,11 @@ export default function PWAHandler() {
               newWorker.addEventListener('statechange', () => {
                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                   console.log('🔄 New version available - will update on next visit');
-                  // Optionally notify user that update will happen on next visit
                 }
               });
             }
           });
 
-          // Check for updates periodically
           setInterval(() => reg.update(), 60000);
 
         } catch (error) {
