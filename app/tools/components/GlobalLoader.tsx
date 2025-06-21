@@ -6,163 +6,165 @@ interface GlobalLoaderProps {
   children?: React.ReactNode;
   minLoadTime?: number; // Minimum loading time in ms
   preloadDelay?: number; // Additional delay after content loads
+  showOnRefresh?: boolean; // Whether to show loader on page refresh
 }
 
 export default function GlobalLoader({ 
   children, 
-  minLoadTime = 1500, 
-  preloadDelay = 800 
+  minLoadTime = 800, // Reduced default time
+  preloadDelay = 300, // Reduced default delay
+  showOnRefresh = false 
 }: GlobalLoaderProps = {}) {
   const [dots, setDots] = useState('');
-  const [loadingStage, setLoadingStage] = useState('Initializing');
+  const [loadingStage, setLoadingStage] = useState('Loading');
   const [progress, setProgress] = useState(0);
   const [isContentReady, setIsContentReady] = useState(false);
   const [showContent, setShowContent] = useState(false);
+  const [shouldShowLoader, setShouldShowLoader] = useState(true);
   const startTimeRef = useRef(Date.now());
   const contentRef = useRef<HTMLDivElement>(null);
+  const hasShownRef = useRef(false);
+
+  // Check if we should show the loader
+  useEffect(() => {
+    // Check if this is a page refresh/reload
+    const isPageRefresh = performance.navigation?.type === 1 || 
+                         performance.getEntriesByType('navigation')[0]?.type === 'reload';
+    
+    // Check if we've already shown the loader in this session
+    const hasShownBefore = sessionStorage.getItem('loader-shown') === 'true';
+    
+    if (!showOnRefresh && (isPageRefresh || hasShownBefore)) {
+      // Skip the loader for refreshes or if already shown
+      setShouldShowLoader(false);
+      setShowContent(true);
+      return;
+    }
+
+    // Mark that we've shown the loader
+    sessionStorage.setItem('loader-shown', 'true');
+    hasShownRef.current = true;
+  }, [showOnRefresh]);
 
   // Animated dots effect
   useEffect(() => {
+    if (!shouldShowLoader) return;
+
     const interval = setInterval(() => {
       setDots(prev => {
         if (prev === '...') return '';
         return prev + '.';
       });
-    }, 500);
+    }, 400);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [shouldShowLoader]);
 
-  // Progress and loading stages simulation
+  // Simplified progress simulation
   useEffect(() => {
-    const stages = [
-      { text: 'Initializing', duration: 300 },
-      { text: 'Loading resources', duration: 400 },
-      { text: 'Preparing content', duration: 500 },
-      { text: 'Optimizing layout', duration: 400 },
-      { text: 'Finalizing', duration: 300 }
-    ];
+    if (!shouldShowLoader) return;
 
     let currentProgress = 0;
-    let stageIndex = 0;
-
     const progressInterval = setInterval(() => {
-      currentProgress += Math.random() * 15 + 5; // Random increment between 5-20
+      currentProgress += Math.random() * 25 + 10; // Faster progress
       
       if (currentProgress >= 100) {
         currentProgress = 100;
         setProgress(100);
         clearInterval(progressInterval);
-        
-        // Mark content as ready after progress completes
-        setTimeout(() => {
-          setIsContentReady(true);
-        }, 200);
+        setIsContentReady(true);
         return;
       }
 
       setProgress(currentProgress);
-
-      // Update loading stage based on progress
-      const targetStage = Math.floor((currentProgress / 100) * stages.length);
-      if (targetStage > stageIndex && targetStage < stages.length) {
-        stageIndex = targetStage;
-        setLoadingStage(stages[stageIndex].text);
+      
+      // Update stage based on progress
+      if (currentProgress < 30) {
+        setLoadingStage('Loading');
+      } else if (currentProgress < 70) {
+        setLoadingStage('Preparing');
+      } else {
+        setLoadingStage('Almost ready');
       }
-    }, 100);
+    }, 150); // Faster updates
 
     return () => clearInterval(progressInterval);
-  }, []);
+  }, [shouldShowLoader]);
 
-  // Content preloading and visibility management
+  // Content loading management
   useEffect(() => {
-    if (!isContentReady) return;
+    if (!shouldShowLoader || !isContentReady) return;
 
     const handleContentLoad = async () => {
-      // Ensure minimum loading time has passed
+      // Much shorter minimum time for better UX
       const elapsedTime = Date.now() - startTimeRef.current;
       const remainingMinTime = Math.max(0, minLoadTime - elapsedTime);
 
-      // Wait for minimum loading time
       if (remainingMinTime > 0) {
         await new Promise(resolve => setTimeout(resolve, remainingMinTime));
       }
 
-      // Preload images and other resources
+      // Quick image preload check
       if (contentRef.current) {
-        const images = contentRef.current.querySelectorAll('img');
-        const imagePromises = Array.from(images).map(img => {
-          return new Promise((resolve) => {
-            if (img.complete) {
-              resolve(true);
-            } else {
-              img.onload = () => resolve(true);
-              img.onerror = () => resolve(true); // Continue even if image fails
-            }
+        const images = contentRef.current.querySelectorAll('img[src]');
+        if (images.length > 0) {
+          // Only wait for critical images, timeout after 1 second
+          const imagePromises = Array.from(images).slice(0, 3).map(img => {
+            return Promise.race([
+              new Promise((resolve) => {
+                if (img.complete) resolve(true);
+                else {
+                  img.onload = () => resolve(true);
+                  img.onerror = () => resolve(true);
+                }
+              }),
+              new Promise(resolve => setTimeout(resolve, 1000)) // 1s timeout
+            ]);
           });
-        });
 
-        // Wait for all images to load
-        await Promise.all(imagePromises);
+          await Promise.all(imagePromises);
+        }
       }
 
-      // Additional preload delay for smooth transition
+      // Shorter preload delay
       await new Promise(resolve => setTimeout(resolve, preloadDelay));
 
-      // Final stage update
       setLoadingStage('Ready');
-      setProgress(100);
-
-      // Small delay before showing content
-      setTimeout(() => {
-        setShowContent(true);
-      }, 300);
+      setTimeout(() => setShowContent(true), 100);
     };
 
     handleContentLoad();
-  }, [isContentReady, minLoadTime, preloadDelay]);
+  }, [shouldShowLoader, isContentReady, minLoadTime, preloadDelay]);
 
-  // If we're just using this as a standalone loader (no children)
+  // If we shouldn't show the loader, render content immediately
+  if (!shouldShowLoader) {
+    return children ? <>{children}</> : null;
+  }
+
+  // Standalone loader (no children)
   if (!children) {
     return (
       <div className="fixed inset-0 bg-gray-50 dark:bg-gray-900 flex items-center justify-center z-50">
-        <div className="text-center max-w-md mx-auto px-6">
-          {/* Spinner */}
-          <div className="relative mb-6">
-            <div className="w-16 h-16 border-4 border-gray-200 dark:border-gray-700 rounded-full animate-spin border-t-blue-500"></div>
-            <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full animate-pulse border-t-blue-300 opacity-50"></div>
+        <div className="text-center max-w-sm mx-auto px-6">
+          {/* Simplified spinner */}
+          <div className="relative mb-4">
+            <div className="w-12 h-12 border-3 border-gray-200 dark:border-gray-700 rounded-full animate-spin border-t-blue-500"></div>
           </div>
           
-          {/* Loading text */}
-          <div className="space-y-3">
-            <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
-              {loadingStage}
-              <span className="inline-block w-8 text-left">{dots}</span>
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 text-sm">
-              Preparing your tools and optimizing performance
-            </p>
-          </div>
+          {/* Simple loading text */}
+          <h2 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-2">
+            {loadingStage}
+            <span className="inline-block w-6 text-left">{dots}</span>
+          </h2>
 
-          {/* Progress bar */}
-          <div className="mt-6 w-full">
-            <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
-              <span>Progress</span>
-              <span>{Math.round(progress)}%</span>
-            </div>
-            <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+          {/* Compact progress bar */}
+          <div className="w-full">
+            <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
               <div 
-                className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 rounded-full transition-all duration-300 ease-out"
+                className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-200 ease-out"
                 style={{ width: `${progress}%` }}
-              >
-                <div className="h-full bg-white bg-opacity-20 animate-pulse"></div>
-              </div>
+              ></div>
             </div>
-          </div>
-
-          {/* Loading tips */}
-          <div className="mt-6 text-xs text-gray-500 dark:text-gray-400">
-            <p>💡 Tip: All content is being preloaded for optimal performance</p>
           </div>
         </div>
       </div>
@@ -172,54 +174,37 @@ export default function GlobalLoader({
   // Wrapper mode with children
   return (
     <>
-      {/* Loader overlay */}
+      {/* Compact loader overlay */}
       <div 
-        className={`fixed inset-0 bg-gray-50 dark:bg-gray-900 flex items-center justify-center z-50 transition-opacity duration-500 ${
+        className={`fixed inset-0 bg-gray-50 dark:bg-gray-900 flex items-center justify-center z-50 transition-opacity duration-300 ${
           showContent ? 'opacity-0 pointer-events-none' : 'opacity-100'
         }`}
       >
-        <div className="text-center max-w-md mx-auto px-6">
-          {/* Same loader content as above */}
-          <div className="relative mb-6">
-            <div className="w-16 h-16 border-4 border-gray-200 dark:border-gray-700 rounded-full animate-spin border-t-blue-500"></div>
-            <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full animate-pulse border-t-blue-300 opacity-50"></div>
+        <div className="text-center max-w-sm mx-auto px-6">
+          <div className="relative mb-4">
+            <div className="w-12 h-12 border-3 border-gray-200 dark:border-gray-700 rounded-full animate-spin border-t-blue-500"></div>
           </div>
           
-          <div className="space-y-3">
-            <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
-              {loadingStage}
-              <span className="inline-block w-8 text-left">{dots}</span>
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 text-sm">
-              Preparing your tools and optimizing performance
-            </p>
-          </div>
+          <h2 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-2">
+            {loadingStage}
+            <span className="inline-block w-6 text-left">{dots}</span>
+          </h2>
 
-          <div className="mt-6 w-full">
-            <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
-              <span>Progress</span>
-              <span>{Math.round(progress)}%</span>
-            </div>
-            <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+          <div className="w-full">
+            <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
               <div 
-                className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 rounded-full transition-all duration-300 ease-out"
+                className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-200 ease-out"
                 style={{ width: `${progress}%` }}
-              >
-                <div className="h-full bg-white bg-opacity-20 animate-pulse"></div>
-              </div>
+              ></div>
             </div>
-          </div>
-
-          <div className="mt-6 text-xs text-gray-500 dark:text-gray-400">
-            <p>💡 Tip: All content is being preloaded for optimal performance</p>
           </div>
         </div>
       </div>
 
-      {/* Hidden content for preloading */}
+      {/* Content */}
       <div 
         ref={contentRef}
-        className={`transition-opacity duration-500 ${
+        className={`transition-opacity duration-300 ${
           showContent ? 'opacity-100' : 'opacity-0'
         }`}
         style={{ visibility: showContent ? 'visible' : 'hidden' }}
