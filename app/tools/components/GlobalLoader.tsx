@@ -77,12 +77,13 @@ export default function GlobalLoader({
         const images = contentRef.current.querySelectorAll('img[src]');
         if (images.length > 0) {
           const imagePromises = Array.from(images).slice(0, 3).map(img => {
+            const imageElement = img as HTMLImageElement;
             return Promise.race([
               new Promise((resolve) => {
-                if (img.complete) resolve(true);
+                if (imageElement.complete) resolve(true);
                 else {
-                  img.onload = () => resolve(true);
-                  img.onerror = () => resolve(true);
+                  imageElement.onload = () => resolve(true);
+                  imageElement.onerror = () => resolve(true);
                 }
               }),
               new Promise(resolve => setTimeout(resolve, 1000))
