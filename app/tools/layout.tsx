@@ -1,9 +1,9 @@
-
-// app/tools/layout.tsx (Enhanced - Optional)
+// app/tools/layout.tsx - DEBUG VERSION
 import React, { ReactNode } from "react";
 import type { Metadata } from 'next';
-import PWARegistration from './components/PWARegistration';
-import NotificationProvider from './components/NotificationProvider'; // Optional new component
+// Comment out these imports temporarily to test
+// import PWARegistration from './components/PWARegistration';
+// import NotificationProvider from './components/NotificationProvider';
 
 interface ToolsLayoutProps {
   children: ReactNode;
@@ -120,13 +120,16 @@ export const metadata: Metadata = {
 };
 
 export default function ToolsLayout({ children }: ToolsLayoutProps) {
+  // Add debug logging
+  console.log('🔄 ToolsLayout rendering at:', new Date().toISOString());
+  
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-      <PWARegistration />
-      {/* Optional: Wrap with notification provider for app-wide notifications */}
-      <NotificationProvider>
+      {/* STEP 1: Comment out EVERYTHING to test if layout metadata is the issue */}
+      {/* <PWARegistration /> */}
+      {/* <NotificationProvider> */}
         {children}
-      </NotificationProvider>
+      {/* </NotificationProvider> */}
     </div>
   );
 }
