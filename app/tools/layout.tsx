@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
-// Only keeping PWA registration for now
-import PWARegistration from './components/PWARegistration';
+import PWAHandler from './components/PWAHandler';
 
 interface ToolsLayoutProps {
   children: ReactNode;
@@ -10,10 +9,10 @@ interface ToolsLayoutProps {
 export const metadata: Metadata = {
   title: 'Tools - Ovrica',
   description: 'Access powerful PDF and AI tools with Apexion. Transform your documents with our suite of intelligent tools designed for productivity and efficiency.',
-  keywords: ['PDF tools', 'AI tools', 'document processing', 'productivity', 'Apexion', 'file converter', 'text analysis'],
-  authors: [{ name: 'Apexion Team' }],
-  creator: 'Apexion',
-  publisher: 'Apexion',
+  keywords: ['PDF tools', 'AI tools', 'document processing', 'productivity', 'Ovrica', 'file converter', 'text analysis'],
+  authors: [{ name: 'Ovrica Team' }],
+  creator: 'Ovrica',
+  publisher: 'Ovrica',
 
   // Robots and indexing
   robots: {
@@ -35,7 +34,7 @@ export const metadata: Metadata = {
 
   // Open Graph tags
   openGraph: {
-    title: 'Tools - Apexion | Powerful PDF & AI Tools',
+    title: 'Tools - Ovrica| Powerful PDF & AI Tools',
     description: 'Access powerful PDF and AI tools with Apexion. Transform your documents with our suite of intelligent tools designed for productivity and efficiency.',
     url: 'https://apexion-2.vercel.app/tools',
     siteName: 'Apexion',
@@ -84,26 +83,18 @@ export const metadata: Metadata = {
     ],
   },
 
-  // Mobile and viewport
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-  },
-
-  // Theme color
+  // Theme color for PWA
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#ffffff' },
     { media: '(prefers-color-scheme: dark)', color: '#000000' },
   ],
 
-  // App-specific
+  // App-specific metadata
   applicationName: 'Apexion',
   generator: 'Next.js',
   referrer: 'origin-when-cross-origin',
 
-  // Additional meta tags with PWA manifest
+  // PWA and mobile-specific meta tags
   other: {
     'apple-mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-status-bar-style': 'default',
@@ -111,21 +102,23 @@ export const metadata: Metadata = {
     'mobile-web-app-capable': 'yes',
     'msapplication-TileColor': '#000000',
     'msapplication-config': '/browserconfig.xml',
+    'format-detection': 'telephone=no',
   },
 
-  // Add manifest
+  // PWA manifest
   manifest: '/manifest.json',
 };
 
 export default function ToolsLayout({ children }: ToolsLayoutProps) {
-  // Add debug logging
-  console.log('🔄 ToolsLayout rendering at:', new Date().toISOString());
-
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-      {/* Only PWA registration for now */}
-      <PWARegistration />
-      {children}
+      {/* PWA functionality handler */}
+      <PWAHandler />
+      
+      {/* Main content */}
+      <main className="relative">
+        {children}
+      </main>
     </div>
   );
 }
