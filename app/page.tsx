@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 
 export default function Home() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -35,7 +36,7 @@ export default function Home() {
           <div className="flex justify-between items-center mb-8">
             <div className="flex items-center">
               <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg flex items-center justify-center mr-3 animate-pulse">
-                <img src="/favicon.ico" alt="Ovrica" className="w-5 h-5" />
+                <Image src="/favicon.ico" alt="Ovrica" width={20} height={20} />
               </div>
               <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Ovrica</span>
             </div>
@@ -64,17 +65,17 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center">
           <div className="flex items-center">
             <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg flex items-center justify-center mr-3 animate-pulse">
-              <img src="/favicon.ico" alt="Ovrica" className="w-5 h-5" />
+              <Image src="/favicon.ico" alt="Ovrica" width={20} height={20} />
             </div>
             <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Ovrica</span>
           </div>
-          
+
           <nav className="hidden md:flex space-x-8">
             <button onClick={() => scrollToSection('features')} className="text-gray-600 hover:text-purple-600 font-medium transition-colors">Features</button>
             <button onClick={() => scrollToSection('tools')} className="text-gray-600 hover:text-purple-600 font-medium transition-colors">Tools</button>
             <button onClick={() => scrollToSection('pricing')} className="text-gray-600 hover:text-purple-600 font-medium transition-colors">Pricing</button>
           </nav>
-          
+
           <div className="flex items-center space-x-4">
             <button className="text-gray-600 hover:text-purple-600 font-medium hidden sm:block transition-colors">Sign In</button>
             <button className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-2 rounded-lg font-medium hover:shadow-lg transition-all transform hover:scale-105">
@@ -122,7 +123,7 @@ export default function Home() {
           <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-12 animate-fade-in-up">
             Powerful AI Tools Suite
           </h2>
-          
+
           <div className="grid md:grid-cols-3 gap-8">
             {[
               {
@@ -172,7 +173,7 @@ export default function Home() {
           <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-12 animate-fade-in-up">
             Why Choose Ovrica?
           </h2>
-          
+
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
               { icon: "M13 10V3L4 14h7v7l9-11h-7z", title: "Lightning Fast", desc: "Process in seconds with optimized AI", color: "purple" },
@@ -199,7 +200,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto text-center">
           <h2 className="text-3xl font-bold text-gray-900 mb-4 animate-fade-in-up">Trusted by Creators & Professionals</h2>
           <p className="text-lg text-gray-600 mb-12 animate-fade-in-up">Join millions who enhance their workflow with AI</p>
-          
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {[
               { number: "15M+", label: "Files Processed" },
@@ -226,7 +227,7 @@ export default function Home() {
             Create images, generate PDFs, and process documents with AI-powered precision. Start for free today.
           </p>
           <button className="bg-white text-purple-600 px-8 py-4 rounded-xl text-lg font-semibold hover:bg-gray-50 transition-all transform hover:scale-105 shadow-lg animate-pulse-subtle">
-            Get Started - It's Free
+            Get Started - It&apos;s Free
           </button>
         </div>
       </section>
@@ -238,7 +239,7 @@ export default function Home() {
             <div className="md:col-span-2">
               <div className="flex items-center mb-4">
                 <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg flex items-center justify-center mr-3 animate-pulse">
-                  <img src="/favicon.ico" alt="Ovrica" className="w-5 h-5" />
+                  <Image src="/favicon.ico" alt="Ovrica" width={20} height={20} />
                 </div>
                 <span className="text-xl font-bold">Ovrica</span>
               </div>
