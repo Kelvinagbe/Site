@@ -2,7 +2,7 @@
 import React, { ReactNode } from "react";
 import type { Metadata } from 'next';
 // Comment out these imports temporarily to test
-// import PWARegistration from './components/PWARegistration';
+import PWARegistration from './components/PWARegistration';
 // import NotificationProvider from './components/NotificationProvider';
 
 interface ToolsLayoutProps {
@@ -126,7 +126,7 @@ export default function ToolsLayout({ children }: ToolsLayoutProps) {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
       {/* STEP 1: Comment out EVERYTHING to test if layout metadata is the issue */}
-      {/* <PWARegistration /> */}
+      <PWARegistration /> 
       {/* <NotificationProvider> */}
         {children}
       {/* </NotificationProvider> */}
