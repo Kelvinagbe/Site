@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
-import PWAHandler from './components/PWAHandler';
+import { Suspense } from 'react';
+import GlobalLoader from './components/GlobalLoader';
 
 interface ToolsLayoutProps {
   children: ReactNode;
@@ -112,13 +113,14 @@ export const metadata: Metadata = {
 export default function ToolsLayout({ children }: ToolsLayoutProps) {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-      {/* PWA functionality handler */}
-      <PWAHandler />
-      
-      {/* Main content */}
-      <main className="relative">
-        {children}
-      </main>
+      {/* Enhanced global loader with content preloading */}
+      <Suspense fallback={<GlobalLoader />}>
+        <GlobalLoader minLoadTime={2000} preloadDelay={1000}>
+          <main className="relative">
+            {children}
+          </main>
+        </GlobalLoader>
+      </Suspense>
     </div>
   );
 }
