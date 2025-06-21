@@ -24,8 +24,9 @@ export default function GlobalLoader({
 
   // Check if we should show the loader
   useEffect(() => {
+    const navigationEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
     const isPageRefresh = performance.navigation?.type === 1 || 
-                         performance.getEntriesByType('navigation')[0]?.type === 'reload';
+                         navigationEntry?.type === 'reload';
     const hasShownBefore = sessionStorage.getItem('loader-shown') === 'true';
     
     if (!showOnRefresh && (isPageRefresh || hasShownBefore)) {
