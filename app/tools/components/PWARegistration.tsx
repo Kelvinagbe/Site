@@ -13,7 +13,7 @@ export default function PWARegistration() {
       if ('serviceWorker' in navigator) {
         try {
           const reg = await navigator.serviceWorker.register('/sw.js', {
-            scope: '/',
+            scope: '/tools',
             updateViaCache: 'none' // Don't cache the service worker file
           });
 
