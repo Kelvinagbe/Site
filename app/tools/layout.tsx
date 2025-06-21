@@ -1,8 +1,6 @@
-// app/tools/layout.tsx (Enhanced - Optional)
+// app/tools/layout.tsx
 import React, { ReactNode } from "react";
 import type { Metadata } from 'next';
-import PWARegistration from './components/PWARegistration';
-import NotificationProvider from './components/NotificationProvider'; // Optional new component
 
 interface ToolsLayoutProps {
   children: ReactNode;
@@ -85,14 +83,6 @@ export const metadata: Metadata = {
     ],
   },
 
-  // Mobile and viewport
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-  },
-
   // Theme color
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#ffffff' },
@@ -121,11 +111,7 @@ export const metadata: Metadata = {
 export default function ToolsLayout({ children }: ToolsLayoutProps) {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-      <PWARegistration />
-      {/* Optional: Wrap with notification provider for app-wide notifications */}
-      <NotificationProvider>
-        {children}
-      </NotificationProvider>
+      {children}
     </div>
   );
 }
